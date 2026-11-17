@@ -1,6 +1,6 @@
 // @vitest-environment happy-dom
 import { describe, expect, it } from 'vitest'
-import { downloadIcon, faviconOf, iconMarkup, systemName, uploadIcon } from './icon.ts'
+import { downloadIcon, faviconOf, iconMarkup, lockIcon, systemName, uploadIcon } from './icon.ts'
 
 describe('the icon', () => {
   it('is drawn in the masthead with the classes of the palette roles', () => {
@@ -26,6 +26,11 @@ describe('the icon', () => {
     expect(downloadIcon().text).toContain('M7 10l5 5 5-5')
     expect(uploadIcon().text).toContain('M7 9l5-5 5 5')
     expect(uploadIcon().text).toContain('stroke="currentColor"')
+  })
+
+  it('of the lock is a padlock, its shackle closed only while locked', () => {
+    expect(lockIcon(true).text).toContain('a4 4 0 0 1 8 0v4')
+    expect(lockIcon(false).text).not.toContain('a4 4 0 0 1 8 0v4')
   })
 
   it('stands beside the name of the system', () => {

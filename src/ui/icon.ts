@@ -62,3 +62,11 @@ export function downloadIcon(): Markup {
 export function uploadIcon(): Markup {
   return trayIcon('<path d="M12 15V4M7 9l5-5 5 5"/>')
 }
+
+/** The icon of the lock: a padlock, closed while the schedule is locked, open otherwise. */
+export function lockIcon(isLocked: boolean): Markup {
+  const shackle = isLocked ? 'M8 11V7a4 4 0 0 1 8 0v4' : 'M8 11V7a4 4 0 0 1 7.5-1.9'
+  return raw(
+    `<svg class="action-icon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="${shackle}"/></svg>`,
+  )
+}

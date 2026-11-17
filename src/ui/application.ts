@@ -28,7 +28,7 @@ import {
 } from './gestures.ts'
 import { cadenceClass, gridOf, kindClass, rowsOf, slotAt, weekClass } from './grid.ts'
 import { html } from './html.ts'
-import { downloadIcon, iconMarkup, systemName, uploadIcon } from './icon.ts'
+import { downloadIcon, iconMarkup, lockIcon, systemName, uploadIcon } from './icon.ts'
 
 /** What the page needs from its surroundings to be mounted. */
 export interface ApplicationContext {
@@ -115,9 +115,11 @@ export function mountApplication(root: HTMLElement, context: ApplicationContext)
       )}</div>`
   }
 
+  /** The lock, a padlock closed while the schedule is locked; Lock to a screen reader. */
   function lockButton() {
-    return html`<button type="button" data-action="lock" aria-pressed="${isLocked ? 'true' : 'false'}"
-      >${isLocked ? 'Locked' : 'Lock'}</button>`
+    const hint = isLocked ? 'Unlock' : 'Lock'
+    return html`<button type="button" class="icon-button" data-action="lock" aria-label="Lock"
+      title="${hint}" aria-pressed="${isLocked ? 'true' : 'false'}">${lockIcon(isLocked)}</button>`
   }
 
   function render(): void {

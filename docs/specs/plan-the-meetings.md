@@ -71,7 +71,7 @@ week. A meeting needs a title; a time block does not.
 
 | Rule | Behaviour |
 |---|---|
-| Lock | The lock button locks the schedule against every change, and unlocks it. It reads *Lock*, and *Locked* while it is pressed. |
+| Lock | The lock button, a padlock, locks the schedule against every change, and unlocks it. The padlock is open while the schedule can be changed, closed while it is locked; it is named *Lock* to a screen reader, and *Lock* or *Unlock* on hover. |
 | Locked | Nothing is added, moved, resized, changed or removed: a press on the grid does nothing, bookings have no remove mark and no lower edge to drag, the switch is not shown, and Delete does nothing. A click on a booking, or Enter, shows its dialog read only, with Close alone. |
 | Kept | Whether the schedule is locked is kept with it: the page opens as it was left. |
 | Replacing | Upload still replaces a locked schedule, once confirmed. |
