@@ -33,7 +33,7 @@ A weekly meeting looks alike on the three tabs, and unlike a bi-weekly one.
 | A weekly meeting | Moved or resized on any tab, it changes in both weeks. |
 | Refused | While a drag would make an overlap, the meeting shows where it would go as refused; dropped there, it goes back where it was and nothing changes. |
 | Escape | During a drag, Escape puts the meeting back where it was. |
-| Remove | The remove mark of a meeting, or Delete while the meeting has the focus, takes the meeting out of the schedule. A weekly meeting removed from one week's tab leaves both weeks. |
+| Remove | The remove mark of a meeting, Delete while the meeting has the focus, or Remove in its dialog asks the Organizer to confirm, naming the meeting, its cadence and its time: *Remove Lab meeting, weekly, Monday 10:00 to 11:00?* Confirmed, the meeting leaves the schedule; otherwise nothing changes. A weekly meeting removed from one week's tab leaves both weeks. |
 
 ## The meeting dialog
 
