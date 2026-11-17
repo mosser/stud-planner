@@ -28,7 +28,7 @@ import {
 } from './gestures.ts'
 import { cadenceClass, gridOf, kindClass, rowsOf, slotAt, weekClass } from './grid.ts'
 import { html } from './html.ts'
-import { iconMarkup, systemName } from './icon.ts'
+import { downloadIcon, iconMarkup, systemName, uploadIcon } from './icon.ts'
 
 /** What the page needs from its surroundings to be mounted. */
 export interface ApplicationContext {
@@ -135,8 +135,10 @@ export function mountApplication(root: HTMLElement, context: ApplicationContext)
                 aria-selected="${each === tab ? 'true' : 'false'}">${tabNames[each]}</button>`,
           )}</div>
           <div class="actions">
-            <button type="button" data-action="download">Download</button>
-            <button type="button" data-action="upload">Upload</button>
+            <button type="button" class="icon-button" data-action="download"
+              aria-label="Download" title="Download">${downloadIcon()}</button>
+            <button type="button" class="icon-button" data-action="upload"
+              aria-label="Upload" title="Upload">${uploadIcon()}</button>
             <input type="file" accept=".json,application/json" data-file hidden>
           </div>
         </div>

@@ -4,7 +4,9 @@ The system has one screen, headed *Supervision Planner* with its icon, a
 calendar page whose square is cut along its diagonal, week A and week B. It
 shows one tab at a time, the overview, week A
 or week B, each a grid with a weekday per column and a quarter of the
-day per row. Above the grid stand the tabs, and Download and Upload; under it, on
+day per row. Above the grid stand the tabs, and Download and Upload, each shown
+as an icon, an arrow down into a tray and up out of it, and named on hover;
+under it, on
 every tab, the switch between Meeting and Time block. At the right of the
 masthead stands the lock. The overview is the first tab,
 and the one shown when the page opens; the switch is then on Meeting.

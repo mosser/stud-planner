@@ -11,15 +11,18 @@ export interface IconColours {
 }
 
 /**
- * The drawing of the icon, in a 24 by 24 box: a calendar page whose square is cut along its
- * diagonal, week A upper left and week B lower right, as the overview cuts shared time.
+ * The drawing of the icon, in a 24 by 24 box: a calendar page whose page is cut along its
+ * diagonal, week A upper left and week B lower right, as the overview cuts shared time, the cut
+ * drawn in the colour of the frame so that the two halves stand apart.
  */
 function drawing(frame: string, weekA: string, weekB: string): string {
   return [
-    `<rect x="3" y="5" width="18" height="16" rx="2" fill="none" stroke-width="2" ${frame}/>`,
-    `<path d="M8 3v4M16 3v4" stroke-width="2" stroke-linecap="round" ${frame}/>`,
-    `<path d="M7 10h10L7 18z" ${weekA}/>`,
-    `<path d="M17 10v8H7z" ${weekB}/>`,
+    `<path d="M4 9h16L4 21z" ${weekA}/>`,
+    `<path d="M20 9v12H4z" ${weekB}/>`,
+    `<path d="M20 9L4 21" stroke-width="1.5" ${frame}/>`,
+    `<rect x="3" y="4" width="18" height="17" rx="2" fill="none" stroke-width="2" ${frame}/>`,
+    `<path d="M3 9h18" stroke-width="2" ${frame}/>`,
+    `<path d="M8 2v4M16 2v4" stroke-width="2" stroke-linecap="round" ${frame}/>`,
   ].join('')
 }
 
@@ -41,4 +44,21 @@ export function faviconOf(colours: IconColours): string {
     `fill="${colours.weekB}"`,
   )}</svg>`
   return `data:image/svg+xml,${encodeURIComponent(svg)}`
+}
+
+/** A tray, and an arrow into it or out of it, drawn in the colour of the text around. */
+function trayIcon(arrow: string): Markup {
+  return raw(
+    `<svg class="action-icon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 15v4a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-4"/>${arrow}</svg>`,
+  )
+}
+
+/** The icon of Download: an arrow down into a tray. */
+export function downloadIcon(): Markup {
+  return trayIcon('<path d="M12 4v11M7 10l5 5 5-5"/>')
+}
+
+/** The icon of Upload: an arrow up out of a tray. */
+export function uploadIcon(): Markup {
+  return trayIcon('<path d="M12 15V4M7 9l5-5 5 5"/>')
 }

@@ -372,7 +372,9 @@ describe('downloading and uploading', () => {
   it('downloads the schedule file', () => {
     const { root, download } = mounted(new Schedule([lab]))
     const button = root.querySelector('[data-action="download"]') as HTMLElement
-    expect(button.textContent).toBe('Download')
+    expect(button.getAttribute('aria-label')).toBe('Download')
+    expect(button.getAttribute('title')).toBe('Download')
+    expect(button.querySelector('svg.action-icon')).not.toBeNull()
     button.click()
     expect(download).toHaveBeenCalledWith(
       scheduleFileOf(new Schedule([lab])),

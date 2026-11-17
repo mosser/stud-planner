@@ -1,6 +1,6 @@
 // @vitest-environment happy-dom
 import { describe, expect, it } from 'vitest'
-import { faviconOf, iconMarkup, systemName } from './icon.ts'
+import { downloadIcon, faviconOf, iconMarkup, systemName, uploadIcon } from './icon.ts'
 
 describe('the icon', () => {
   it('is drawn in the masthead with the classes of the palette roles', () => {
@@ -8,7 +8,7 @@ describe('the icon', () => {
     element.innerHTML = iconMarkup().text
     const svg = element.querySelector('svg.icon')
     expect(svg?.getAttribute('aria-hidden')).toBe('true')
-    expect(svg?.querySelectorAll('.icon-frame')).toHaveLength(2)
+    expect(svg?.querySelectorAll('.icon-frame')).toHaveLength(4)
     expect(svg?.querySelector('.icon-week-a')).not.toBeNull()
     expect(svg?.querySelector('.icon-week-b')).not.toBeNull()
   })
@@ -20,6 +20,12 @@ describe('the icon', () => {
     expect(svg).toContain('stroke="maroon"')
     expect(svg).toContain('fill="blue"')
     expect(svg).toContain('fill="gold"')
+  })
+
+  it('of Download points down into a tray, that of Upload up out of it', () => {
+    expect(downloadIcon().text).toContain('M7 10l5 5 5-5')
+    expect(uploadIcon().text).toContain('M7 9l5-5 5 5')
+    expect(uploadIcon().text).toContain('stroke="currentColor"')
   })
 
   it('stands beside the name of the system', () => {
