@@ -1,7 +1,7 @@
 # Domain Model
 
 The concepts a schedule is made of, and how they relate. The Organizer
-changes them on the odd week, the even week and the month, the browser keeps
+changes them on the odd week, the even week and the merged view, the browser keeps
 them between two sessions, and the schedule file carries them. A schedule
 holds no date: its weeks are abstract.
 
@@ -22,16 +22,16 @@ in the specification, in the interface and in the code.
 | Bi-weekly | The cadence of a meeting held in one week only, the odd or the even: its parity. |
 | Parity | Which of the two weeks a bi-weekly meeting is held in: odd or even. |
 | Odd week, even week | The two abstract weeks the schedule is planned on. They have no date: which week of the calendar is odd is the Organizer's to know. |
-| Month | The odd week and the even week merged, as one grid: a month of the schedule is these two weeks, alternating. |
+| Merged view | The odd week and the even week merged, as one grid: what the two weeks hold, alternating, and the time they share. Nothing is added from it. |
 | Weekday | Monday, Tuesday, Wednesday, Thursday or Friday. |
 | Day | The hours a meeting can take on a weekday: from 08:00 to 18:00, configured in `config/calendar.json`. |
 | Quarter | Fifteen minutes. Starts and durations are whole quarters. |
 | Start | The time of day a meeting begins: a quarter of the day, its end within the day. |
 | Duration | How long a meeting lasts: one quarter at least, ending at the end of the day at most. |
-| Slot | A quarter of a weekday. On the month, the slots an odd and an even meeting share are cut, together, along their diagonal: the upper left half for the odd week, the lower right half for the even week. |
+| Slot | A quarter of a weekday. On the merged view, the slots an odd and an even meeting share are cut, together, along their diagonal: the upper left half for the odd week, the lower right half for the even week. |
 | Free, taken | A slot is taken in a week when a meeting held that week covers it, and free otherwise. A weekly meeting takes its slots in both weeks, a bi-weekly one in its week only. |
 | Overlap | Two meetings that would take the same slot in the same week. The system refuses an overlap, whatever makes it: adding, moving, resizing, changing a cadence or a parity, or loading a file. |
-| Tab | One of the three grids the screen shows, one at a time: the odd week, the even week, the month. |
+| Tab | One of the three grids the screen shows, one at a time: the odd week, the even week, the merged view. |
 | Keep | What the browser does of the schedule: it holds it between two sessions, best effort, and gives it back when the page opens. |
 | Schedule file | The schedule as a file of the Organizer's computer, saved and loaded: see `schedule-file.md`. |
 | Save | The system hands the schedule file to the browser, which writes it on the Organizer's computer. Nothing is sent over a network. |

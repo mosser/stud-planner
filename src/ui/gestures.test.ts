@@ -6,6 +6,7 @@ import { Schedule } from '../domain/schedule.ts'
 import { Weekday } from '../domain/weekday.ts'
 import {
   cadenceOffered,
+  cadencesAddedIn,
   firstFreeHour,
   meetingMoved,
   meetingResized,
@@ -27,10 +28,10 @@ function written(span: Span): string {
 }
 
 describe('the tabs', () => {
-  it('show the odd week, the even week, or both on the month', () => {
+  it('show the odd week, the even week, or both on the merged view', () => {
     expect(parityOf('odd')).toBe(Parity.odd)
     expect(parityOf('even')).toBe(Parity.even)
-    expect(parityOf('month')).toBeUndefined()
+    expect(parityOf('merged')).toBeUndefined()
   })
 })
 
@@ -40,13 +41,19 @@ describe('the cadence offered from a free slot', () => {
     expect(cadenceOffered(schedule, 'even', monday(8))).toBe(even)
   })
 
-  it('is weekly on the month, from a slot free in both weeks', () => {
-    expect(cadenceOffered(schedule, 'month', monday(0))).toBe(Cadence.weekly)
-    expect(cadenceOffered(schedule, 'month', monday(8))).toBeUndefined()
+  it('is none on the merged view, where nothing is added', () => {
+    expect(cadenceOffered(schedule, 'merged', monday(0))).toBeUndefined()
   })
 
   it('is none from a slot taken in the week of the tab', () => {
     expect(cadenceOffered(schedule, 'odd', monday(8))).toBeUndefined()
+  })
+})
+
+describe('a meeting added from a week', () => {
+  it('is held in that week: bi-weekly in it, or weekly', () => {
+    expect(cadencesAddedIn(Parity.odd)).toEqual([Cadence.weekly, odd])
+    expect(cadencesAddedIn(Parity.even)).toEqual([Cadence.weekly, even])
   })
 })
 

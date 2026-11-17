@@ -6,8 +6,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 `stud-planner` is a meeting scheduler for recurring meetings. The Organizer
 places weekly and bi-weekly meetings on two abstract weeks, odd and even, by
-pressing and dragging on them, and sees them one tab at a time or merged as
-the month, where only the time an odd and an even meeting share is cut along
+pressing and dragging on them, and sees them one tab at a time or in the
+merged view, where only the time an odd and an even meeting share is cut along
 its diagonal, odd upper left, even lower right. A slot is never booked twice. The schedule is kept in the browser
 and saved to, or loaded from, a schedule file.
 
@@ -159,10 +159,13 @@ first.
 - The schedule is planned on an odd week and an even week, without dates; the
   system never reads today's date. A meeting is weekly (both weeks) or
   bi-weekly (its parity's week); there is no monthly cadence.
-- Three tabs, one at a time: odd week, even week, month (both merged; only
+- Three tabs, one at a time: odd week, even week, merged (both; only
   the time an odd and an even meeting share is cut along its diagonal, odd
   upper left, even lower right, by `piecesOf` in `grid.ts`). No occurrence: a
   meeting is changed as a whole.
+- A meeting is added from a week's tab only, held in that week (weekly or
+  bi-weekly in it, `cadencesAddedIn`); nothing is added from the merged
+  view.
 
 ### ADR 0009: a slot is booked once
 

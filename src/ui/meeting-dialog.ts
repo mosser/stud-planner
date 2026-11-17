@@ -16,6 +16,8 @@ export interface MeetingDialogOptions {
   readonly meeting?: Meeting | undefined
   /** Where a new meeting goes, and the cadence offered. */
   readonly proposal: Span & { readonly cadence: Cadence }
+  /** The cadences the meeting may have; every cadence when absent. */
+  readonly cadences?: readonly Cadence[] | undefined
   /** Called with the meeting as Done leaves it: never one that overlaps another. */
   readonly onDone: (meeting: Meeting) => void
   /** Called when the Organizer asks to remove the meeting changed. */
@@ -29,6 +31,11 @@ type Outcome =
 
 /** A title that stands in while the Organizer has typed none, to check everything else. */
 const standInTitle = 'Meeting'
+
+/** The cadences the dialog offers. */
+function cadencesOf(given: MeetingDialogOptions): readonly Cadence[] {
+  return given.cadences ?? Cadence.all
+}
 
 /** The options of a list, each valued by its rank; which is chosen is set by `choose`. */
 function options<T>(values: readonly T[], label: (value: T) => string): Markup {
@@ -44,7 +51,7 @@ function markupOf(given: MeetingDialogOptions): Markup {
   return html`<form method="dialog">
     <h2>${meeting === undefined ? 'New meeting' : meeting.title}</h2>
     <label>Title <input name="title" value="${meeting?.title ?? ''}" autocomplete="off"></label>
-    <label>Cadence <select name="cadence">${options(Cadence.all, cadenceChoice)}</select></label>
+    <label>Cadence <select name="cadence">${options(cadencesOf(given), cadenceChoice)}</select></label>
     <label>Weekday <select name="weekday">${options(Weekday.all, (weekday) => weekday.name)}</select></label>
     <label>Start <select name="start">${options(theDay.quarters, String)}</select></label>
     <label>Duration <select name="duration">${options(durations, durationWritten)}</select></label>
@@ -62,7 +69,7 @@ function markupOf(given: MeetingDialogOptions): Markup {
 function choose(form: HTMLFormElement, given: MeetingDialogOptions): void {
   const shown = given.meeting ?? given.proposal
   const ranks: Record<string, number> = {
-    cadence: Cadence.all.indexOf(shown.cadence),
+    cadence: cadencesOf(given).indexOf(shown.cadence),
     weekday: Weekday.all.indexOf(shown.weekday),
     start: theDay.quarterAt(shown.start),
     duration: shown.duration.quarters - 1,
@@ -91,7 +98,7 @@ function textOf(form: HTMLFormElement, name: string): string {
  */
 function outcomeOf(form: HTMLFormElement, given: MeetingDialogOptions): Outcome {
   const title = textOf(form, 'title')
-  const cadence = chosen(form, 'cadence', Cadence.all)
+  const cadence = chosen(form, 'cadence', cadencesOf(given))
   const weekday = chosen(form, 'weekday', Weekday.all)
   const start = chosen(form, 'start', theDay.quarters)
   const duration = chosen(form, 'duration', durations)

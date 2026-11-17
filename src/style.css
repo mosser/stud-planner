@@ -283,7 +283,7 @@ button:disabled {
 }
 
 /*
- * The month: a bi-weekly meeting is drawn in pieces when it shares time with a meeting of the
+ * The merged view: a bi-weekly meeting is drawn in pieces when it shares time with a meeting of the
  * other week; the time shared is cut along its diagonal, the upper left for odd, the lower right
  * for even, and the rest is whole.
  */

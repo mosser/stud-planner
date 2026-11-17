@@ -97,8 +97,8 @@ describe('the screen', () => {
     ;(root.querySelector('[data-tab="even"]') as HTMLElement).click()
     expect(application.tab).toBe('even')
     expect(titles(root)).toEqual(['Lab meeting'])
-    ;(root.querySelector('[data-tab="month"]') as HTMLElement).click()
-    expect(root.querySelector('[role="tabpanel"]')?.getAttribute('aria-label')).toBe('Month')
+    ;(root.querySelector('[data-tab="merged"]') as HTMLElement).click()
+    expect(root.querySelector('[role="tabpanel"]')?.getAttribute('aria-label')).toBe('Merged')
     expect(root.querySelector<HTMLElement>('.meeting.odd')?.style.gridRow).toBe('9 / span 4')
   })
 })
@@ -128,20 +128,31 @@ describe('adding a meeting', () => {
     expect(describeMeetings(application.schedule)[1]).toBe('Bo Monday 09:30-10:00')
   })
 
-  it('offers a weekly meeting on the month', () => {
-    const { root, application } = mounted(new Schedule([ana]))
-    ;(root.querySelector('[data-tab="month"]') as HTMLElement).click()
+  it('offers only the cadences held in the week of the tab', () => {
+    const { root, application } = mounted(new Schedule())
+    ;(root.querySelector('[data-tab="even"]') as HTMLElement).click()
     press(day(root, Weekday.tuesday), point(Weekday.tuesday, '08:00'))
     release(point(Weekday.tuesday, '08:00'))
+    const choices = [...dialog().querySelectorAll('[name="cadence"] option')].map(
+      (option) => option.textContent,
+    )
+    expect(choices).toEqual(['Weekly', 'Bi-weekly, even week'])
+    const cadence = dialog().querySelector('[name="cadence"]') as HTMLSelectElement
+    cadence.value = '0'
+    cadence.dispatchEvent(new Event('change', { bubbles: true }))
     typeTitle('Bo')
-    expect(application.schedule.meetings[1]?.cadence).toBe(Cadence.weekly)
+    expect(application.schedule.meetings[0]?.cadence).toBe(Cadence.weekly)
   })
 
-  it('adds nothing from a slot of the month taken in one week', () => {
+  it('adds nothing from the merged view', () => {
     const { root } = mounted(new Schedule([ana]))
-    ;(root.querySelector('[data-tab="month"]') as HTMLElement).click()
-    press(day(root, Weekday.tuesday), point(Weekday.tuesday, '10:00'))
-    release(point(Weekday.tuesday, '10:00'))
+    ;(root.querySelector('[data-tab="merged"]') as HTMLElement).click()
+    press(day(root, Weekday.monday), point(Weekday.monday, '08:00'))
+    release(point(Weekday.monday, '08:00'))
+    expect(dialog()).toBeNull()
+    const add = root.querySelector('[data-action="add"]') as HTMLButtonElement
+    expect(add.disabled).toBe(true)
+    add.dispatchEvent(new MouseEvent('click', { bubbles: true }))
     expect(dialog()).toBeNull()
   })
 
@@ -150,10 +161,7 @@ describe('adding a meeting', () => {
     ;(root.querySelector('[data-action="add"]') as HTMLElement).click()
     typeTitle('Ana')
     expect(describeMeetings(application.schedule)[1]).toBe('Ana Monday 09:00-10:00')
-    ;(root.querySelector('[data-tab="month"]') as HTMLElement).click()
-    ;(root.querySelector('[data-action="add"]') as HTMLElement).click()
-    typeTitle('Bo')
-    expect(application.schedule.meetings[2]?.cadence).toBe(Cadence.weekly)
+    expect(application.schedule.meetings[1]?.cadence).toBe(odd)
   })
 })
 

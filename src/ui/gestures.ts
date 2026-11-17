@@ -7,14 +7,14 @@ import type { TimeOfDay } from '../domain/time-of-day.ts'
 import { Weekday } from '../domain/weekday.ts'
 
 /** The three grids the screen shows, one at a time. */
-export type Tab = 'odd' | 'even' | 'month'
+export type Tab = 'odd' | 'even' | 'merged'
 
 /** The tabs, in the order the screen shows them. */
-export const tabs: readonly Tab[] = ['odd', 'even', 'month']
+export const tabs: readonly Tab[] = ['odd', 'even', 'merged']
 
-/** The week a tab shows, or absent for the month, which shows both. */
+/** The week a tab shows, or absent for the merged view, which shows both. */
 export function parityOf(tab: Tab): Parity | undefined {
-  if (tab === 'month') {
+  if (tab === 'merged') {
     return undefined
   }
   return tab === 'odd' ? Parity.odd : Parity.even
@@ -41,13 +41,24 @@ function isFree(schedule: Schedule, cadence: Cadence, weekday: Weekday, quarter:
 }
 
 /**
- * The cadence a meeting added from a free slot is offered: bi-weekly in the week of the tab, and
- * weekly on the month. Absent when the slot is taken in a week the cadence is held in.
+ * The cadence a meeting added from a free slot is offered: bi-weekly in the week of the tab.
+ * Absent on the merged view, where nothing is added, and from a slot taken in that week.
  */
 export function cadenceOffered(schedule: Schedule, tab: Tab, slot: Slot): Cadence | undefined {
   const parity = parityOf(tab)
-  const cadence = parity === undefined ? Cadence.weekly : Cadence.biWeekly(parity)
+  if (parity === undefined) {
+    return undefined
+  }
+  const cadence = Cadence.biWeekly(parity)
   return isFree(schedule, cadence, slot.weekday, slot.quarter) ? cadence : undefined
+}
+
+/**
+ * The cadences a meeting added from the week of that parity may have: it is always held in that
+ * week, so it is weekly, or bi-weekly in that week.
+ */
+export function cadencesAddedIn(parity: Parity): readonly Cadence[] {
+  return Cadence.all.filter((cadence) => cadence.isHeldIn(parity))
 }
 
 /**

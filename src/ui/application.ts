@@ -1,4 +1,4 @@
-import { Cadence } from '../domain/cadence.ts'
+import { Cadence, type Parity } from '../domain/cadence.ts'
 import { theDay } from '../domain/day.ts'
 import {
   fileRefused,
@@ -15,6 +15,7 @@ import type { Restored, ScheduleStore } from '../io/schedule-store.ts'
 import { askToConfirm } from './confirmation.ts'
 import {
   cadenceOffered,
+  cadencesAddedIn,
   firstFreeHour,
   meetingMoved,
   meetingResized,
@@ -50,14 +51,14 @@ export interface Application {
   readonly tab: Tab
 }
 
-const tabNames: Record<Tab, string> = { odd: 'Odd week', even: 'Even week', month: 'Month' }
+const tabNames: Record<Tab, string> = { odd: 'Odd week', even: 'Even week', merged: 'Merged' }
 
 /** A drag in progress on the grid; it has moved once the pointer left the slot pressed. */
 type Drag =
   | {
       readonly kind: 'add'
       readonly pressed: Slot
-      readonly cadence: Cadence
+      readonly parity: Parity
       span: Span
       hasMoved: boolean
     }
@@ -106,7 +107,7 @@ export function mountApplication(root: HTMLElement, context: ApplicationContext)
                 aria-selected="${each === tab ? 'true' : 'false'}">${tabNames[each]}</button>`,
           )}</div>
           <div class="actions">
-            <button type="button" data-action="add">Add a meeting</button>
+            <button type="button" data-action="add" ${tab === 'merged' ? 'disabled' : ''}>Add a meeting</button>
             <button type="button" data-action="save">Save</button>
             <button type="button" data-action="load">Load</button>
             <input type="file" accept=".json,application/json" data-file hidden>
@@ -140,10 +141,12 @@ export function mountApplication(root: HTMLElement, context: ApplicationContext)
     return schedule.meetings[Number(rank)]
   }
 
-  function openNew(span: Span, cadence: Cadence): void {
+  /** Opens the dialog of a meeting added from the week of that parity: it is held in it. */
+  function openNew(span: Span, parity: Parity): void {
     openMeetingDialog(page, {
       schedule,
-      proposal: { ...span, cadence },
+      proposal: { ...span, cadence: Cadence.biWeekly(parity) },
+      cadences: cadencesAddedIn(parity),
       onDone: (meeting) => change(schedule.afterAdding(meeting)),
     })
   }
@@ -178,8 +181,9 @@ export function mountApplication(root: HTMLElement, context: ApplicationContext)
 
   function addFromTheToolbar(): void {
     const parity = parityOf(tab)
-    const cadence = parity === undefined ? Cadence.weekly : Cadence.biWeekly(parity)
-    openNew(firstFreeHour(schedule, cadence), cadence)
+    if (parity !== undefined) {
+      openNew(firstFreeHour(schedule, Cadence.biWeekly(parity)), parity)
+    }
   }
 
   root.addEventListener('click', (event) => {
@@ -247,7 +251,7 @@ export function mountApplication(root: HTMLElement, context: ApplicationContext)
     function showDrag(current: Drag): void {
       if (current.kind === 'add') {
         const { span } = current
-        show(span.weekday.key, rowsOf(span), current.cadence.parity?.key ?? 'weekly')
+        show(span.weekday.key, rowsOf(span), current.parity.key)
         return
       }
       const isRefused = schedule.overlapOf(current.candidate, current.meeting) !== undefined
@@ -273,7 +277,7 @@ export function mountApplication(root: HTMLElement, context: ApplicationContext)
         return
       }
       if (drag.kind === 'add') {
-        drag.span = spanDragged(schedule, drag.cadence, drag.pressed, slot.quarter)
+        drag.span = spanDragged(schedule, Cadence.biWeekly(drag.parity), drag.pressed, slot.quarter)
       } else if (drag.kind === 'move') {
         drag.candidate = meetingMoved(drag.meeting, drag.heldAt, slot)
       } else {
@@ -293,8 +297,8 @@ export function mountApplication(root: HTMLElement, context: ApplicationContext)
       if (finished.kind === 'add') {
         const span = finished.hasMoved
           ? finished.span
-          : spanPressed(schedule, finished.cadence, finished.pressed)
-        openNew(span, finished.cadence)
+          : spanPressed(schedule, Cadence.biWeekly(finished.parity), finished.pressed)
+        openNew(span, finished.parity)
         return
       }
       if (!finished.hasMoved && finished.kind === 'move') {
@@ -361,10 +365,10 @@ export function mountApplication(root: HTMLElement, context: ApplicationContext)
         begin({ kind: 'move', ...move, hasMoved: false }, held ?? undefined)
         return
       }
-      const cadence = cadenceOffered(schedule, tab, slot)
-      if (cadence !== undefined) {
-        const span = spanDragged(schedule, cadence, slot, slot.quarter)
-        begin({ kind: 'add', pressed: slot, cadence, span, hasMoved: false })
+      const parity = cadenceOffered(schedule, tab, slot)?.parity
+      if (parity !== undefined) {
+        const span = spanDragged(schedule, Cadence.biWeekly(parity), slot, slot.quarter)
+        begin({ kind: 'add', pressed: slot, parity, span, hasMoved: false })
       }
     })
   }
