@@ -9,7 +9,7 @@
 The application is used at McMaster University, next to its siblings
 `macreport` and `streaming-hat`, which use McMaster's palette. It needs colours
 for its chrome and three colours of data: weekly, odd-week and even-week
-meetings, which must stay apart on the month, where an odd and an even meeting
+meetings, which must stay apart on the overview, where an odd and an even meeting
 share their slots.
 
 McMaster publishes its palette and usage rules at
@@ -63,9 +63,19 @@ role (`--color-*`) defined from them, or a tint mixed from them with
 | Kind a press adds, chosen | Maroon on maroon 12 % on white | White on maroon 40 % on black |
 | Refused, errors | Maroon | Royal Botanical Pink |
 
-A meeting is drawn with its cadence's colour as a border and as a tint of the
-surface behind its text: 22 % on white, 30 % on black; the halves of the
-month, 40 % on white, 45 % on black.
+A booking is drawn with its cadence's colour as a border, and filled behind
+its text with a light or a dark tone of it:
+
+| Cadence | Fill, light | Fill, dark | Half on the overview, light | Half, dark |
+|---|---|---|---|---|
+| Weekly | Green, 22 % on white | Lime, 30 % on black | — | — |
+| Odd week | Albion Falls Blue, 65 % on white | Bayfront Blue, 70 % on black | Albion Falls Blue | Bayfront Blue |
+| Even week | Gold, 22 % on white | Gold, 30 % on black | Gold, 40 % on white | Gold, 45 % on black |
+
+The odd week is filled with Albion Falls Blue rather than a tint of the
+Bayfront Blue of its border: a tint of Bayfront Blue is a blue grey that
+cannot be told from the grey of a time block. A time block is filled with its
+grey, whatever its cadence.
 
 ### Usage rules
 
@@ -80,12 +90,12 @@ month, 40 % on white, 45 % on black.
    | White | Maroon | 11.1 |
    | Maroon | White | 11.1 |
    | Grey | White | 7.2 |
-   | Black | each cadence, 22 % on white | 14.6 at least |
-   | Grey | each cadence, 22 % on white | 5.0 at least |
-   | Black | each cadence, 40 % on white | 10.4 at least |
-   | White | each cadence, 30 % on black | 9.8 at least |
-   | Dundurn Grey | each cadence, 30 % on black | 7.1 at least |
-   | White | each cadence, 45 % on black | 5.8 at least |
+   | Black | each fill, light | 14.6 at least |
+   | Grey | each fill, light | 5.0 at least |
+   | Black | each half, light | 13.3 at least |
+   | White | each fill, dark | 9.8 at least |
+   | Dundurn Grey | each fill, dark | 7.1 at least |
+   | White | each half, dark | 6.8 at least |
    | Royal Botanical Pink | Black | 10.1 |
    | Black / Grey | Grey, 25 % on white (time block) | 14.4 / 4.9 |
    | White / Dundurn Grey | Dundurn Grey, 30 % on black (time block) | 10.0 / 7.3 |
@@ -106,7 +116,7 @@ month, 40 % on white, 45 % on black.
 
 **Negative / accepted trade-offs**
 
-- Gold, the clearest colour against Bayfront Blue on the month, cannot carry
+- Gold, the clearest colour against Albion Falls Blue on the overview, cannot carry
   text; the title of an even meeting is written in black, or white, over it.
 - The application's look is tied to McMaster; if it must be neutral, this ADR
   is amended.

@@ -32,9 +32,16 @@
   /* The kind a press adds, chosen: maroon on its tint in light, white on it in dark. */
   --color-chosen-text: var(--mac-maroon);
   --color-chosen-tint: color-mix(in srgb, var(--mac-maroon) 12%, var(--mac-white));
-  /* Backgrounds of bookings, mixed with the surface: black text on them in light, white in dark. */
-  --tint: 22%;
-  --half-tint: 40%;
+  /*
+   * The fill of a booking, by cadence, and of its half on the overview: black text on them in
+   * light, white in dark. The odd week is filled with Albion Falls Blue, lighter than the
+   * Bayfront Blue of its border, so that it is not taken for the grey of a time block.
+   */
+  --fill-weekly: color-mix(in srgb, var(--mac-accent-green) 22%, var(--mac-white));
+  --fill-odd: color-mix(in srgb, var(--mac-accent-sky) 65%, var(--mac-white));
+  --fill-even: color-mix(in srgb, var(--mac-gold) 22%, var(--mac-white));
+  --half-fill-odd: var(--mac-accent-sky);
+  --half-fill-even: color-mix(in srgb, var(--mac-gold) 40%, var(--mac-white));
   --quarter-height: 0.85rem;
   color-scheme: light dark;
   font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
@@ -54,8 +61,11 @@
     --color-blocked: color-mix(in srgb, var(--mac-accent-light-grey) 30%, var(--mac-black));
     --color-chosen-text: var(--mac-white);
     --color-chosen-tint: color-mix(in srgb, var(--mac-maroon) 40%, var(--mac-black));
-    --tint: 30%;
-    --half-tint: 45%;
+    --fill-weekly: color-mix(in srgb, var(--mac-accent-lime) 30%, var(--mac-black));
+    --fill-odd: color-mix(in srgb, var(--mac-accent-blue) 70%, var(--mac-black));
+    --fill-even: color-mix(in srgb, var(--mac-gold) 30%, var(--mac-black));
+    --half-fill-odd: var(--mac-accent-blue);
+    --half-fill-even: color-mix(in srgb, var(--mac-gold) 45%, var(--mac-black));
   }
 }
 
@@ -244,19 +254,25 @@ button:disabled {
 .booking,
 .preview {
   --cadence: var(--color-weekly);
+  --fill: var(--fill-weekly);
+  --half-fill: var(--fill-weekly);
   margin: 0 2px;
   border-left: 4px solid var(--cadence);
-  background: color-mix(in srgb, var(--cadence) var(--tint), var(--color-surface));
+  background: var(--fill);
 }
 
 .booking.odd,
 .preview.odd {
   --cadence: var(--color-odd);
+  --fill: var(--fill-odd);
+  --half-fill: var(--half-fill-odd);
 }
 
 .booking.even,
 .preview.even {
   --cadence: var(--color-even);
+  --fill: var(--fill-even);
+  --half-fill: var(--half-fill-even);
 }
 
 .booking {
@@ -365,7 +381,7 @@ button:disabled {
 
 .booking.half {
   border-left: 0;
-  background: color-mix(in srgb, var(--cadence) var(--half-tint), var(--color-surface));
+  background: var(--half-fill);
 }
 
 .booking.half.odd {
