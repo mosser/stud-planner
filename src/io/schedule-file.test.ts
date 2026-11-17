@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { Cadence, Week } from '../domain/cadence.ts'
 import { aMeeting, aTimeBlock, at } from '../domain/meeting.fixture.ts'
+import { Participant } from '../domain/participant.ts'
 import { Schedule } from '../domain/schedule.ts'
 import { Weekday } from '../domain/weekday.ts'
 import {
@@ -102,6 +103,74 @@ describe('the time blocks of the schedule file', () => {
   })
 })
 
+describe('the participants of the schedule file', () => {
+  const ana = new Participant('Ana')
+  const bo = new Participant('Bo')
+  const withParticipants = new Schedule(
+    [aMeeting({ participants: [ana, bo] }), aMeeting({ title: 'Alone', weekday: Weekday.friday })],
+    [],
+    [ana, bo],
+  )
+
+  function fileOf(participants: unknown, meetings: unknown[] = []): unknown {
+    return { format: 'stud-planner/schedule', version: 3, meetings, participants }
+  }
+
+  it('are written by name, and on a meeting only when it has some', () => {
+    const content = contentOf(withParticipants)
+    expect(content.participants).toEqual(['Ana', 'Bo'])
+    expect(content.meetings[0]?.participants).toEqual(['Ana', 'Bo'])
+    expect(content.meetings[1]?.participants).toBeUndefined()
+  })
+
+  it('are read back as they were written, the meetings with the same participants', () => {
+    const read = readScheduleFile(scheduleFileOf(withParticipants))
+    expect(!read.isRefused && contentOf(read.schedule)).toEqual(contentOf(withParticipants))
+    const [first] = read.isRefused ? [] : read.schedule.meetings
+    expect(!read.isRefused && first?.participants[0]).toBe(
+      !read.isRefused && read.schedule.participants[0],
+    )
+  })
+
+  it('refuse a meeting naming someone who is not a participant', () => {
+    expect(
+      reasonOf(
+        scheduleFromContent(fileOf(['Ana'], [{ ...aMeetingContent, participants: ['Zoé'] }])),
+      ),
+    ).toBe('meeting 1: Zoé is not a participant of the schedule.')
+    expect(
+      reasonOf(
+        scheduleFromContent(
+          fileOf(['Ana'], [{ ...aMeetingContent, participants: ['Ana', 'ana'] }]),
+        ),
+      ),
+    ).toBe('meeting 1: A meeting names Ana twice.')
+    expect(
+      reasonOf(scheduleFromContent(fileOf(['Ana'], [{ ...aMeetingContent, participants: 'Ana' }]))),
+    ).toBe('meeting 1 cannot have "Ana" as its participants.')
+  })
+
+  it('refuse two participants with the same name, or one without a name', () => {
+    expect(reasonOf(scheduleFromContent(fileOf(['Ana', 'ANA'])))).toBe(
+      'participant 2: There is already a participant named ANA.',
+    )
+    expect(reasonOf(scheduleFromContent(fileOf(['  '])))).toBe(
+      'participant 1: A participant needs a name.',
+    )
+    expect(reasonOf(scheduleFromContent(fileOf([3])))).toBe(
+      'participant 1 cannot have 3 as its name.',
+    )
+  })
+
+  it('are none in a file of version 2, which cannot list them', () => {
+    expect(reasonOf(scheduleFromContent(fileWith([], { participants: [] })))).toBe(
+      'the schedule has a field participants, which a schedule file does not have.',
+    )
+    const read = scheduleFromContent(fileWith([aMeetingContent]))
+    expect(!read.isRefused && read.schedule.participants).toEqual([])
+  })
+})
+
 describe('a schedule file of version 1', () => {
   const versionOne = {
     format: 'stud-planner/schedule',
@@ -136,9 +205,9 @@ describe('a schedule file of version 1', () => {
     )
   })
 
-  it('is written again as version 2', () => {
+  it('is written again as version 3', () => {
     const read = scheduleFromContent(versionOne)
-    expect(!read.isRefused && contentOf(read.schedule).version).toBe(2)
+    expect(!read.isRefused && contentOf(read.schedule).version).toBe(3)
   })
 })
 
@@ -150,7 +219,7 @@ describe('the schedule file', () => {
   it('writes each meeting as the specification lists, a week for a bi-weekly one only', () => {
     expect(contentOf(schedule)).toEqual({
       format: 'stud-planner/schedule',
-      version: 2,
+      version: 3,
       meetings: [
         { ...aMeetingContent, note: 'Room 201' },
         {
@@ -171,6 +240,7 @@ describe('the schedule file', () => {
         },
       ],
       timeBlocks: [],
+      participants: [],
     })
   })
 
@@ -196,11 +266,11 @@ describe('the schedule file', () => {
   })
 
   it('refuses a version it does not read', () => {
-    expect(reasonOf(scheduleFromContent(fileWith([], { version: 3 })))).toBe(
-      'it is a schedule file of version 3, and this system reads versions 1 and 2.',
+    expect(reasonOf(scheduleFromContent(fileWith([], { version: 4 })))).toBe(
+      'it is a schedule file of version 4, and this system reads versions 1 to 3.',
     )
     expect(reasonOf(scheduleFromContent(fileWith([], { version: '2' })))).toBe(
-      'it is a schedule file of version "2", and this system reads versions 1 and 2.',
+      'it is a schedule file of version "2", and this system reads versions 1 to 3.',
     )
   })
 

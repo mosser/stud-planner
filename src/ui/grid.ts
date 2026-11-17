@@ -2,7 +2,9 @@ import type { Booking } from '../domain/booking.ts'
 import type { Week } from '../domain/cadence.ts'
 import { theDay } from '../domain/day.ts'
 import { Duration } from '../domain/duration.ts'
-import { cadenceWritten, labelOf, timeOf } from '../domain/findings.ts'
+import { cadenceWritten, labelOf, timeOf, withParticipants } from '../domain/findings.ts'
+import { Meeting } from '../domain/meeting.ts'
+import type { Participant } from '../domain/participant.ts'
 import type { Schedule } from '../domain/schedule.ts'
 import type { TimeOfDay } from '../domain/time-of-day.ts'
 import { Weekday } from '../domain/weekday.ts'
@@ -18,7 +20,37 @@ export function accessibleNameOf(booking: Booking): string {
     booking.isTimeBlock && booking.title !== undefined
       ? `Time block: ${booking.title}`
       : labelOf(booking)
-  return `${name}, ${cadenceWritten(booking.cadence)}, ${booking.weekday.name} ${timeOf(booking)}`
+  const spoken = `${name}, ${cadenceWritten(booking.cadence)}, ${booking.weekday.name} ${timeOf(booking)}`
+  const people = participantsOf(booking)
+  return people.length === 0 ? spoken : `${spoken}, ${withParticipants(people)}`
+}
+
+/** The names of the participants of a meeting; none for a time block. */
+function participantsOf(booking: Booking): readonly string[] {
+  return booking instanceof Meeting
+    ? booking.participants.map((participant) => participant.name)
+    : []
+}
+
+/** How the grid draws its bookings: whether it is locked, and whose meetings it singles out. */
+export interface Drawing {
+  /** Whether the schedule is locked: no remove marks, no handles. */
+  readonly isLocked?: boolean | undefined
+  /** The participant whose meetings stand out, every other booking dimmed; none when absent. */
+  readonly participant?: Participant | undefined
+}
+
+/** Whether a booking is dimmed: a participant is singled out, and it is not one of their meetings. */
+function isDimmed(booking: Booking, drawing: Drawing): boolean {
+  const { participant } = drawing
+  return (
+    participant !== undefined &&
+    !(booking instanceof Meeting && booking.hasParticipant(participant))
+  )
+}
+
+function dimmedClass(booking: Booking, drawing: Drawing): string {
+  return isDimmed(booking, drawing) ? 'dimmed' : ''
 }
 
 /** The class a week is drawn with: week-a or week-b. */
@@ -61,11 +93,35 @@ function resizeHandle(rank: number, isLocked: boolean): Markup | string {
   return isLocked ? '' : html`<span class="resize" data-resize="${rank}" aria-hidden="true"></span>`
 }
 
-function wholeBooking(booking: Booking, rank: number, isLocked: boolean): Markup {
-  return html`<div class="booking ${classesOf(booking)}" style="grid-row: ${rowsOf(booking)}"
-    data-booking="${rank}" role="button" tabindex="0" aria-label="${accessibleNameOf(booking)}">
+function participantsLine(booking: Booking): Markup | string {
+  const people = participantsOf(booking)
+  return people.length === 0
+    ? ''
+    : html`<span class="booking-participants">${people.join(', ')}</span>`
+}
+
+/**
+ * The class a booking's length is drawn with, so that a short one stays readable: `short`, its
+ * title and time on one line, for half an hour or less; `shortest` too, its title alone, for a
+ * quarter.
+ */
+export function lengthClass(booking: Booking): string {
+  const { quarters } = booking.duration
+  if (quarters === 1) {
+    return 'short shortest'
+  }
+  return quarters === 2 ? 'short' : ''
+}
+
+function wholeBooking(booking: Booking, rank: number, drawing: Drawing): Markup {
+  const isLocked = drawing.isLocked === true
+  const name = accessibleNameOf(booking)
+  return html`<div class="booking ${classesOf(booking)} ${lengthClass(booking)} ${dimmedClass(booking, drawing)}"
+    style="grid-row: ${rowsOf(booking)}" data-booking="${rank}" role="button" tabindex="0"
+    aria-label="${name}" title="${name}">
     <span class="booking-title">${labelOf(booking)}</span>
     <span class="booking-time">${timeOf(booking)}</span>
+    ${participantsLine(booking)}
     ${removeMark(booking, rank, isLocked)}
     ${resizeHandle(rank, isLocked)}
   </div>`
@@ -150,19 +206,21 @@ function piecedBooking(
   rank: number,
   week: Week,
   pieces: readonly Piece[],
-  isLocked: boolean,
+  drawing: Drawing,
 ) {
+  const isLocked = drawing.isLocked === true
+  const dimmed = dimmedClass(booking, drawing)
   const first = pieces[0] as Piece
   const last = pieces[pieces.length - 1] as Piece
   const kind = kindClass(booking)
   const drawn = pieces.map((piece, index) => {
     const focus =
       index === 0 ? html`role="button" tabindex="0" aria-label="${accessibleNameOf(booking)}"` : ''
-    return html`<div class="booking piece ${kind} ${weekClass(week)} ${pieceClasses(piece, index, pieces.length)}"
+    return html`<div class="booking piece ${kind} ${weekClass(week)} ${dimmed} ${pieceClasses(piece, index, pieces.length)}"
       style="grid-row: ${rowsOf(piece)}" data-booking="${rank}" ${focus}></div>`
   })
   return html`${drawn}
-    <div class="booking-label ${weekClass(week)} ${sharedClass(first)}" style="grid-row: ${rowsOf(first)}">
+    <div class="booking-label ${weekClass(week)} ${dimmed} ${sharedClass(first)}" style="grid-row: ${rowsOf(first)}">
       <span class="booking-title">${labelOf(booking)}</span>${removeMark(booking, rank, isLocked)}
     </div>
     <div class="resize-zone ${weekClass(week)} ${sharedClass(last)}" style="grid-row: ${rowsOf(last)}">
@@ -175,14 +233,14 @@ function bookingOnTab(
   rank: number,
   tab: Tab,
   schedule: Schedule,
-  isLocked: boolean,
+  drawing: Drawing,
 ): Markup {
   const week = booking.cadence.week
   const pieces = piecesOf(booking, schedule)
   if (tab === 'overview' && week !== undefined && pieces.some((piece) => piece.isShared)) {
-    return piecedBooking(booking, rank, week, pieces, isLocked)
+    return piecedBooking(booking, rank, week, pieces, drawing)
   }
-  return wholeBooking(booking, rank, isLocked)
+  return wholeBooking(booking, rank, drawing)
 }
 
 function isShownOn(booking: Booking, tab: Tab): boolean {
@@ -202,7 +260,7 @@ function hourLabels(): Markup {
  * The grid of a tab: a weekday per column, a quarter of the day per row, and its bookings, each
  * by its rank among the bookings of the schedule; without remove marks or handles while locked.
  */
-export function gridOf(schedule: Schedule, tab: Tab, isLocked = false): Markup {
+export function gridOf(schedule: Schedule, tab: Tab, drawing: Drawing = {}): Markup {
   const shown = schedule.bookings
     .map((booking, rank) => ({ booking, rank }))
     .filter(({ booking }) => isShownOn(booking, tab))
@@ -210,7 +268,7 @@ export function gridOf(schedule: Schedule, tab: Tab, isLocked = false): Markup {
     (weekday) =>
       html`<div class="day" data-weekday="${weekday.key}">${shown
         .filter(({ booking }) => booking.weekday === weekday)
-        .map(({ booking, rank }) => bookingOnTab(booking, rank, tab, schedule, isLocked))}</div>`,
+        .map(({ booking, rank }) => bookingOnTab(booking, rank, tab, schedule, drawing))}</div>`,
   )
   return html`<div class="week" data-shows="${tab}" style="--quarters: ${theDay.quarterCount}">
     <div class="corner"></div>

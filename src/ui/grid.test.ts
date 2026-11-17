@@ -3,9 +3,10 @@ import { describe, expect, it } from 'vitest'
 import { Cadence, Week } from '../domain/cadence.ts'
 import { Duration } from '../domain/duration.ts'
 import { aMeeting, aTimeBlock, at } from '../domain/meeting.fixture.ts'
+import { Participant } from '../domain/participant.ts'
 import { Schedule } from '../domain/schedule.ts'
 import { Weekday } from '../domain/weekday.ts'
-import { accessibleNameOf, gridOf, piecesOf, slotAt } from './grid.ts'
+import { accessibleNameOf, gridOf, lengthClass, piecesOf, slotAt } from './grid.ts'
 
 const lab = aMeeting({ weekday: Weekday.tuesday })
 const ana = aMeeting({ title: 'Ana', cadence: Cadence.biWeekly(Week.a) })
@@ -109,6 +110,54 @@ describe('a time block on the grid', () => {
   it('shares on the overview the time it has in common with a meeting of the other week', () => {
     expect(piecesOf(block, withBlocks).map((piece) => piece.isShared)).toEqual([false, true])
     expect(drawn('overview').querySelectorAll('.piece.time-block.half')).toHaveLength(1)
+  })
+})
+
+describe('a short booking on the grid', () => {
+  it('is drawn on one line when half an hour or less, its title alone for a quarter', () => {
+    expect(lengthClass(aMeeting({ duration: Duration.ofQuarters(1) }))).toBe('short shortest')
+    expect(lengthClass(aMeeting({ duration: Duration.ofQuarters(2) }))).toBe('short')
+    expect(lengthClass(aMeeting({ duration: Duration.ofQuarters(3) }))).toBe('')
+  })
+
+  it('tells all of itself on hover', () => {
+    const element = document.createElement('div')
+    element.innerHTML = gridOf(new Schedule([aMeeting()]), 'a').text
+    expect(element.querySelector('[data-booking="0"]')?.getAttribute('title')).toBe(
+      'Lab meeting, weekly, Monday 10:00 to 11:00',
+    )
+  })
+})
+
+describe('the participants on the grid', () => {
+  const ana = new Participant('Ana')
+  const bo = new Participant('Bo')
+  const withThem = aMeeting({ participants: [ana, bo] })
+  const alone = aMeeting({ title: 'Alone', weekday: Weekday.friday })
+  const block = aTimeBlock()
+  const roster = new Schedule([withThem, alone], [block], [ana, bo])
+
+  function drawn(participant?: Participant): HTMLElement {
+    const element = document.createElement('div')
+    element.innerHTML = gridOf(roster, 'overview', { participant }).text
+    return element
+  }
+
+  it('are written on a meeting, and named to a screen reader', () => {
+    const meeting = drawn().querySelector('[data-booking="0"]')
+    expect(meeting?.querySelector('.booking-participants')?.textContent).toBe('Ana, Bo')
+    expect(meeting?.getAttribute('aria-label')).toBe(
+      'Lab meeting, weekly, Monday 10:00 to 11:00, with Ana and Bo',
+    )
+    expect(drawn().querySelector('[data-booking="1"] .booking-participants')).toBeNull()
+  })
+
+  it('single out the meetings of one of them, every other booking dimmed', () => {
+    const dimmed = [...drawn(bo).querySelectorAll('.dimmed')].map(
+      (each) => (each as HTMLElement).dataset.booking,
+    )
+    expect(dimmed.toSorted()).toEqual(['1', '2'])
+    expect(drawn().querySelectorAll('.dimmed')).toHaveLength(0)
   })
 })
 

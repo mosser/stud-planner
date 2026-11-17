@@ -1,16 +1,17 @@
 # Schedule file
 
 The schedule as a file: JSON, UTF-8, one object. The browser keeps the same
-content (ADR 0006). The system writes version 2, and reads versions 1 and 2.
+content (ADR 0006). The system writes version 3, and reads versions 1 to 3.
 
 ## The schedule
 
 | Field | Value |
 |---|---|
 | `format` | `"stud-planner/schedule"`. |
-| `version` | `2`; `1` is read as the section Version 1 says. A file of another version is refused. |
+| `version` | `3`; `1` and `2` are read as their sections say. A file of another version is refused. |
 | `meetings` | The meetings, an array, possibly empty, in no particular order. |
 | `timeBlocks` | The time blocks, an array, possibly empty, in no particular order. A file without it holds no time block. |
+| `participants` | The participants, by name, an array of texts, possibly empty, no two names alike whatever their case. A file without it holds no participant. |
 
 ## A meeting
 
@@ -23,6 +24,7 @@ content (ADR 0006). The system writes version 2, and reads versions 1 and 2.
 | `start` | `HH:MM`, a quarter of the day. |
 | `duration` | In minutes, a whole number of quarters. |
 | `note` | Its note; absent when it has none. |
+| `participants` | Its participants, by name, each a participant of the schedule, once; absent when it has none. |
 
 ## A time block
 
@@ -31,16 +33,24 @@ content (ADR 0006). The system writes version 2, and reads versions 1 and 2.
 | `title` | Its title; absent when it has none. |
 | `cadence`, `week`, `weekday`, `start`, `duration` | As for a meeting. |
 
+## Version 2
+
+A file of version 2 is read as one of version 3 without participants: it has
+no `participants`, neither in the schedule nor in a meeting.
+
 ## Version 1
 
 A file of version 1 is read as one of version 2, but for the week of a
 bi-weekly booking, written `parity`: `"odd"` for week A, `"even"` for week B.
-It has no `week`. Downloaded again, it is written as version 2.
+It has no `week`.
+
+Downloaded again, a file of an earlier version is written as version 3.
 
 ## Refusal
 
 A file is refused, with the first reason found, when it is not JSON, has a
 field missing, a field the tables do not list for its version, a value the
-tables or the domain model do not allow, or two bookings that overlap: two
+tables or the domain model do not allow, a meeting naming someone who is
+not a participant, or two bookings that overlap: two
 meetings, a meeting in a time block, or two time blocks. Nothing of a refused
 file is taken.

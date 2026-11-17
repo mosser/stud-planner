@@ -3,6 +3,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { Cadence, Week } from '../domain/cadence.ts'
 import { Duration } from '../domain/duration.ts'
 import { aMeeting, aTimeBlock, at } from '../domain/meeting.fixture.ts'
+import { Participant } from '../domain/participant.ts'
 import { Schedule } from '../domain/schedule.ts'
 import { Weekday } from '../domain/weekday.ts'
 import { openBookingDialog } from './booking-dialog.ts'
@@ -153,6 +154,47 @@ describe('the meeting dialog of a meeting of the schedule', () => {
     ;(dialog.querySelector('[data-action="remove"]') as HTMLElement).click()
     expect(onRemove).toHaveBeenCalledWith(lab)
     expect(dialog.isConnected).toBe(false)
+  })
+})
+
+describe('the participants of a meeting in its dialog', () => {
+  const ana = new Participant('Ana')
+  const bo = new Participant('Bo')
+
+  it('are ticked among those of the schedule', () => {
+    const withAna = aMeeting({ participants: [ana] })
+    const roster = new Schedule([withAna], [], [ana, bo])
+    const onDone = vi.fn()
+    const dialog = openBookingDialog(document, {
+      schedule: roster,
+      kind: 'meeting',
+      booking: withAna,
+      proposal: withAna.timing,
+      onDone,
+    })
+    const boxes = [...dialog.querySelectorAll<HTMLInputElement>('input[name="participant"]')]
+    expect(boxes.map((box) => box.checked)).toEqual([true, false])
+    ;(boxes[1] as HTMLInputElement).checked = true
+    dialog.querySelector('form')?.requestSubmit()
+    expect(onDone.mock.calls[0]?.[0].participants).toEqual([ana, bo])
+  })
+
+  it('are not asked of a time block, nor when the schedule has none', () => {
+    const roster = new Schedule([], [], [ana])
+    const block = openBookingDialog(document, {
+      schedule: roster,
+      kind: 'time-block',
+      proposal,
+      onDone: vi.fn(),
+    })
+    expect(block.querySelector('fieldset.participants')).toBeNull()
+    const none = openBookingDialog(document, {
+      schedule,
+      kind: 'meeting',
+      proposal,
+      onDone: vi.fn(),
+    })
+    expect(none.querySelector('fieldset.participants')).toBeNull()
   })
 })
 

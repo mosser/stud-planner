@@ -15,12 +15,14 @@ import {
   notJson,
   notKept,
   overlap,
+  participantRemovalQuestion,
   removalQuestion,
   replacementQuestion,
   setAside,
   unknownField,
   unknownVersion,
   valueNotAllowed,
+  withParticipants,
 } from './findings.ts'
 import { aMeeting, aTimeBlock } from './meeting.fixture.ts'
 import { Weekday } from './weekday.ts'
@@ -58,17 +60,32 @@ describe('the findings', () => {
     )
   })
 
+  it('say who takes part in a meeting, and ask before a participant leaves', () => {
+    expect(withParticipants([])).toBe('')
+    expect(withParticipants(['Ana'])).toBe('with Ana')
+    expect(withParticipants(['Ana', 'Bo', 'Chloé'])).toBe('with Ana, Bo and Chloé')
+    expect(participantRemovalQuestion('Ana', 2)).toBe(
+      'Remove Ana from the participants, and from 2 meetings?',
+    )
+    expect(participantRemovalQuestion('Ana', 1)).toBe(
+      'Remove Ana from the participants, and from 1 meeting?',
+    )
+  })
+
   it('ask to confirm a replacement by a schedule file', () => {
-    expect(replacementQuestion(2, 1, 'a.json')).toBe(
+    expect(replacementQuestion({ meetings: 2, timeBlocks: 1, participants: 0 }, 'a.json')).toBe(
       'Replace the 2 meetings and 1 time block of the schedule with those of a.json?',
     )
-    expect(replacementQuestion(0, 3, 'a.json')).toBe(
+    expect(replacementQuestion({ meetings: 0, timeBlocks: 3, participants: 0 }, 'a.json')).toBe(
       'Replace the 0 meetings and 3 time blocks of the schedule with those of a.json?',
     )
-    expect(replacementQuestion(1, 0, 'a.json')).toBe(
+    expect(replacementQuestion({ meetings: 2, timeBlocks: 1, participants: 3 }, 'a.json')).toBe(
+      'Replace the 2 meetings, 1 time block and 3 participants of the schedule with those of a.json?',
+    )
+    expect(replacementQuestion({ meetings: 1, timeBlocks: 0, participants: 0 }, 'a.json')).toBe(
       'Replace the 1 meeting of the schedule with those of a.json?',
     )
-    expect(replacementQuestion(3, 0, 'a.json')).toBe(
+    expect(replacementQuestion({ meetings: 3, timeBlocks: 0, participants: 0 }, 'a.json')).toBe(
       'Replace the 3 meetings of the schedule with those of a.json?',
     )
   })
@@ -102,8 +119,8 @@ describe('the findings', () => {
       'a.json is refused: it is not a schedule file, nor JSON.',
     )
     expect(notAScheduleFile()).toBe('it is not a schedule file.')
-    expect(unknownVersion(3)).toBe(
-      'it is a schedule file of version 3, and this system reads versions 1 and 2.',
+    expect(unknownVersion(4)).toBe(
+      'it is a schedule file of version 4, and this system reads versions 1 to 3.',
     )
     expect(missingField(part, 'title')).toBe('meeting 2 has no title.')
     expect(unknownField(part, 'room')).toBe(

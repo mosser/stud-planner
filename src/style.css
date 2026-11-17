@@ -42,7 +42,7 @@
   --fill-week-b: color-mix(in srgb, var(--mac-gold) 22%, var(--mac-white));
   --half-fill-week-a: var(--mac-accent-sky);
   --half-fill-week-b: color-mix(in srgb, var(--mac-gold) 40%, var(--mac-white));
-  --quarter-height: 0.85rem;
+  --quarter-height: 1.1rem;
   color-scheme: light;
   font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
 }
@@ -353,6 +353,44 @@ button:disabled {
   white-space: nowrap;
 }
 
+/*
+ * A short booking stays readable: half an hour or less, its title and time on one line and its
+ * participants under them; a quarter, its title alone. Its description is shown on hover.
+ */
+.booking.short {
+  display: flex;
+  flex-wrap: wrap;
+  align-content: flex-start;
+  column-gap: 0.4rem;
+}
+
+.booking.short .booking-title {
+  flex: 0 1 auto;
+  max-width: 100%;
+}
+
+.booking.short .booking-participants {
+  flex-basis: 100%;
+}
+
+.booking.shortest .booking-time,
+.booking.shortest .booking-participants {
+  display: none;
+}
+
+.booking-participants {
+  display: block;
+  overflow: hidden;
+  color: var(--color-secondary-text);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* A participant singled out: every booking that is not one of their meetings fades. */
+.dimmed {
+  opacity: 0.25;
+}
+
 .booking-time {
   color: var(--color-secondary-text);
 }
@@ -494,6 +532,86 @@ dialog {
 
 dialog::backdrop {
   background: color-mix(in srgb, var(--mac-black) 40%, transparent);
+}
+
+/* The participants of a meeting, ticked in its dialog. */
+dialog fieldset.participants {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 1rem;
+  font-size: 0.875rem;
+}
+
+dialog fieldset.participants legend {
+  margin-bottom: 0.2rem;
+  padding: 0;
+}
+
+dialog label.participant {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+/* The participants of the schedule, each renamed in place or removed. */
+.participants-panel {
+  display: grid;
+  gap: 0.6rem;
+  padding: 1.25rem;
+}
+
+.participant-list {
+  display: grid;
+  gap: 0.4rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.participant-list li {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.participant-list input {
+  flex: 1;
+}
+
+.participant-meetings {
+  color: var(--color-secondary-text);
+  font-size: 0.875rem;
+  white-space: nowrap;
+}
+
+.add-participant {
+  display: flex;
+  gap: 0.5rem;
+  padding: 0;
+}
+
+.add-participant input {
+  flex: 1;
+}
+
+.remove-participant,
+.add-participant button {
+  padding: 0.3rem 0.6rem;
+  border: 1px solid var(--color-rule);
+  border-radius: 0.375rem;
+  background: var(--color-surface);
+  color: var(--color-text);
+  cursor: pointer;
+}
+
+.participant-filter {
+  margin-right: auto;
+  padding: 0.35rem 0.6rem;
+  border: 1px solid var(--color-rule);
+  border-radius: 0.375rem;
+  background: var(--color-surface);
+  color: var(--color-text);
+  font: inherit;
 }
 
 dialog fieldset {

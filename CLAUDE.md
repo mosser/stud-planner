@@ -22,10 +22,10 @@ from `file://` and is served by GitHub Pages at
 
 It follows the conventions of its siblings `macreport` and `streaming-hat`.
 
-**Current state:** the specification (`docs/specs/`) and ADRs 0001 to 0012
+**Current state:** the specification (`docs/specs/`) and ADRs 0001 to 0013
 are implemented: the three tabs, meetings and time blocks added, moved,
 resized and removed by dragging, the dialog of a booking, overlaps refused,
-the lock, the schedule kept in IndexedDB, and downloaded as or uploaded
+the lock, participants, the schedule kept in IndexedDB, and downloaded as or uploaded
 from its file. Not released yet.
 
 ## Where things live
@@ -51,6 +51,7 @@ Layout of the code:
 
 ```
 src/domain/   Schedule (no overlap), Booking with Meeting and TimeBlock,
+              Participant,
               Cadence and Week, Weekday, TimeOfDay, Duration, Day
               (config/calendar.json), findings.ts (every sentence shown);
               *.fixture.ts are test helpers
@@ -60,7 +61,8 @@ src/io/       schedule-file.ts (the JSON file), schedule-store.ts (IndexedDB:
               shared-schedules.ts (inlines schedules/*.json)
 src/ui/       application.ts (state, toolbar, tabs, drags), gestures.ts (what a
               press or a drag makes, pure), grid.ts (a tab's grid, slotAt),
-              booking-dialog.ts, confirmation.ts, dialog.ts, html.ts
+              booking-dialog.ts, participants-dialog.ts, icon.ts,
+              confirmation.ts, dialog.ts, html.ts
 src/main.ts   entry point, mounted from index.html
 src/style.css palette tokens and all styling
 config/       calendar.json: the hours of the day; inlined at build time and
@@ -203,6 +205,16 @@ first.
   `import.meta.glob` and any tracked JSON file but the project's own.
 - The lock (`keepLock`, kept with the schedule) blocks every change; Upload
   still replaces a locked schedule, once confirmed.
+
+### ADR 0013: participants
+
+- `Participant` (a name unique in the schedule, whatever its case) is held by
+  `Schedule`; a `Meeting` refers to some of them, by reference. Renaming and
+  removing go through `Schedule` and carry into every meeting. Time blocks
+  have none. No overlap means no participant in two meetings at once.
+- The schedule file is version 3: `participants` by name, in the schedule and
+  on a meeting. The grid writes them, singles one out (`dimmed`), and draws
+  a booking of half an hour or less compact (`lengthClass`).
 
 ## Writing
 

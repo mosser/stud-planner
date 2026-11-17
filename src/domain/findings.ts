@@ -52,6 +52,40 @@ export function durationWritten(duration: Duration): string {
   return minutes === 0 ? `${hours} h` : `${hours} h ${String(minutes).padStart(2, '0')}`
 }
 
+/** Why a participant cannot be without a name. */
+export function needsAName(): string {
+  return 'A participant needs a name.'
+}
+
+/** Why a meeting cannot name a participant twice. */
+export function participantTwice(name: string): string {
+  return `A meeting names ${name} twice.`
+}
+
+/** Why a participant cannot be named so: another participant of the schedule is. */
+export function nameTaken(name: string): string {
+  return `There is already a participant named ${name}.`
+}
+
+/** Why a meeting cannot name someone: they are not a participant of the schedule. */
+export function notAParticipant(name: string): string {
+  return `${name} is not a participant of the schedule.`
+}
+
+/** What the Organizer confirms before a participant who takes part in meetings leaves the schedule. */
+export function participantRemovalQuestion(name: string, meetingCount: number): string {
+  const meetings = meetingCount === 1 ? '1 meeting' : `${meetingCount} meetings`
+  return `Remove ${name} from the participants, and from ${meetings}?`
+}
+
+/** Who takes part in a meeting, as the interface writes it: with Ana and Bo. */
+export function withParticipants(names: readonly string[]): string {
+  if (names.length <= 1) {
+    return names.length === 0 ? '' : `with ${names[0]}`
+  }
+  return `with ${names.slice(0, -1).join(', ')} and ${names.at(-1)}`
+}
+
 /** Why a meeting cannot be without a title. */
 export function needsATitle(): string {
   return 'A meeting needs a title.'
@@ -88,15 +122,18 @@ function counted(count: number, what: string): string {
 
 /** What the Organizer confirms before a schedule file replaces the schedule. */
 export function replacementQuestion(
-  meetingCount: number,
-  timeBlockCount: number,
+  counts: { readonly meetings: number; readonly timeBlocks: number; readonly participants: number },
   fileName: string,
 ): string {
-  const held = [counted(meetingCount, 'meeting')]
-  if (timeBlockCount > 0) {
-    held.push(counted(timeBlockCount, 'time block'))
+  const held = [counted(counts.meetings, 'meeting')]
+  if (counts.timeBlocks > 0) {
+    held.push(counted(counts.timeBlocks, 'time block'))
   }
-  return `Replace the ${held.join(' and ')} of the schedule with those of ${fileName}?`
+  if (counts.participants > 0) {
+    held.push(counted(counts.participants, 'participant'))
+  }
+  const listed = held.length > 1 ? `${held.slice(0, -1).join(', ')} and ${held.at(-1)}` : held[0]
+  return `Replace the ${listed} of the schedule with those of ${fileName}?`
 }
 
 /** What the screen says when the browser does not keep the schedule. */
@@ -126,7 +163,7 @@ export function notAScheduleFile(): string {
 
 /** Why a file is refused: it is a schedule file of a version this system does not read. */
 export function unknownVersion(version: unknown): string {
-  return `it is a schedule file of version ${JSON.stringify(version)}, and this system reads versions 1 and 2.`
+  return `it is a schedule file of version ${JSON.stringify(version)}, and this system reads versions 1 to 3.`
 }
 
 /** Why a file is refused: a part of it has a field missing. */
@@ -157,6 +194,11 @@ export function bookingsOverlap(part: string, otherPart: string, reason: string)
 /** A meeting of a schedule file, by its rank, the first being 1: meeting 3. */
 export function meetingOfTheFile(rank: number): string {
   return `meeting ${rank}`
+}
+
+/** A participant of a schedule file, by its rank, the first being 1: participant 2. */
+export function participantOfTheFile(rank: number): string {
+  return `participant ${rank}`
 }
 
 /** A time block of a schedule file, by its rank, the first being 1: time block 2. */

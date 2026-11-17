@@ -1,10 +1,12 @@
 import { Booking, type Timing } from './booking.ts'
-import { needsATitle } from './findings.ts'
+import { needsATitle, participantTwice } from './findings.ts'
+import type { Participant } from './participant.ts'
 
 /** What makes a meeting: what the Organizer gives, and what the schedule file holds. */
 export interface MeetingDescription extends Timing {
   readonly title: string
   readonly note?: string | undefined
+  readonly participants?: readonly Participant[] | undefined
 }
 
 /** A recurring meeting of the schedule, held for as long as it is in it. */
@@ -13,10 +15,13 @@ export class Meeting extends Booking implements MeetingDescription {
   readonly title: string
   /** Free text, never read by the system; absent when there is none. */
   readonly note: string | undefined
+  /** The participants of the schedule who take part in it, each once; none, possibly. */
+  readonly participants: readonly Participant[]
 
   /**
-   * Throws a RangeError for a meeting without a title, or that does not fit within the day. The
-   * title and the note are taken without their leading and trailing spaces; an empty note is none.
+   * Throws a RangeError for a meeting without a title, that does not fit within the day, or that
+   * names a participant twice. The title and the note are taken without their leading and
+   * trailing spaces; an empty note is none.
    */
   constructor(description: MeetingDescription) {
     const title = description.title.trim()
@@ -24,9 +29,22 @@ export class Meeting extends Booking implements MeetingDescription {
       throw new RangeError(needsATitle())
     }
     super(description, false)
+    const participants = description.participants ?? []
+    const twice = participants.find(
+      (participant, rank) => participants.indexOf(participant) !== rank,
+    )
+    if (twice !== undefined) {
+      throw new RangeError(participantTwice(twice.name))
+    }
     const note = description.note?.trim()
     this.title = title
     this.note = note === '' ? undefined : note
+    this.participants = [...participants]
+  }
+
+  /** Whether the participant takes part in the meeting. */
+  hasParticipant(participant: Participant): boolean {
+    return this.participants.includes(participant)
   }
 
   /** The same meeting, changed as said. */
@@ -46,6 +64,11 @@ export class Meeting extends Booking implements MeetingDescription {
 
   /** What makes this meeting. */
   get description(): MeetingDescription {
-    return { ...this.timing, title: this.title, note: this.note }
+    return {
+      ...this.timing,
+      title: this.title,
+      note: this.note,
+      participants: this.participants,
+    }
   }
 }

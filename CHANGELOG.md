@@ -31,5 +31,11 @@ project adheres to [Semantic Versioning](https://semver.org/).
 - A **Lock** at the top right blocks every change made by accident: nothing is added,
   moved, resized, changed or removed, and a booking clicked is shown read only. The browser
   remembers it.
+- **Participants**: the people of the schedule, students and co-supervisors, each named
+  once, added, renamed and removed in their own dialog. A meeting is ticked with its
+  participants, who are written on it; a list above the grid singles out one participant's
+  meetings.
+- Meetings of half an hour or less stay readable: title and time on one line, participants
+  under them; every booking tells all of itself on hover.
 - The schedule is kept by the browser between two sessions, and is downloaded as, or
   uploaded from, `stud-planner-schedule.json`: the way to share it.

@@ -57,10 +57,30 @@ Meetings and time blocks are moved, resized and removed alike.
 | Escape | During a drag, Escape puts the booking back where it was. |
 | Remove | The remove mark of a booking, Delete while it has the focus, or Remove in its dialog asks the Organizer to confirm, naming the booking, its cadence and its time: *Remove Lab meeting, weekly, Monday 10:00 to 11:00?*, *Remove a time block, bi-weekly, week A, Friday 14:00 to 15:00?* Confirmed, the booking leaves the schedule; otherwise nothing changes. A weekly booking removed from one week's tab leaves both weeks. |
 
+## Short bookings
+
+A quarter is drawn tall enough for a line of text. A booking of half an hour
+or less writes its title and time on one line, and its participants under
+them; a booking of a quarter, its title alone. Every booking tells all of
+itself on hover: its title, cadence, weekday, time and participants.
+
+## Participants
+
+| Rule | Behaviour |
+|---|---|
+| The list | The participants button, beside Download and Upload, opens the participants of the schedule: each by name, with the number of meetings they take part in. |
+| Add | A name typed and added makes a participant; a name another participant has, whatever its case, is refused and the reason shown. |
+| Rename | A name changed in the list renames the participant, in every meeting they take part in. |
+| Remove | The remove mark of a participant takes them out of the schedule and of every meeting; when they take part in some, the Organizer confirms first: *Remove Ana from the participants, and from 2 meetings?* |
+| On a meeting | The dialog of a meeting ticks its participants among those of the schedule. The grid writes them under the meeting's time; a screen reader hears them: *Lab meeting, weekly, Monday 10:00 to 11:00, with Ana and Bo.* |
+| Singled out | A list after the tabs, *Everyone* or a participant's name, shown when the schedule has participants, singles out that participant's meetings: every other booking is faded. |
+| Locked | The participants are shown, and none is added, renamed or removed. |
+
 ## The dialog of a booking
 
 A click on a booking, without a drag, opens its dialog: title, cadence,
-week (bi-weekly), weekday, start and duration, a note for a meeting, with
+week (bi-weekly), weekday, start and duration, and for a meeting its
+participants and its note, with
 Done and Remove. Every change a move or a resize makes can also be made here,
 with the keyboard. Done is refused while the booking would overlap another,
 and the dialog names it: *Overlaps Lab meeting, week A, 10:00 to 11:00.* A

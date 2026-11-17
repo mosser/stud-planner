@@ -6,15 +6,19 @@ import {
   bookingsOverlap,
   meetingOfTheFile,
   missingField,
+  nameTaken,
+  notAParticipant,
   notAScheduleFile,
   notJson,
   overlap,
+  participantOfTheFile,
   timeBlockOfTheFile,
   unknownField,
   unknownVersion,
   valueNotAllowed,
 } from '../domain/findings.ts'
 import { Meeting } from '../domain/meeting.ts'
+import { Participant } from '../domain/participant.ts'
 import { Schedule } from '../domain/schedule.ts'
 import { TimeBlock } from '../domain/time-block.ts'
 import { TimeOfDay } from '../domain/time-of-day.ts'
@@ -25,26 +29,40 @@ export const scheduleFileName = 'stud-planner-schedule.json'
 
 const format = 'stud-planner/schedule'
 /** The version written; every version ever written is read (ADR 0007). */
-const version = 2
-const scheduleFields = ['format', 'version', 'meetings', 'timeBlocks']
+const version = 3
+
 /**
- * How a version of the schedule file writes the week of a bi-weekly booking: version 2 as `week`,
- * A or B; version 1 as `parity`, odd for week A and even for week B.
+ * How a version of the schedule file is written: the field and the values of the week of a
+ * bi-weekly booking (version 1 as `parity`, odd for week A and even for week B; later ones as
+ * `week`, A or B), and whether it lists participants (from version 3).
  */
 interface WeekWritten {
   readonly field: string
   readonly weeks: Readonly<Record<string, Week>>
+  readonly hasParticipants: boolean
 }
 
+const parity = { field: 'parity', weeks: { odd: Week.a, even: Week.b } }
+const lettered = { field: 'week', weeks: { A: Week.a, B: Week.b } }
 const weekWritten: Readonly<Record<number, WeekWritten>> = {
-  1: { field: 'parity', weeks: { odd: Week.a, even: Week.b } },
-  2: { field: 'week', weeks: { A: Week.a, B: Week.b } },
+  1: { ...parity, hasParticipants: false },
+  2: { ...lettered, hasParticipants: false },
+  3: { ...lettered, hasParticipants: true },
 }
 
-/** What a part of a file is read with: its version's way of writing the week. */
+function scheduleFields(written: WeekWritten): string[] {
+  const fields = ['format', 'version', 'meetings', 'timeBlocks']
+  return written.hasParticipants ? [...fields, 'participants'] : fields
+}
+
+/**
+ * What a part of a file is read with: its version's way of writing the week, and the
+ * participants the meetings may name.
+ */
 interface Reading {
   readonly part: string
   readonly written: WeekWritten
+  readonly participants: readonly Participant[]
 }
 
 function timingFields(written: WeekWritten): string[] {
@@ -61,10 +79,11 @@ interface TimingContent {
   readonly duration: number
 }
 
-/** A meeting as the schedule file holds it. */
+/** A meeting as the schedule file holds it: its participants by name. */
 interface MeetingContent extends TimingContent {
   readonly title: string
   readonly note?: string
+  readonly participants?: readonly string[]
 }
 
 /** A time block as the schedule file holds it. */
@@ -78,6 +97,7 @@ export interface ScheduleContent {
   readonly version: number
   readonly meetings: readonly MeetingContent[]
   readonly timeBlocks: readonly TimeBlockContent[]
+  readonly participants: readonly string[]
 }
 
 /** What reading a schedule file gives: the schedule, or why the file is refused. */
@@ -100,6 +120,9 @@ function contentOfMeeting(meeting: Meeting): MeetingContent {
     title: meeting.title,
     ...contentOfTiming(meeting),
     ...(meeting.note === undefined ? {} : { note: meeting.note }),
+    ...(meeting.participants.length === 0
+      ? {}
+      : { participants: meeting.participants.map((participant) => participant.name) }),
   }
 }
 
@@ -117,6 +140,7 @@ export function contentOf(schedule: Schedule): ScheduleContent {
     version,
     meetings: schedule.meetings.map(contentOfMeeting),
     timeBlocks: schedule.timeBlocks.map(contentOfTimeBlock),
+    participants: schedule.participants.map((participant) => participant.name),
   }
 }
 
@@ -202,7 +226,7 @@ function timingOf(reading: Reading, record: Record<string, unknown>): Timing {
 }
 
 /** The booking `build` makes, or a refusal that says which part of the file breaks a rule. */
-function built<T extends Booking>(part: string, build: () => T): T {
+function built<T>(part: string, build: () => T): T {
   try {
     return build()
   } catch (error) {
@@ -217,16 +241,60 @@ function recordOf(list: string, value: unknown): Record<string, unknown> {
   return value
 }
 
+/** The participants a meeting names, each a participant of the schedule. */
+function participantsOf(reading: Reading, record: Record<string, unknown>): Participant[] {
+  const { part } = reading
+  const names = fieldRead(part, record, 'participants', (value) =>
+    Array.isArray(value) && value.every((name) => typeof name === 'string')
+      ? (value as string[])
+      : undefined,
+  )
+  return names.map((name) => {
+    const participant = reading.participants.find((each) => each.isNamed(name))
+    if (participant === undefined) {
+      throw new Refusal(bookingBroken(part, notAParticipant(name)))
+    }
+    return participant
+  })
+}
+
 function meetingOf(reading: Reading, value: unknown): Meeting {
   const { part } = reading
   const record = recordOf('meetings', value)
-  checkFields(part, record, ['title', ...timingFields(reading.written), 'note'])
+  const participantsField = reading.written.hasParticipants ? ['participants'] : []
+  checkFields(part, record, [
+    'title',
+    ...timingFields(reading.written),
+    'note',
+    ...participantsField,
+  ])
   const description = {
     title: fieldRead(part, record, 'title', text),
     ...timingOf(reading, record),
     note: 'note' in record ? fieldRead(part, record, 'note', text) : undefined,
+    participants: 'participants' in record ? participantsOf(reading, record) : [],
   }
   return built(part, () => new Meeting(description))
+}
+
+/** The participants of the schedule, by name, no two with the same name. */
+function rosterOf(content: Record<string, unknown>): Participant[] {
+  if (!('participants' in content)) {
+    return []
+  }
+  const roster: Participant[] = []
+  listOf(content, 'participants').forEach((value, index) => {
+    const part = participantOfTheFile(index + 1)
+    if (typeof value !== 'string') {
+      throw new Refusal(valueNotAllowed(part, 'name', value))
+    }
+    const participant = built(part, () => new Participant(value))
+    if (roster.some((each) => each.isNamed(participant.name))) {
+      throw new Refusal(bookingBroken(part, nameTaken(participant.name)))
+    }
+    roster.push(participant)
+  })
+  return roster
 }
 
 function timeBlockOf(reading: Reading, value: unknown): TimeBlock {
@@ -250,18 +318,19 @@ function scheduleOf(content: unknown): Schedule {
   if (!isRecord(content) || content.format !== format) {
     throw new Refusal(notAScheduleFile())
   }
-  checkFields(theSchedule, content, scheduleFields)
   const given = required(theSchedule, content, 'version')
   const written = typeof given === 'number' ? weekWritten[given] : undefined
   if (written === undefined) {
     throw new Refusal(unknownVersion(content.version))
   }
+  checkFields(theSchedule, content, scheduleFields(written))
+  const participants = rosterOf(content)
   const meetings = listOf(content, 'meetings').map((value, index) =>
-    meetingOf({ part: meetingOfTheFile(index + 1), written }, value),
+    meetingOf({ part: meetingOfTheFile(index + 1), written, participants }, value),
   )
   const timeBlocks = 'timeBlocks' in content ? listOf(content, 'timeBlocks') : []
   const blocks = timeBlocks.map((value, index) =>
-    timeBlockOf({ part: timeBlockOfTheFile(index + 1), written }, value),
+    timeBlockOf({ part: timeBlockOfTheFile(index + 1), written, participants }, value),
   )
   const partOf = new Map<Booking, string>([
     ...meetings.map((meeting, index) => [meeting, meetingOfTheFile(index + 1)] as const),
@@ -273,7 +342,7 @@ function scheduleOf(content: unknown): Schedule {
     const reason = overlap(booking, other)
     throw new Refusal(bookingsOverlap(partOf.get(other) ?? '', partOf.get(booking) ?? '', reason))
   }
-  return new Schedule(meetings, blocks)
+  return new Schedule(meetings, blocks, participants)
 }
 
 /** The schedule a schedule file's content holds, or why it is refused: nothing is taken then. */

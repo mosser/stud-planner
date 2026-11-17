@@ -4,6 +4,7 @@ import { theDay } from '../domain/day.ts'
 import { Duration } from '../domain/duration.ts'
 import { aTimeBlock, cadenceChoice, durationWritten, overlap } from '../domain/findings.ts'
 import { Meeting } from '../domain/meeting.ts'
+import type { Participant } from '../domain/participant.ts'
 import type { Schedule } from '../domain/schedule.ts'
 import { TimeBlock } from '../domain/time-block.ts'
 import { Weekday } from '../domain/weekday.ts'
@@ -70,6 +71,32 @@ function noteField(given: BookingDialogOptions): Markup | string {
   return html`<label>Note <textarea name="note" rows="2">${note ?? ''}</textarea></label>`
 }
 
+/** The participants of the schedule, each to tick, for a meeting; none for a time block. */
+function participantsField(given: BookingDialogOptions): Markup | string {
+  const { participants } = given.schedule
+  if (given.kind !== 'meeting' || participants.length === 0) {
+    return ''
+  }
+  const meeting = given.booking instanceof Meeting ? given.booking : undefined
+  return html`<fieldset class="participants">
+    <legend>Participants</legend>
+    ${participants.map(
+      (participant, rank) => html`<label class="participant"><input type="checkbox"
+        name="participant" value="${rank}" ${meeting?.hasParticipant(participant) ? 'checked' : ''}
+        >${participant.name}</label>`,
+    )}
+  </fieldset>`
+}
+
+/** The participants ticked. */
+function participantsTicked(form: HTMLFormElement, given: BookingDialogOptions): Participant[] {
+  const ticked = [...form.querySelectorAll<HTMLInputElement>('input[name="participant"]')]
+  return ticked
+    .filter((box) => box.checked)
+    .map((box) => given.schedule.participants[Number(box.value)])
+    .filter((participant): participant is Participant => participant !== undefined)
+}
+
 /** The actions of the dialog: Close alone when read only; Remove, Cancel and Done otherwise. */
 function actionsOf(given: BookingDialogOptions): Markup {
   if (given.isReadOnly === true) {
@@ -94,6 +121,7 @@ function markupOf(given: BookingDialogOptions): Markup {
     <label>Weekday <select name="weekday">${options(Weekday.all, (weekday) => weekday.name)}</select></label>
     <label>Start <select name="start">${options(theDay.quarters, String)}</select></label>
     <label>Duration <select name="duration">${options(durations, durationWritten)}</select></label>
+    ${participantsField(given)}
     ${noteField(given)}
     </fieldset>
     <p class="finding" role="alert"></p>
@@ -115,6 +143,11 @@ function choose(form: HTMLFormElement, given: BookingDialogOptions): void {
     if (field !== null) {
       field.value = String(rank)
     }
+  }
+  const meeting = given.booking instanceof Meeting ? given.booking : undefined
+  for (const box of form.querySelectorAll<HTMLInputElement>('input[name="participant"]')) {
+    const participant = given.schedule.participants[Number(box.value)]
+    box.checked = participant !== undefined && meeting?.hasParticipant(participant) === true
   }
 }
 
@@ -149,6 +182,7 @@ function candidateOf(form: HTMLFormElement, given: BookingDialogOptions, timing:
     ...timing,
     title: title.trim() || standInTitle,
     note: textOf(form, 'note'),
+    participants: participantsTicked(form, given),
   })
 }
 

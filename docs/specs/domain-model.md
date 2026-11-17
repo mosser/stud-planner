@@ -13,9 +13,11 @@ in the specification, in the interface and in the code.
 | Concept | Meaning |
 |---|---|
 | Organizer | The person who plans their recurring meetings with students, and the time they are not available for them, and the only user of the system. |
-| Schedule | What the Organizer plans: the meetings and the time blocks. There is one schedule at a time. No two of its bookings overlap. |
+| Schedule | What the Organizer plans: the meetings, the time blocks, and the participants. There is one schedule at a time. No two of its bookings overlap. |
 | Booking | What takes slots of the schedule: a meeting or a time block. Both have a cadence, a weekday, a start and a duration, and are added, moved, resized and removed alike. |
-| Meeting | A recurring meeting of the schedule: its title, its cadence, its weekday, its start, its duration, and its note when the Organizer gives one. A meeting has no date: it recurs for as long as it is in the schedule. |
+| Meeting | A recurring meeting of the schedule: its title, its cadence, its weekday, its start, its duration, its participants, and its note when the Organizer gives one. A meeting has no date: it recurs for as long as it is in the schedule. |
+| Participant | A person the Organizer meets: a student, a co-supervisor. A participant of the schedule, by a name no other participant has, whatever its case. A meeting is with some of them, each once, or none. No participant is ever in two meetings at once, since no two meetings overlap. A time block has none. |
+| Singled out | A participant whose meetings stand out on the grid, every other booking faded, while chosen in the list above it. |
 | Time block | A recurring time the Organizer is not available for meetings: teaching, a committee, research. No meeting can be booked in it. It has a title when the Organizer gives one, a cadence, a weekday, a start and a duration, and no note. |
 | Title | What a booking is called, in the Organizer's words, without leading or trailing spaces: a meeting's is not empty; a time block may have none, and is then shown as *Time block*. Two bookings may have the same title. |
 | Note | Free text the Organizer attaches to a meeting: a room, a link, the participants. The system never reads what it says. |

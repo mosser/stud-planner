@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { Cadence, Week } from '../domain/cadence.ts'
 import { Duration } from '../domain/duration.ts'
 import { aMeeting, at } from '../domain/meeting.fixture.ts'
+import { Participant } from '../domain/participant.ts'
 import { Schedule } from '../domain/schedule.ts'
 import { TimeBlock } from '../domain/time-block.ts'
 import { Weekday } from '../domain/weekday.ts'
@@ -497,5 +498,48 @@ describe('the lock', () => {
       (button) => button.textContent,
     )
     expect(actions).toEqual(['Close'])
+  })
+})
+
+describe('the participants on the page', () => {
+  const zoe = new Participant('Zoé')
+  const withZoe = aMeeting({ title: 'Zoé', weekday: Weekday.thursday, participants: [zoe] })
+
+  it('are managed in their dialog, opened from the toolbar', () => {
+    const { root, application } = mounted(new Schedule())
+    ;(root.querySelector('[data-action="participants"]') as HTMLElement).click()
+    const panel = document.querySelector('dialog.participants-dialog') as HTMLElement
+    const field = panel.querySelector('input[name="new"]') as HTMLInputElement
+    field.value = 'Zoé'
+    panel
+      .querySelector('form.add-participant')
+      ?.dispatchEvent(new Event('submit', { cancelable: true }))
+    expect(application.schedule.participants.map((participant) => participant.name)).toEqual([
+      'Zoé',
+    ])
+    expect(root.querySelector('[data-filter]')).not.toBeNull()
+  })
+
+  it('single out the meetings of the one chosen, and of no one once it is gone', () => {
+    const { root } = mounted(new Schedule([lab, withZoe], [], [zoe]), {}, 'overview')
+    const filter = root.querySelector('[data-filter]') as HTMLSelectElement
+    expect([...filter.options].map((option) => option.textContent)).toEqual(['Everyone', 'Zoé'])
+    filter.value = 'Zoé'
+    filter.dispatchEvent(new Event('change', { bubbles: true }))
+    expect((root.querySelector('[data-filter]') as HTMLSelectElement).value).toBe('Zoé')
+    expect(bookingElement(root, 0).classList.contains('dimmed')).toBe(true)
+    expect(bookingElement(root, 1).classList.contains('dimmed')).toBe(false)
+  })
+
+  it('are not offered as a filter when the schedule has none', () => {
+    const { root } = mounted(new Schedule([lab]))
+    expect(root.querySelector('[data-filter]')).toBeNull()
+  })
+
+  it('are shown read only while the schedule is locked', () => {
+    const { root } = mounted(new Schedule([], [], [zoe]))
+    ;(root.querySelector('[data-action="lock"]') as HTMLElement).click()
+    ;(root.querySelector('[data-action="participants"]') as HTMLElement).click()
+    expect(document.querySelector('dialog.participants-dialog form.add-participant')).toBeNull()
   })
 })

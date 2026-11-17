@@ -9,6 +9,7 @@ import {
   replacementQuestion,
   setAside,
 } from '../domain/findings.ts'
+import type { Participant } from '../domain/participant.ts'
 import type { Schedule } from '../domain/schedule.ts'
 import { readScheduleFile, scheduleFileName, scheduleFileOf } from '../io/schedule-file.ts'
 import type { Restored, ScheduleStore } from '../io/schedule-store.ts'
@@ -28,7 +29,15 @@ import {
 } from './gestures.ts'
 import { cadenceClass, gridOf, kindClass, rowsOf, slotAt, weekClass } from './grid.ts'
 import { html } from './html.ts'
-import { downloadIcon, iconMarkup, lockIcon, systemName, uploadIcon } from './icon.ts'
+import {
+  downloadIcon,
+  iconMarkup,
+  lockIcon,
+  participantsIcon,
+  systemName,
+  uploadIcon,
+} from './icon.ts'
+import { openParticipantsDialog } from './participants-dialog.ts'
 
 /** What the page needs from its surroundings to be mounted. */
 export interface ApplicationContext {
@@ -89,6 +98,8 @@ export function mountApplication(root: HTMLElement, context: ApplicationContext)
   let isKept = context.store.isKept
   /** Whether the schedule is locked against every change. */
   let isLocked = context.restored.isLocked
+  /** The name of the participant whose meetings stand out; none, everyone's being shown alike. */
+  let singledOutName: string | undefined
   const isSetAside = context.restored.wasSetAside
   let refusal: string | undefined
 
@@ -115,6 +126,24 @@ export function mountApplication(root: HTMLElement, context: ApplicationContext)
       )}</div>`
   }
 
+  /** The participant whose meetings stand out, while they are a participant of the schedule. */
+  function singledOut(): Participant | undefined {
+    return singledOutName === undefined ? undefined : schedule.participantNamed(singledOutName)
+  }
+
+  /** The list that singles out a participant's meetings, when the schedule has participants. */
+  function participantFilter() {
+    if (schedule.participants.length === 0) {
+      return ''
+    }
+    return html`<select class="participant-filter" data-filter aria-label="Participant">
+      <option value="">Everyone</option>
+      ${schedule.participants.map(
+        (participant) => html`<option value="${participant.name}">${participant.name}</option>`,
+      )}
+    </select>`
+  }
+
   /** The lock, a padlock closed while the schedule is locked; Lock to a screen reader. */
   function lockButton() {
     const hint = isLocked ? 'Unlock' : 'Lock'
@@ -136,7 +165,10 @@ export function mountApplication(root: HTMLElement, context: ApplicationContext)
               html`<button type="button" role="tab" data-tab="${each}"
                 aria-selected="${each === tab ? 'true' : 'false'}">${tabNames[each]}</button>`,
           )}</div>
+          ${participantFilter()}
           <div class="actions">
+            <button type="button" class="icon-button" data-action="participants"
+              aria-label="Participants" title="Participants">${participantsIcon()}</button>
             <button type="button" class="icon-button" data-action="download"
               aria-label="Download" title="Download">${downloadIcon()}</button>
             <button type="button" class="icon-button" data-action="upload"
@@ -144,11 +176,15 @@ export function mountApplication(root: HTMLElement, context: ApplicationContext)
             <input type="file" accept=".json,application/json" data-file hidden>
           </div>
         </div>
-        <div class="grid ${isLocked ? 'locked' : ''}" role="tabpanel" aria-label="${tabNames[tab]}">${gridOf(schedule, tab, isLocked)}</div>
+        <div class="grid ${isLocked ? 'locked' : ''}" role="tabpanel" aria-label="${tabNames[tab]}">${gridOf(schedule, tab, { isLocked, participant: singledOut() })}</div>
         ${addingSwitch()}
       </main>
       <footer class="site-footer">stud-planner v${context.version}</footer>
     `.text
+    const filter = root.querySelector<HTMLSelectElement>('[data-filter]')
+    if (filter !== null) {
+      filter.value = singledOut()?.name ?? ''
+    }
   }
 
   /** Takes a changed schedule: kept at once, shown, and the last refusal forgotten. */
@@ -208,7 +244,14 @@ export function mountApplication(root: HTMLElement, context: ApplicationContext)
 
   /** Whether the schedule may be replaced by another, named so: at once when it is empty. */
   async function mayReplace(name: string): Promise<boolean> {
-    const question = replacementQuestion(schedule.meetings.length, schedule.timeBlocks.length, name)
+    const question = replacementQuestion(
+      {
+        meetings: schedule.meetings.length,
+        timeBlocks: schedule.timeBlocks.length,
+        participants: schedule.participants.length,
+      },
+      name,
+    )
     return schedule.isEmpty || ask(question, 'Replace')
   }
 
@@ -260,11 +303,25 @@ export function mountApplication(root: HTMLElement, context: ApplicationContext)
       lock(!isLocked)
       render()
     }
+    if (action === 'participants') {
+      openParticipantsDialog(page, {
+        schedule: () => schedule,
+        change,
+        ask,
+        isReadOnly: isLocked,
+      })
+    }
     if (action === 'download') context.download(scheduleFileOf(schedule), scheduleFileName)
     if (action === 'upload') root.querySelector<HTMLInputElement>('[data-file]')?.click()
   })
 
   root.addEventListener('change', (event) => {
+    const filter = event.target as HTMLSelectElement
+    if (filter.matches('[data-filter]')) {
+      singledOutName = filter.value === '' ? undefined : filter.value
+      render()
+      return
+    }
     const input = event.target as HTMLInputElement
     const file = input.matches('[data-file]') ? input.files?.[0] : undefined
     if (file !== undefined) {
