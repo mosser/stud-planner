@@ -1,7 +1,6 @@
 import './style.css'
 import { download } from './io/download.ts'
 import { openTheBrowserScheduleStore } from './io/schedule-store.ts'
-import { sharedSchedules } from './io/shared-schedules.ts'
 import { mountApplication } from './ui/application.ts'
 import { faviconOf } from './ui/icon.ts'
 
@@ -26,5 +25,4 @@ mountApplication(root, {
   restored: await store.restore(),
   store,
   download: (fileText, fileName) => download(fileText, fileName, document),
-  sharedSchedules,
 })

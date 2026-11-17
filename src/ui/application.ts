@@ -12,7 +12,6 @@ import {
 import type { Schedule } from '../domain/schedule.ts'
 import { readScheduleFile, scheduleFileName, scheduleFileOf } from '../io/schedule-file.ts'
 import type { Restored, ScheduleStore } from '../io/schedule-store.ts'
-import type { SharedSchedule } from '../io/shared-schedule.ts'
 import { type Kind, openBookingDialog } from './booking-dialog.ts'
 import { askToConfirm } from './confirmation.ts'
 import {
@@ -39,8 +38,6 @@ export interface ApplicationContext {
   readonly restored: Restored
   /** Where every change of the schedule, and of its lock, is kept (ADR 0006). */
   readonly store: Pick<ScheduleStore, 'isKept' | 'keep' | 'keepLock'>
-  /** The schedules of `schedules/`, built into the page (ADR 0012). */
-  readonly sharedSchedules: readonly SharedSchedule[]
   /** Hands the text of a file to the browser, to be downloaded under its name (ADR 0007). */
   readonly download: (fileText: string, fileName: string) => void
   /** Asks the Organizer to confirm; by default, in a dialog of the page. */
@@ -118,19 +115,6 @@ export function mountApplication(root: HTMLElement, context: ApplicationContext)
       )}</div>`
   }
 
-  /** The list of the shared schedules, at the right of the masthead, when there is one. */
-  function sharedChooser() {
-    if (context.sharedSchedules.length === 0) {
-      return ''
-    }
-    return html`<select data-shared aria-label="Shared schedules">
-      <option value="">Shared schedules</option>
-      ${context.sharedSchedules.map(
-        (shared, rank) => html`<option value="${rank}">${shared.name}</option>`,
-      )}
-    </select>`
-  }
-
   function lockButton() {
     return html`<button type="button" data-action="lock" aria-pressed="${isLocked ? 'true' : 'false'}"
       >${isLocked ? 'Locked' : 'Lock'}</button>`
@@ -140,7 +124,7 @@ export function mountApplication(root: HTMLElement, context: ApplicationContext)
     root.innerHTML = html`
       <header class="masthead">
         <h1>${iconMarkup()}${systemName}</h1>
-        <div class="masthead-actions">${sharedChooser()}${lockButton()}</div>
+        <div class="masthead-actions">${lockButton()}</div>
       </header>
       <main class="screen">
         ${notices()}
@@ -152,7 +136,7 @@ export function mountApplication(root: HTMLElement, context: ApplicationContext)
           )}</div>
           <div class="actions">
             <button type="button" data-action="download">Download</button>
-            <button type="button" data-action="load">Load</button>
+            <button type="button" data-action="upload">Upload</button>
             <input type="file" accept=".json,application/json" data-file hidden>
           </div>
         </div>
@@ -224,7 +208,8 @@ export function mountApplication(root: HTMLElement, context: ApplicationContext)
     return schedule.isEmpty || ask(question, 'Replace')
   }
 
-  async function load(file: File): Promise<void> {
+  /** Takes a file the Organizer uploads, read in the browser, once confirmed (ADR 0007). */
+  async function upload(file: File): Promise<void> {
     const read = readScheduleFile(await file.text())
     if (read.isRefused) {
       refuse(fileRefused(file.name, read.reason))
@@ -238,16 +223,6 @@ export function mountApplication(root: HTMLElement, context: ApplicationContext)
   function lock(locked: boolean): void {
     isLocked = locked
     void context.store.keepLock(locked)
-  }
-
-  /** Takes a shared schedule, once confirmed, and locks it against changes made by accident. */
-  async function takeShared(shared: SharedSchedule): Promise<void> {
-    if (await mayReplace(shared.name)) {
-      lock(true)
-      change(shared.schedule)
-      return
-    }
-    render()
   }
 
   root.addEventListener('click', (event) => {
@@ -282,23 +257,15 @@ export function mountApplication(root: HTMLElement, context: ApplicationContext)
       render()
     }
     if (action === 'download') context.download(scheduleFileOf(schedule), scheduleFileName)
-    if (action === 'load') root.querySelector<HTMLInputElement>('[data-file]')?.click()
+    if (action === 'upload') root.querySelector<HTMLInputElement>('[data-file]')?.click()
   })
 
   root.addEventListener('change', (event) => {
-    const chooser = event.target as HTMLSelectElement
-    if (chooser.matches('[data-shared]')) {
-      const shared = context.sharedSchedules[Number(chooser.value)]
-      if (chooser.value !== '' && shared !== undefined) {
-        void takeShared(shared)
-      }
-      return
-    }
     const input = event.target as HTMLInputElement
     const file = input.matches('[data-file]') ? input.files?.[0] : undefined
     if (file !== undefined) {
       input.value = ''
-      void load(file)
+      void upload(file)
     }
   })
 

@@ -75,14 +75,13 @@ textarea {
   color: var(--color-on-primary);
 }
 
-/* The shared schedules and the lock, at the right of the masthead, white on maroon. */
+/* The lock, at the right of the masthead, white on maroon. */
 .masthead-actions {
   display: flex;
   gap: 0.5rem;
   margin-left: auto;
 }
 
-.masthead-actions select,
 .masthead-actions button {
   padding: 0.3rem 0.75rem;
   border: 1px solid var(--color-on-primary);

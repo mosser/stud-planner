@@ -52,7 +52,6 @@ function mounted(
     version: '1.2.3',
     restored: { schedule, wasSetAside: false, isLocked: false },
     store: { isKept: true, keep, keepLock },
-    sharedSchedules: [],
     download,
     ask,
     ...changes,
@@ -363,8 +362,8 @@ describe('removing a meeting', () => {
   })
 })
 
-describe('downloading and loading', () => {
-  function loadFile(root: HTMLElement, text: string, name = 'week.json'): void {
+describe('downloading and uploading', () => {
+  function uploadFile(root: HTMLElement, text: string, name = 'week.json'): void {
     const input = root.querySelector('[data-file]') as HTMLInputElement
     Object.defineProperty(input, 'files', { value: [new File([text], name)], configurable: true })
     input.dispatchEvent(new Event('change', { bubbles: true }))
@@ -381,24 +380,24 @@ describe('downloading and loading', () => {
     )
   })
 
-  it('opens the choice of a file on Load', () => {
+  it('opens the choice of a file on Upload', () => {
     const { root } = mounted(new Schedule())
     const input = root.querySelector('[data-file]') as HTMLInputElement
     const chosen = vi.spyOn(input, 'click')
-    ;(root.querySelector('[data-action="load"]') as HTMLElement).click()
+    ;(root.querySelector('[data-action="upload"]') as HTMLElement).click()
     expect(chosen).toHaveBeenCalled()
   })
 
   it('takes a schedule file at once when the schedule is empty', async () => {
     const { root, application, ask } = mounted(new Schedule())
-    loadFile(root, scheduleFileOf(new Schedule([lab, ana])))
+    uploadFile(root, scheduleFileOf(new Schedule([lab, ana])))
     await vi.waitFor(() => expect(application.schedule.meetings).toHaveLength(2))
     expect(ask).not.toHaveBeenCalled()
   })
 
   it('asks before a schedule file replaces the meetings of the schedule', async () => {
     const { root, application, ask } = mounted(new Schedule([lab]))
-    loadFile(root, scheduleFileOf(new Schedule([ana])))
+    uploadFile(root, scheduleFileOf(new Schedule([ana])))
     await vi.waitFor(() => expect(application.schedule.meetings[0]?.title).toBe('Ana'))
     expect(ask).toHaveBeenCalledWith(
       'Replace the 1 meeting of the schedule with those of week.json?',
@@ -408,7 +407,7 @@ describe('downloading and loading', () => {
 
   it('refuses a file that is not a schedule file, and keeps the schedule', async () => {
     const { root, application } = mounted(new Schedule([lab]))
-    loadFile(root, 'not a schedule')
+    uploadFile(root, 'not a schedule')
     await vi.waitFor(() => expect(root.querySelector('.refusal')).not.toBeNull())
     expect(root.querySelector('.refusal')?.textContent).toBe(
       'week.json is refused: it is not a schedule file, nor JSON.',
@@ -495,59 +494,5 @@ describe('the lock', () => {
       (button) => button.textContent,
     )
     expect(actions).toEqual(['Close'])
-  })
-})
-
-describe('the shared schedules', () => {
-  const fall = { name: 'Fall 2026', schedule: new Schedule([ana]) }
-  const winter = { name: 'Winter 2027', schedule: new Schedule([lab, ana]) }
-  const chooser = (root: HTMLElement) => root.querySelector('[data-shared]') as HTMLSelectElement
-
-  function choose(root: HTMLElement, rank: string): void {
-    chooser(root).value = rank
-    chooser(root).dispatchEvent(new Event('change', { bubbles: true }))
-  }
-
-  it('are not offered when there is none', () => {
-    const { root } = mounted(new Schedule())
-    expect(root.querySelector('[data-shared]')).toBeNull()
-  })
-
-  it('are listed by name in the masthead', () => {
-    const { root } = mounted(new Schedule(), { sharedSchedules: [fall, winter] })
-    const names = [...chooser(root).options].map((option) => option.textContent)
-    expect(names).toEqual(['Shared schedules', 'Fall 2026', 'Winter 2027'])
-    expect(chooser(root).closest('.masthead')).not.toBeNull()
-  })
-
-  it('replace an empty schedule at once, locked', async () => {
-    const { root, application, ask } = mounted(new Schedule(), { sharedSchedules: [fall, winter] })
-    choose(root, '1')
-    await vi.waitFor(() => expect(application.schedule).toBe(winter.schedule))
-    expect(application.isLocked).toBe(true)
-    expect(ask).not.toHaveBeenCalled()
-  })
-
-  it('replace a schedule once confirmed, and nothing otherwise', async () => {
-    const ask = vi.fn(async () => false)
-    const { root, application } = mounted(new Schedule([lab]), {
-      sharedSchedules: [fall, winter],
-      ask,
-    })
-    choose(root, '0')
-    await flush()
-    expect(ask).toHaveBeenCalledWith(
-      'Replace the 1 meeting of the schedule with those of Fall 2026?',
-      'Replace',
-    )
-    expect(application.schedule.meetings).toEqual([lab])
-    expect(application.isLocked).toBe(false)
-    expect(chooser(root).value).toBe('')
-  })
-
-  it('ignore the line that names the list', () => {
-    const { root, application } = mounted(new Schedule([lab]), { sharedSchedules: [fall] })
-    choose(root, '')
-    expect(application.schedule.meetings).toEqual([lab])
   })
 })

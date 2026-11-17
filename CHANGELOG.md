@@ -31,8 +31,5 @@ project adheres to [Semantic Versioning](https://semver.org/).
 - A **Lock** at the top right blocks every change made by accident: nothing is added,
   moved, resized, changed or removed, and a booking clicked is shown read only. The browser
   remembers it.
-- **Shared schedules**: the schedules of the `schedules/` folder of the repository are built
-  into the page and listed at the top right; choosing one replaces the schedule, once
-  confirmed, and locks it.
-- The schedule is kept by the browser between two sessions, and is downloaded as, or loaded
-  from, `stud-planner-schedule.json`.
+- The schedule is kept by the browser between two sessions, and is downloaded as, or
+  uploaded from, `stud-planner-schedule.json`: the way to share it.

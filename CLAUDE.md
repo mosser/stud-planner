@@ -11,7 +11,7 @@ they are not available for meetings, on two abstract weeks, A and B, by
 pressing and dragging on them, and sees them one tab at a time or in the
 overview, where only the time a booking of week A and one of week B share is
 cut along its diagonal, week A upper left, week B lower right. A slot is never booked twice.
-The schedule is kept in the browser and downloaded as, or loaded from, a
+The schedule is kept in the browser and downloaded as, or uploaded from, a
 schedule file.
 
 It is a client-side web application in TypeScript, front-end only,
@@ -25,8 +25,8 @@ It follows the conventions of its siblings `macreport` and `streaming-hat`.
 **Current state:** the specification (`docs/specs/`) and ADRs 0001 to 0012
 are implemented: the three tabs, meetings and time blocks added, moved,
 resized and removed by dragging, the dialog of a booking, overlaps refused,
-the lock, the shared schedules of `schedules/`, the schedule kept in
-IndexedDB, and downloaded as or loaded from its file. Not released yet.
+the lock, the schedule kept in IndexedDB, and downloaded as or uploaded
+from its file. Not released yet.
 
 ## Where things live
 
@@ -34,7 +34,7 @@ IndexedDB, and downloaded as or loaded from its file. Not released yet.
   behaviour. `stakeholders.md`, `domain-model.md` (the glossary),
   `plan-the-meetings.md` (the tabs, the switch, their gestures, overlaps
   refused),
-  `schedule-file.md` (the file downloaded and loaded, and what the browser keeps). Read the relevant spec before implementing a feature; if a
+  `schedule-file.md` (the file downloaded and uploaded, and what the browser keeps). Read the relevant spec before implementing a feature; if a
   spec is missing or ambiguous, say so rather than guessing. Spec files are
   short, self-contained, and never cite or link to documents outside the
   repository: a heading, then tables or short paragraphs, no preamble.
@@ -65,8 +65,6 @@ src/main.ts   entry point, mounted from index.html
 src/style.css palette tokens and all styling
 config/       calendar.json: the hours of the day; inlined at build time and
               checked by the build
-schedules/    the shared schedules, schedule files named as they are listed;
-              inlined at build time and checked by the build (ADR 0012)
 scripts/      check-adr.sh: the scriptable ADR checks; release.sh and
               release-notes.sh: cutting a release (ADR 0002)
 ```
@@ -159,12 +157,12 @@ first.
 
 ### ADR 0007: the schedule file
 
-- The schedule is downloaded and loaded as `stud-planner-schedule.json`, in the
+- The schedule is downloaded and uploaded as `stud-planner-schedule.json`, in the
   versioned format of `docs/specs/schedule-file.md`, written and read only by
   `src/io/schedule-file.ts`. A file is checked completely before anything is
   taken. A change of format is a new version; every version written is read.
-- The interface says Download and Load. "Upload" never appears under `src/`
-  nor in `docs/specs/`: nothing leaves the computer.
+- The interface says Download and Upload, the Organizer's words; a file
+  uploaded is read in the browser and sent nowhere (ADR 0001).
 
 ### ADR 0008: two abstract weeks
 
@@ -183,7 +181,7 @@ first.
 
 - No two bookings overlap, meetings and time blocks alike: an invariant of
   `Schedule`, whose constructor throws. Adding, moving, resizing, changing a cadence or a week, and
-  loading a file are refused when they would make one; a refused drop changes
+  uploading a file are refused when they would make one; a refused drop changes
   nothing. Ending as another starts is not an overlap.
 
 ### ADR 0011: time blocks are bookings
@@ -197,22 +195,21 @@ first.
   press adds.
   The schedule file holds `timeBlocks`, which a file may leave out.
 
-### ADR 0012: shared schedules
+### ADR 0012: no schedule is published
 
-- A shared schedule is a file of `schedules/`, named after its file; only
-  `src/io/shared-schedules.ts` takes them, with an eager `import.meta.glob`,
-  so that nothing is fetched. `checkSharedSchedules()` in `vite.config.ts`
-  refuses a build with a file the system does not read.
-- Choosing one in the masthead replaces the schedule, once confirmed, and
-  locks it. The lock blocks every change; it is kept with the schedule
-  (`keepLock`). Load still replaces a locked schedule.
+- A schedule names people: none is built into the page or committed. It is
+  shared by its file, downloaded and uploaded. `.gitignore` ignores
+  `stud-planner-schedule*.json` and `schedules/`; `check-adr.sh` refuses
+  `import.meta.glob` and any tracked JSON file but the project's own.
+- The lock (`keepLock`, kept with the schedule) blocks every change; Upload
+  still replaces a locked schedule, once confirmed.
 
 ## Writing
 
 - **No narrating text** in the interface: no sentence that introduces a
   screen or a section, restates its heading or explains how to read it.
-- Words are the glossary's, in the interface as in the code. Files are loaded
-  and downloaded, never uploaded.
+- Words are the glossary's, in the interface as in the code. Files are
+  downloaded and uploaded; nothing leaves the computer.
 
 ## Git
 

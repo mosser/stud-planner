@@ -10,3 +10,7 @@ pnpm-lock.yaml
 yarn.lock
 bun.lock
 bun.lockb
+
+# Schedules name people: never committed (ADR 0012).
+stud-planner-schedule*.json
+schedules/

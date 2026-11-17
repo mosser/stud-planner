@@ -61,14 +61,13 @@ grep -nE 'new Date\(|Date\.now\(|Temporal\.' $business && fail "src/ reads a dat
 grep -nE 'localStorage|sessionStorage|document\.cookie|caches\.' $business && fail "browser storage other than IndexedDB"
 grep -ln 'indexedDB' $business | grep -v '^src/io/schedule-store.ts$' && fail "IndexedDB used outside src/io/schedule-store.ts"
 
-# ADR 0007: download and load, never upload.
-grep -rniE 'upload' src docs/specs && fail "\"upload\" in src/ or docs/specs/"
+# ADR 0007: a file is read in the browser and sent nowhere.
+grep -nE 'FormData|navigator\.sendBeacon|new XMLHttpRequest' $business && fail "a file is sent from src/"
 
-# ADR 0012: shared schedules inlined from schedules/, by one module, checked by the build.
-[ -d schedules ] || fail "schedules/ must exist"
-grep -ln 'import\.meta\.glob' $business | grep -v '^src/io/shared-schedules.ts$' && fail "import.meta.glob used outside src/io/shared-schedules.ts"
-grep -q "import.meta.glob('../../schedules/\*.json', { eager: true" src/io/shared-schedules.ts || fail "src/io/shared-schedules.ts must inline schedules/*.json, eager"
-grep -q 'checkSharedSchedules()' vite.config.ts || fail "vite.config.ts must check the files of schedules/"
+# ADR 0012: no schedule is published: nothing inlined, no schedule file tracked.
+grep -ln 'import\.meta\.glob' $business && fail "import.meta.glob in src/: no schedule file is built into the page"
+git ls-files '*.json' | grep -vE '^(package(-lock)?\.json|biome\.json|tsconfig(\.[a-z]+)?\.json|config/[a-z-]+\.json)$' && fail "a JSON file is tracked that is not the project's own: a schedule is never published"
+{ git check-ignore -q stud-planner-schedule.json && git check-ignore -q schedules/any.json; } || fail ".gitignore must ignore downloaded schedule files and schedules/"
 
 if [ "$failures" -gt 0 ]; then
   echo "$failures ADR check(s) failed" >&2

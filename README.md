@@ -13,10 +13,9 @@ file. Nothing it does crosses a network.
 
 ## Sharing a schedule
 
-Download the schedule, put the file in [`schedules/`](schedules/) under the name it
-should be listed by (`schedules/Fall 2026.json`), commit it, and cut a release:
-the page lists it at the top right, under *Shared schedules*. Everything in
-`schedules/` is public with the page.
+Download the schedule and send the file to whom you choose; they upload it,
+and may lock it. A schedule names people: it is never committed or published
+with the page.
 
 Architecture decisions are in [`docs/adr/`](docs/adr/), the specification in
 [`docs/specs/`](docs/specs/).
