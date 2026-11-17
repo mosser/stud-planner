@@ -29,9 +29,10 @@ grep -q '^save-exact=true$' .npmrc || fail ".npmrc must set save-exact=true"
 grep -q '^engine-strict=true$' .npmrc || fail ".npmrc must set engine-strict=true"
 [ -f .nvmrc ] || fail ".nvmrc must exist"
 
-# Colour literals only in the palette block of style.css.
+# ADR 0010: colour literals only in the palette block of style.css, and only McMaster's.
 grep -nEi '#[0-9a-f]{3,8}\b|rgba?\( *[0-9]|hsla?\( *[0-9]' $business && fail "colour literal outside src/style.css"
 awk '/palette:start/{inside=1} /palette:end/{inside=0} !inside && /#[0-9A-Fa-f]{3,8}\b|rgba?\(/' src/style.css | grep . && fail "colour literal outside the palette block of src/style.css"
+awk '/palette:start/{inside=1; next} /palette:end/{inside=0} inside && /#/' src/style.css | grep -vE '^\s*--mac-[a-z-]+: #[0-9a-f]{6};$' && fail "the palette block of src/style.css holds a colour that is not a --mac-* token"
 
 # ADR 0002: actions pinned to a commit SHA; release notes from the CHANGELOG; Pages after the release.
 grep -nE '^\s*-?\s*uses:' .github/workflows/*.yml | grep -vE 'uses: [^@ ]+@[0-9a-f]{40} # v[0-9]' && fail "an action is not pinned to a full commit SHA with its version in a comment"

@@ -17,5 +17,7 @@ project adheres to [Semantic Versioning](https://semver.org/).
 - Removing a meeting from its remove mark, the Delete key or its dialog, once confirmed.
 - A slot is never booked twice: a change or a file that would make two meetings overlap is
   refused, and the meeting overlapped is named.
+- The McMaster University colour palette, in a light and a dark theme: weekly meetings in
+  green, odd weeks in blue, even weeks in gold.
 - The schedule is kept by the browser between two sessions, and is saved to, or loaded
   from, `stud-planner-schedule.json`.

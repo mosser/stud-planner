@@ -113,8 +113,16 @@ first.
   library, no HTML drag-and-drop API, no `draggable`. A drag previews, then
   changes the schedule once, when it ends; Escape cancels it. Everything a
   drag does can also be done with the keyboard in the meeting dialog.
-- Colour literals live only in the palette block of `src/style.css`; the
-  interface uses `--color-*` roles. Branding is not decided yet.
+- Colours: see ADR 0010.
+
+### ADR 0010: McMaster palette
+
+- Colour literals are the `--mac-*` tokens of the palette block of
+  `src/style.css`, and nothing else; the interface uses `--color-*` roles and
+  `color-mix()` tints of them. Maroon dominates the chrome. The cadences are
+  data: weekly green, odd blue, even gold (lime and sky in the dark theme).
+- Gold is never text. Every text and background pairing is one tabled in the
+  ADR, or measured at 4.5:1 at least.
 
 ### ADR 0005: object model
 

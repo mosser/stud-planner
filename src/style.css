@@ -1,31 +1,35 @@
 :root {
-  /* palette:start (the only colour literals of the system; branding not decided yet) */
-  --palette-ink: #1f2328;
-  --palette-paper: #ffffff;
-  --palette-night: #0d1117;
-  --palette-mist: #d0d7de;
-  --palette-slate: #57606a;
-  --palette-primary: #24527a;
-  --palette-green: #2f7d4f;
-  --palette-blue: #2a64a8;
-  --palette-orange: #b5621b;
-  --palette-red: #b42318;
-  --palette-pink: #ff8f85;
+  /* palette:start (ADR 0010: the McMaster palette, the only colour literals of the system) */
+  --mac-maroon: #7a003c;
+  --mac-gold: #fdbf57;
+  --mac-grey: #495965;
+  --mac-white: #ffffff;
+  --mac-black: #000000;
+  --mac-accent-pink: #ff9980;
+  --mac-accent-lime: #e4ea6c;
+  --mac-accent-green: #0e5b3d;
+  --mac-accent-blue: #0d5d78;
+  --mac-accent-sky: #aad5e1;
+  --mac-accent-purple: #cc99cc;
+  --mac-accent-light-grey: #dbdbdd;
   /* palette:end */
 
-  --color-primary: var(--palette-primary);
-  --color-on-primary: var(--palette-paper);
-  --color-surface: var(--palette-paper);
-  --color-text: var(--palette-ink);
-  --color-secondary-text: var(--palette-slate);
-  --color-rule: var(--palette-mist);
-  --color-faint-rule: color-mix(in srgb, var(--palette-mist) 45%, var(--palette-paper));
-  --color-weekly: var(--palette-green);
-  --color-odd: var(--palette-blue);
-  --color-even: var(--palette-orange);
-  --color-refused: var(--palette-red);
-  --color-error: var(--palette-red);
+  --color-primary: var(--mac-maroon);
+  --color-on-primary: var(--mac-white);
+  --color-surface: var(--mac-white);
+  --color-text: var(--mac-black);
+  --color-secondary-text: var(--mac-grey);
+  --color-rule: var(--mac-accent-light-grey);
+  --color-faint-rule: color-mix(in srgb, var(--mac-accent-light-grey) 45%, var(--mac-white));
+  /* The cadences are data: accents for weekly and odd, gold for even, never as text. */
+  --color-weekly: var(--mac-accent-green);
+  --color-odd: var(--mac-accent-blue);
+  --color-even: var(--mac-gold);
+  --color-refused: var(--mac-maroon);
+  --color-error: var(--mac-maroon);
+  /* Backgrounds of meetings, mixed with the surface: black text on them in light, white in dark. */
   --tint: 22%;
+  --half-tint: 40%;
   --quarter-height: 0.85rem;
   color-scheme: light dark;
   font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
@@ -33,13 +37,17 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --color-surface: var(--palette-night);
-    --color-text: var(--palette-paper);
-    --color-secondary-text: var(--palette-mist);
-    --color-rule: var(--palette-slate);
-    --color-faint-rule: color-mix(in srgb, var(--palette-slate) 45%, var(--palette-night));
-    --color-error: var(--palette-pink);
-    --tint: 40%;
+    --color-surface: var(--mac-black);
+    --color-text: var(--mac-white);
+    --color-secondary-text: var(--mac-accent-light-grey);
+    --color-rule: var(--mac-grey);
+    --color-faint-rule: color-mix(in srgb, var(--mac-grey) 45%, var(--mac-black));
+    --color-weekly: var(--mac-accent-lime);
+    --color-odd: var(--mac-accent-sky);
+    --color-refused: var(--mac-accent-pink);
+    --color-error: var(--mac-accent-pink);
+    --tint: 30%;
+    --half-tint: 45%;
   }
 }
 
@@ -281,7 +289,7 @@ button:disabled {
   margin: 0 2px;
   border: 0;
   border-radius: 0.25rem;
-  background: color-mix(in srgb, var(--cadence) calc(var(--tint) * 2), var(--color-surface));
+  background: color-mix(in srgb, var(--cadence) var(--half-tint), var(--color-surface));
 }
 
 .meeting.half.odd {
@@ -340,7 +348,7 @@ dialog {
 }
 
 dialog::backdrop {
-  background: color-mix(in srgb, var(--palette-ink) 40%, transparent);
+  background: color-mix(in srgb, var(--mac-black) 40%, transparent);
 }
 
 dialog form {

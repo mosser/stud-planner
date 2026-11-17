@@ -29,8 +29,8 @@ Options considered:
   drag shows where the meeting would go and changes the schedule once, when it
   ends. Every change a drag makes can also be made with the keyboard, in a
   dialog.
-- Colour literals live only in the palette block of `src/style.css`; the
-  interface uses the `--color-*` roles.
+- Colours come from the palette of ADR 0010, through the `--color-*` roles
+  of `src/style.css`.
 
 ## Consequences
 
@@ -48,6 +48,5 @@ Options considered:
 ## Compliance
 
 A change is compliant with this ADR when `package.json` holds no UI framework
-and no drag-and-drop library, `src/` sets no `draggable` attribute,
-markup is built with `html`, and no colour literal appears outside the palette
-block of `src/style.css`.
+and no drag-and-drop library, `src/` sets no `draggable` attribute, and
+markup is built with `html`.
