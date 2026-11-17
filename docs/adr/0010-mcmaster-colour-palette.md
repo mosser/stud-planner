@@ -50,27 +50,30 @@ role (`--color-*`) defined from them, or a tint mixed from them with
 
 ### Roles
 
-| Role | Light theme | Dark theme |
-|---|---|---|
-| Primary: masthead, tab shown, Done, Remove in a confirmation | Maroon, white text | Maroon, white text |
-| Surface, text | White, black | Black, white |
-| Secondary text, rules | Grey, Dundurn Grey | Dundurn Grey, Grey |
-| Weekly meeting | King's Forest Green | Cootes Paradise Green |
-| Odd week | Bayfront Blue | Albion Falls Blue |
-| Even week | Gold | Gold |
-| Mark under a tab's name, 4 px: odd week, even week, overview | Blue, gold, half each | Sky, gold, half each |
-| Time block | Grey, 25 % on white | Dundurn Grey, 30 % on black |
-| Kind a press adds, chosen | Maroon on maroon 12 % on white | White on maroon 40 % on black |
-| Refused, errors | Maroon | Royal Botanical Pink |
+The interface has one theme, light: a white surface and black text, whatever
+the browser's preference.
+
+| Role | Colour |
+|---|---|
+| Primary: masthead, Done, Remove in a confirmation | Maroon, white text |
+| Chosen: the tab shown, the kind a press adds | Maroon text and border on maroon 12 % on white |
+| Surface, text | White, black |
+| Secondary text, rules | Grey, Dundurn Grey |
+| Weekly | King's Forest Green |
+| Odd week | Bayfront Blue |
+| Even week | Gold |
+| Mark under a tab's name, 4 px: overview, odd week, even week | Half blue and half gold, blue, gold |
+| Time block | Grey, 25 % on white |
+| Refused, errors | Maroon |
 
 A booking is drawn with its cadence's colour as a border, and filled behind
-its text with a light or a dark tone of it:
+its text with a light tone of it:
 
-| Cadence | Fill, light | Fill, dark | Half on the overview, light | Half, dark |
-|---|---|---|---|---|
-| Weekly | Green, 22 % on white | Lime, 30 % on black | — | — |
-| Odd week | Albion Falls Blue, 65 % on white | Bayfront Blue, 70 % on black | Albion Falls Blue | Bayfront Blue |
-| Even week | Gold, 22 % on white | Gold, 30 % on black | Gold, 40 % on white | Gold, 45 % on black |
+| Cadence | Fill | Half on the overview |
+|---|---|---|
+| Weekly | Green, 22 % on white | — |
+| Odd week | Albion Falls Blue, 65 % on white | Albion Falls Blue |
+| Even week | Gold, 22 % on white | Gold, 40 % on white |
 
 The odd week is filled with Albion Falls Blue rather than a tint of the
 Bayfront Blue of its border: a tint of Bayfront Blue is a blue grey that
@@ -80,8 +83,11 @@ grey, whatever its cadence.
 ### Usage rules
 
 1. **Maroon dominates** the chrome. Gold is never more prominent than maroon.
-2. **Accents and gold are for data**: the cadences of meetings. They are
-   borders and tints, never text.
+   What is chosen among a few, the tab shown or the kind a press adds, is a
+   light maroon; solid maroon is kept for the masthead and the actions that
+   conclude a dialog.
+2. **Accents and gold are for data**: the cadences of bookings. They are
+   borders and fills, never text.
 3. **No new literal.** A tint is mixed from a token with `color-mix()`.
 4. **Text contrast meets WCAG AA (4.5:1).** The pairings used:
 
@@ -89,23 +95,22 @@ grey, whatever its cadence.
    |---|---|---|
    | White | Maroon | 11.1 |
    | Maroon | White | 11.1 |
-   | Grey | White | 7.2 |
-   | Black | each fill, light | 14.6 at least |
-   | Grey | each fill, light | 5.0 at least |
-   | Black | each half, light | 13.3 at least |
-   | White | each fill, dark | 9.8 at least |
-   | Dundurn Grey | each fill, dark | 7.1 at least |
-   | White | each half, dark | 6.8 at least |
-   | Royal Botanical Pink | Black | 10.1 |
-   | Black / Grey | Grey, 25 % on white (time block) | 14.4 / 4.9 |
-   | White / Dundurn Grey | Dundurn Grey, 30 % on black (time block) | 10.0 / 7.3 |
    | Maroon | Maroon, 12 % on white | 8.7 |
-   | White | Maroon, 40 % on black | 18.4 |
+   | Grey | White | 7.2 |
+   | Black | each fill | 14.6 at least |
+   | Grey | each fill | 5.0 at least |
+   | Black | each half | 13.3 at least |
+   | Black / Grey | Grey, 25 % on white (time block) | 14.4 / 4.9 |
 
    **Forbidden for text:** gold on white (1.6:1) or on any light tint, and
    white on gold.
-5. **Dark theme.** The roles of white and black swap, maroon stays primary,
-   and the dark accents give way to their light counterparts.
+
+### Options considered for the themes
+
+- **A light and a dark theme**, following the browser's preference. Every
+  role then has two values, each pairing two ratios, and the cadences two
+  sets of fills to keep apart from the grey of a time block.
+- **The light theme only.** One set of colours to check and to keep readable.
 
 ## Consequences
 
@@ -117,7 +122,8 @@ grey, whatever its cadence.
 **Negative / accepted trade-offs**
 
 - Gold, the clearest colour against Albion Falls Blue on the overview, cannot carry
-  text; the title of an even meeting is written in black, or white, over it.
+  text; the title of an even booking is written in black over it.
+- A reader who sets the browser to a dark theme still gets a light page.
 - The application's look is tied to McMaster; if it must be neutral, this ADR
   is amended.
 

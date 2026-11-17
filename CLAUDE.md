@@ -126,7 +126,8 @@ first.
 - Colour literals are the `--mac-*` tokens of the palette block of
   `src/style.css`, and nothing else; the interface uses `--color-*` roles and
   `color-mix()` tints of them. Maroon dominates the chrome. The cadences are
-  data: weekly green, odd blue, even gold (lime and sky in the dark theme).
+  data: weekly green, odd blue (filled light sky), even gold. One theme, light;
+  the tab shown and the kind a press adds are light maroon, not solid.
 - Gold is never text. Every text and background pairing is one tabled in the
   ADR, or measured at 4.5:1 at least.
 

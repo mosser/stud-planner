@@ -29,13 +29,13 @@
   --color-error: var(--mac-maroon);
   /* Time blocks: grey over the surface, their cadence's colour as a border. */
   --color-blocked: color-mix(in srgb, var(--mac-grey) 25%, var(--mac-white));
-  /* The kind a press adds, chosen: maroon on its tint in light, white on it in dark. */
+  /* What is chosen, the tab shown or the kind a press adds: maroon on a light maroon. */
   --color-chosen-text: var(--mac-maroon);
   --color-chosen-tint: color-mix(in srgb, var(--mac-maroon) 12%, var(--mac-white));
   /*
-   * The fill of a booking, by cadence, and of its half on the overview: black text on them in
-   * light, white in dark. The odd week is filled with Albion Falls Blue, lighter than the
-   * Bayfront Blue of its border, so that it is not taken for the grey of a time block.
+   * The fill of a booking, by cadence, and of its half on the overview, black text on them. The
+   * odd week is filled with Albion Falls Blue, lighter than the Bayfront Blue of its border, so
+   * that it is not taken for the grey of a time block.
    */
   --fill-weekly: color-mix(in srgb, var(--mac-accent-green) 22%, var(--mac-white));
   --fill-odd: color-mix(in srgb, var(--mac-accent-sky) 65%, var(--mac-white));
@@ -43,30 +43,8 @@
   --half-fill-odd: var(--mac-accent-sky);
   --half-fill-even: color-mix(in srgb, var(--mac-gold) 40%, var(--mac-white));
   --quarter-height: 0.85rem;
-  color-scheme: light dark;
+  color-scheme: light;
   font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --color-surface: var(--mac-black);
-    --color-text: var(--mac-white);
-    --color-secondary-text: var(--mac-accent-light-grey);
-    --color-rule: var(--mac-grey);
-    --color-faint-rule: color-mix(in srgb, var(--mac-grey) 45%, var(--mac-black));
-    --color-weekly: var(--mac-accent-lime);
-    --color-odd: var(--mac-accent-sky);
-    --color-refused: var(--mac-accent-pink);
-    --color-error: var(--mac-accent-pink);
-    --color-blocked: color-mix(in srgb, var(--mac-accent-light-grey) 30%, var(--mac-black));
-    --color-chosen-text: var(--mac-white);
-    --color-chosen-tint: color-mix(in srgb, var(--mac-maroon) 40%, var(--mac-black));
-    --fill-weekly: color-mix(in srgb, var(--mac-accent-lime) 30%, var(--mac-black));
-    --fill-odd: color-mix(in srgb, var(--mac-accent-blue) 70%, var(--mac-black));
-    --fill-even: color-mix(in srgb, var(--mac-gold) 30%, var(--mac-black));
-    --half-fill-odd: var(--mac-accent-blue);
-    --half-fill-even: color-mix(in srgb, var(--mac-gold) 45%, var(--mac-black));
-  }
 }
 
 * {
@@ -141,11 +119,17 @@ textarea {
   cursor: pointer;
 }
 
-.tabs button[aria-selected="true"],
 button.primary {
   border-color: var(--color-primary);
   background-color: var(--color-primary);
   color: var(--color-on-primary);
+}
+
+.tabs button[aria-selected="true"],
+.adding button[aria-checked="true"] {
+  border-color: var(--color-chosen-text);
+  background-color: var(--color-chosen-tint);
+  color: var(--color-chosen-text);
 }
 
 /* Each tab is marked, under its name, with the colour of the week it shows; the overview, both. */
@@ -187,12 +171,6 @@ button.primary {
   background: var(--color-surface);
   color: var(--color-text);
   cursor: pointer;
-}
-
-.adding button[aria-checked="true"] {
-  border-color: var(--color-chosen-text);
-  background: var(--color-chosen-tint);
-  color: var(--color-chosen-text);
 }
 
 button.danger {
