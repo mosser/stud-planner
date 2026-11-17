@@ -142,7 +142,7 @@ first.
   `src/io/schedule-file.ts`. A file is checked completely before anything is
   taken. A change of format is a new version; every version written is read.
 - "Upload" and "download" never appear under `src/` (except the `download`
-  attribute in `src/io/save.ts`) nor in `docs/specs/`.
+  attribute in `src/io/save.ts` and its test) nor in `docs/specs/`.
 
 ### ADR 0008: two abstract weeks
 

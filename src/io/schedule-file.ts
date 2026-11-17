@@ -93,7 +93,7 @@ function required(part: string, record: Record<string, unknown>, field: string):
 }
 
 /** The value of the field read by `read`, or a refusal when `read` finds nothing in it. */
-function valueOf<T>(
+function fieldRead<T>(
   part: string,
   record: Record<string, unknown>,
   field: string,
@@ -120,7 +120,7 @@ function duration(value: unknown): Duration | undefined {
 }
 
 function cadenceOf(part: string, record: Record<string, unknown>): Cadence {
-  const key = valueOf(part, record, 'cadence', (value) =>
+  const key = fieldRead(part, record, 'cadence', (value) =>
     value === 'weekly' || value === 'bi-weekly' ? value : undefined,
   )
   if (key === 'weekly') {
@@ -129,7 +129,7 @@ function cadenceOf(part: string, record: Record<string, unknown>): Cadence {
     }
     return Cadence.weekly
   }
-  const parity = valueOf(part, record, 'parity', (value) =>
+  const parity = fieldRead(part, record, 'parity', (value) =>
     typeof value === 'string' ? Parity.withKey(value) : undefined,
   )
   return Cadence.biWeekly(parity)
@@ -141,12 +141,12 @@ function meetingOf(part: string, value: unknown): Meeting {
   }
   checkFields(part, value, meetingFields)
   const description = {
-    title: valueOf(part, value, 'title', text),
+    title: fieldRead(part, value, 'title', text),
     cadence: cadenceOf(part, value),
-    weekday: valueOf(part, value, 'weekday', weekday),
-    start: valueOf(part, value, 'start', time),
-    duration: valueOf(part, value, 'duration', duration),
-    note: 'note' in value ? valueOf(part, value, 'note', text) : undefined,
+    weekday: fieldRead(part, value, 'weekday', weekday),
+    start: fieldRead(part, value, 'start', time),
+    duration: fieldRead(part, value, 'duration', duration),
+    note: 'note' in value ? fieldRead(part, value, 'note', text) : undefined,
   }
   try {
     return new Meeting(description)
@@ -163,7 +163,7 @@ function scheduleOf(content: unknown): Schedule {
   if (required(theSchedule, content, 'version') !== version) {
     throw new Refusal(unknownVersion(content.version))
   }
-  const meetings = valueOf(theSchedule, content, 'meetings', (value) =>
+  const meetings = fieldRead(theSchedule, content, 'meetings', (value) =>
     Array.isArray(value) ? (value as unknown[]) : undefined,
   ).map((value, index) => meetingOf(meetingOfTheFile(index + 1), value))
   const pair = Schedule.firstOverlapAmong(meetings)

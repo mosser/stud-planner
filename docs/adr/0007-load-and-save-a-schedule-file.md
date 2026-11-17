@@ -33,7 +33,8 @@ Options considered:
 - Only `src/io/schedule-file.ts` maps a schedule to and from the file;
   `src/io/save.ts` hands it to the browser.
 - "Upload" and "download" never appear under `src/` (except the `download`
-  attribute set in `src/io/save.ts`) nor in `docs/specs/`. They are kept for
+  attribute set in `src/io/save.ts` and checked by its test) nor in
+  `docs/specs/`. They are kept for
   a real transfer over a network: obtaining a release from GitHub.
 
 ## Consequences

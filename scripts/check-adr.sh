@@ -61,7 +61,7 @@ grep -nE 'localStorage|sessionStorage|document\.cookie|caches\.' $business && fa
 grep -ln 'indexedDB' $business | grep -v '^src/io/schedule-store.ts$' && fail "IndexedDB used outside src/io/schedule-store.ts"
 
 # ADR 0007: load and save, never upload or download.
-grep -rniE 'upload|download' src docs/specs | grep -v '^src/io/save.ts:' && fail "\"upload\" or \"download\" in src/ or docs/specs/"
+grep -rniE 'upload|download' src docs/specs | grep -vE '^src/io/save(\.test)?\.ts:' && fail "\"upload\" or \"download\" in src/ or docs/specs/"
 grep -niE 'upload|download' src/io/save.ts 2>/dev/null | grep -viE 'download =|`download`|\bdownload attribute' && fail "src/io/save.ts may only set the download attribute"
 
 if [ "$failures" -gt 0 ]; then

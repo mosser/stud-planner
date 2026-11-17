@@ -1,4 +1,4 @@
-import calendar from '../../config/calendar.json'
+import calendar from '../../config/calendar.json' with { type: 'json' }
 import { TimeOfDay } from './time-of-day.ts'
 
 /** The hours a meeting can take on a weekday, configured in `config/calendar.json`. */
