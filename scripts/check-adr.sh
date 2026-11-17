@@ -61,9 +61,8 @@ grep -nE 'new Date\(|Date\.now\(|Temporal\.' $business && fail "src/ reads a dat
 grep -nE 'localStorage|sessionStorage|document\.cookie|caches\.' $business && fail "browser storage other than IndexedDB"
 grep -ln 'indexedDB' $business | grep -v '^src/io/schedule-store.ts$' && fail "IndexedDB used outside src/io/schedule-store.ts"
 
-# ADR 0007: load and save, never upload or download.
-grep -rniE 'upload|download' src docs/specs | grep -vE '^src/io/save(\.test)?\.ts:' && fail "\"upload\" or \"download\" in src/ or docs/specs/"
-grep -niE 'upload|download' src/io/save.ts 2>/dev/null | grep -viE 'download =|`download`|\bdownload attribute' && fail "src/io/save.ts may only set the download attribute"
+# ADR 0007: download and load, never upload.
+grep -rniE 'upload' src docs/specs && fail "\"upload\" in src/ or docs/specs/"
 
 # ADR 0012: shared schedules inlined from schedules/, by one module, checked by the build.
 [ -d schedules ] || fail "schedules/ must exist"

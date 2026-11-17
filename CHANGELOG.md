@@ -34,5 +34,5 @@ project adheres to [Semantic Versioning](https://semver.org/).
 - **Shared schedules**: the schedules of the `schedules/` folder of the repository are built
   into the page and listed at the top right; choosing one replaces the schedule, once
   confirmed, and locks it.
-- The schedule is kept by the browser between two sessions, and is saved to, or loaded
+- The schedule is kept by the browser between two sessions, and is downloaded as, or loaded
   from, `stud-planner-schedule.json`.

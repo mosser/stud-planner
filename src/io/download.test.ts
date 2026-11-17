@@ -1,13 +1,13 @@
 // @vitest-environment happy-dom
 import { describe, expect, it, vi } from 'vitest'
-import { save } from './save.ts'
+import { download } from './download.ts'
 
-describe('saving a file', () => {
+describe('downloading a file', () => {
   it('hands its text to the browser under its name, as JSON', async () => {
     const created = vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:schedule')
     const revoked = vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => undefined)
     const clicked = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {})
-    save('{}', 'stud-planner-schedule.json', document)
+    download('{}', 'stud-planner-schedule.json', document)
     const blob = created.mock.calls[0]?.[0] as Blob
     expect(blob.type).toBe('application/json')
     expect(await blob.text()).toBe('{}')

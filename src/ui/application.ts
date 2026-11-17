@@ -41,8 +41,8 @@ export interface ApplicationContext {
   readonly store: Pick<ScheduleStore, 'isKept' | 'keep' | 'keepLock'>
   /** The schedules of `schedules/`, built into the page (ADR 0012). */
   readonly sharedSchedules: readonly SharedSchedule[]
-  /** Hands the text of a file to the browser, to be saved under its name (ADR 0007). */
-  readonly save: (fileText: string, fileName: string) => void
+  /** Hands the text of a file to the browser, to be downloaded under its name (ADR 0007). */
+  readonly download: (fileText: string, fileName: string) => void
   /** Asks the Organizer to confirm; by default, in a dialog of the page. */
   readonly ask?: ((question: string, confirm: string) => Promise<boolean>) | undefined
 }
@@ -105,12 +105,15 @@ export function mountApplication(root: HTMLElement, context: ApplicationContext)
     return html`${kept}${aside}${refused}`
   }
 
-  /** The switch under the grid: what a press on a free slot adds; nothing, while locked. */
+  /** The switch under the grid: what a press on a free slot adds; not shown while locked. */
   function addingSwitch() {
+    if (isLocked) {
+      return ''
+    }
     return html`<div class="adding" role="radiogroup" aria-labelledby="adding-label">
       <span id="adding-label">Add</span>${kinds.map(
         (kind) =>
-          html`<button type="button" role="radio" data-adding="${kind}" ${isLocked ? 'disabled' : ''}
+          html`<button type="button" role="radio" data-adding="${kind}"
             aria-checked="${kind === adding ? 'true' : 'false'}">${kindNames[kind]}</button>`,
       )}</div>`
   }
@@ -148,7 +151,7 @@ export function mountApplication(root: HTMLElement, context: ApplicationContext)
                 aria-selected="${each === tab ? 'true' : 'false'}">${tabNames[each]}</button>`,
           )}</div>
           <div class="actions">
-            <button type="button" data-action="save">Save</button>
+            <button type="button" data-action="download">Download</button>
             <button type="button" data-action="load">Load</button>
             <input type="file" accept=".json,application/json" data-file hidden>
           </div>
@@ -278,7 +281,7 @@ export function mountApplication(root: HTMLElement, context: ApplicationContext)
       lock(!isLocked)
       render()
     }
-    if (action === 'save') context.save(scheduleFileOf(schedule), scheduleFileName)
+    if (action === 'download') context.download(scheduleFileOf(schedule), scheduleFileName)
     if (action === 'load') root.querySelector<HTMLInputElement>('[data-file]')?.click()
   })
 

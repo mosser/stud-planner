@@ -143,7 +143,7 @@ describe('a schedule file of version 1', () => {
 })
 
 describe('the schedule file', () => {
-  it('is saved as stud-planner-schedule.json', () => {
+  it('is downloaded as stud-planner-schedule.json', () => {
     expect(scheduleFileName).toBe('stud-planner-schedule.json')
   })
 

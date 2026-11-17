@@ -47,13 +47,13 @@ function mounted(
   const keep = vi.fn(async () => true)
   const keepLock = vi.fn(async () => true)
   const ask = vi.fn(async () => true)
-  const save = vi.fn()
+  const download = vi.fn()
   const context = {
     version: '1.2.3',
     restored: { schedule, wasSetAside: false, isLocked: false },
     store: { isKept: true, keep, keepLock },
     sharedSchedules: [],
-    save,
+    download,
     ask,
     ...changes,
   }
@@ -61,7 +61,7 @@ function mounted(
   if (shown !== 'as opened') {
     ;(root.querySelector(`[data-tab="${shown}"]`) as HTMLElement).click()
   }
-  return { root, application, keep, keepLock, ask: context.ask, save }
+  return { root, application, keep, keepLock, ask: context.ask, download }
 }
 
 function press(target: Element, at_: { clientX: number; clientY: number }): void {
@@ -363,17 +363,19 @@ describe('removing a meeting', () => {
   })
 })
 
-describe('saving and loading', () => {
+describe('downloading and loading', () => {
   function loadFile(root: HTMLElement, text: string, name = 'week.json'): void {
     const input = root.querySelector('[data-file]') as HTMLInputElement
     Object.defineProperty(input, 'files', { value: [new File([text], name)], configurable: true })
     input.dispatchEvent(new Event('change', { bubbles: true }))
   }
 
-  it('saves the schedule file', () => {
-    const { root, save } = mounted(new Schedule([lab]))
-    ;(root.querySelector('[data-action="save"]') as HTMLElement).click()
-    expect(save).toHaveBeenCalledWith(
+  it('downloads the schedule file', () => {
+    const { root, download } = mounted(new Schedule([lab]))
+    const button = root.querySelector('[data-action="download"]') as HTMLElement
+    expect(button.textContent).toBe('Download')
+    button.click()
+    expect(download).toHaveBeenCalledWith(
       scheduleFileOf(new Schedule([lab])),
       'stud-planner-schedule.json',
     )
@@ -469,9 +471,7 @@ describe('the lock', () => {
     lockButton(root).click()
     expect(root.querySelector('[data-remove]')).toBeNull()
     expect(root.querySelector('[data-resize]')).toBeNull()
-    expect((root.querySelector('[data-adding="time-block"]') as HTMLButtonElement).disabled).toBe(
-      true,
-    )
+    expect(root.querySelector('.adding')).toBeNull()
     press(day(root, Weekday.friday), point(Weekday.friday, '08:00'))
     release(point(Weekday.friday, '08:00'))
     expect(dialog()).toBeNull()

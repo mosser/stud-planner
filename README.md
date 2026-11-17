@@ -13,7 +13,7 @@ file. Nothing it does crosses a network.
 
 ## Sharing a schedule
 
-Save the schedule, put the file in [`schedules/`](schedules/) under the name it
+Download the schedule, put the file in [`schedules/`](schedules/) under the name it
 should be listed by (`schedules/Fall 2026.json`), commit it, and cut a release:
 the page lists it at the top right, under *Shared schedules*. Everything in
 `schedules/` is public with the page.

@@ -20,7 +20,7 @@ import { TimeBlock } from '../domain/time-block.ts'
 import { TimeOfDay } from '../domain/time-of-day.ts'
 import { Weekday } from '../domain/weekday.ts'
 
-/** The name the schedule file is saved under (ADR 0007). */
+/** The name the schedule file is downloaded under (ADR 0007). */
 export const scheduleFileName = 'stud-planner-schedule.json'
 
 const format = 'stud-planner/schedule'

@@ -11,8 +11,8 @@ they are not available for meetings, on two abstract weeks, A and B, by
 pressing and dragging on them, and sees them one tab at a time or in the
 overview, where only the time a booking of week A and one of week B share is
 cut along its diagonal, week A upper left, week B lower right. A slot is never booked twice.
-The schedule is kept in the browser and saved to, or loaded from, a schedule
-file.
+The schedule is kept in the browser and downloaded as, or loaded from, a
+schedule file.
 
 It is a client-side web application in TypeScript, front-end only,
 delivered as **one self-contained `dist/stud-planner-vX.Y.Z.html`** that opens
@@ -26,7 +26,7 @@ It follows the conventions of its siblings `macreport` and `streaming-hat`.
 are implemented: the three tabs, meetings and time blocks added, moved,
 resized and removed by dragging, the dialog of a booking, overlaps refused,
 the lock, the shared schedules of `schedules/`, the schedule kept in
-IndexedDB, and saved to or loaded from its file. Not released yet.
+IndexedDB, and downloaded as or loaded from its file. Not released yet.
 
 ## Where things live
 
@@ -34,7 +34,7 @@ IndexedDB, and saved to or loaded from its file. Not released yet.
   behaviour. `stakeholders.md`, `domain-model.md` (the glossary),
   `plan-the-meetings.md` (the tabs, the switch, their gestures, overlaps
   refused),
-  `schedule-file.md` (the file saved and loaded, and what the browser keeps). Read the relevant spec before implementing a feature; if a
+  `schedule-file.md` (the file downloaded and loaded, and what the browser keeps). Read the relevant spec before implementing a feature; if a
   spec is missing or ambiguous, say so rather than guessing. Spec files are
   short, self-contained, and never cite or link to documents outside the
   repository: a heading, then tables or short paragraphs, no preamble.
@@ -55,7 +55,7 @@ src/domain/   Schedule (no overlap), Booking with Meeting and TimeBlock,
               (config/calendar.json), findings.ts (every sentence shown);
               *.fixture.ts are test helpers
 src/io/       schedule-file.ts (the JSON file), schedule-store.ts (IndexedDB:
-              the schedule and its lock), save.ts (hands a file to the
+              the schedule and its lock), download.ts (hands a file to the
               browser), shared-schedule.ts (reads them) and
               shared-schedules.ts (inlines schedules/*.json)
 src/ui/       application.ts (state, toolbar, tabs, drags), gestures.ts (what a
@@ -159,12 +159,12 @@ first.
 
 ### ADR 0007: the schedule file
 
-- The schedule is saved and loaded as `stud-planner-schedule.json`, in the
+- The schedule is downloaded and loaded as `stud-planner-schedule.json`, in the
   versioned format of `docs/specs/schedule-file.md`, written and read only by
   `src/io/schedule-file.ts`. A file is checked completely before anything is
   taken. A change of format is a new version; every version written is read.
-- "Upload" and "download" never appear under `src/` (except the `download`
-  attribute in `src/io/save.ts` and its test) nor in `docs/specs/`.
+- The interface says Download and Load. "Upload" never appears under `src/`
+  nor in `docs/specs/`: nothing leaves the computer.
 
 ### ADR 0008: two abstract weeks
 
@@ -212,7 +212,7 @@ first.
 - **No narrating text** in the interface: no sentence that introduces a
   screen or a section, restates its heading or explains how to read it.
 - Words are the glossary's, in the interface as in the code. Files are loaded
-  or added and saved, never uploaded or downloaded.
+  and downloaded, never uploaded.
 
 ## Git
 

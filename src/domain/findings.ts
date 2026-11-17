@@ -101,7 +101,7 @@ export function replacementQuestion(
 
 /** What the screen says when the browser does not keep the schedule. */
 export function notKept(): string {
-  return 'This browser does not keep the schedule: closing the page loses it. Save it to keep a copy.'
+  return 'This browser does not keep the schedule: closing the page loses it. Download it to keep a copy.'
 }
 
 /** What the screen says when the schedule the browser kept could not be read. */

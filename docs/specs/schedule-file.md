@@ -36,7 +36,7 @@ content (ADR 0006), and the shared schedules of `schedules/` are such files
 
 A file of version 1 is read as one of version 2, but for the week of a
 bi-weekly booking, written `parity`: `"odd"` for week A, `"even"` for week B.
-It has no `week`. Saved again, it is written as version 2.
+It has no `week`. Downloaded again, it is written as version 2.
 
 ## Refusal
 

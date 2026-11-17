@@ -4,7 +4,7 @@ The system has one screen, headed *Supervision Planner* with its icon, a
 calendar page whose square is cut along its diagonal, week A and week B. It
 shows one tab at a time, the overview, week A
 or week B, each a grid with a weekday per column and a quarter of the
-day per row. Above the grid stand the tabs, and Save and Load; under it, on
+day per row. Above the grid stand the tabs, and Download and Load; under it, on
 every tab, the switch between Meeting and Time block. At the right of the
 masthead stand the shared schedules, when there is one, and the lock. The overview is the first tab,
 and the one shown when the page opens; the switch is then on Meeting.
@@ -70,14 +70,14 @@ week. A meeting needs a title; a time block does not.
 | Rule | Behaviour |
 |---|---|
 | Lock | The lock button locks the schedule against every change, and unlocks it. It reads *Lock*, and *Locked* while it is pressed. |
-| Locked | Nothing is added, moved, resized, changed or removed: a press on the grid does nothing, bookings have no remove mark and no lower edge to drag, the switch is disabled, and Delete does nothing. A click on a booking, or Enter, shows its dialog read only, with Close alone. |
+| Locked | Nothing is added, moved, resized, changed or removed: a press on the grid does nothing, bookings have no remove mark and no lower edge to drag, the switch is not shown, and Delete does nothing. A click on a booking, or Enter, shows its dialog read only, with Close alone. |
 | Kept | Whether the schedule is locked is kept with it: the page opens as it was left. |
 | Replacing | Load and the shared schedules still replace a locked schedule, once confirmed. |
 
 ## Shared schedules
 
 A shared schedule is a schedule file of the folder `schedules/` of the
-repository, built into the page: the Organizer saves a schedule, puts the file
+repository, built into the page: the Organizer downloads a schedule, puts the file
 there under the name it is to be known by, and releases the system. The build
 refuses a file of `schedules/` that is not a schedule file the system reads.
 
@@ -85,14 +85,14 @@ refuses a file of `schedules/` that is not a schedule file the system reads.
 |---|---|
 | The list | At the right of the masthead, a list headed *Shared schedules* names them, by the name of their file without `.json`, A to Z. There is no list when there is no shared schedule. |
 | Choosing one | Replaces the schedule, once confirmed when it holds a booking: *Replace the 2 meetings and 1 time block of the schedule with those of Fall 2026?* The schedule is then locked. Declined, nothing changes. |
-| After | The schedule taken is the Organizer's like any other: kept, saved, and changed once unlocked. The list shows its heading again. |
+| After | The schedule taken is the Organizer's like any other: kept, downloaded, and changed once unlocked. The list shows its heading again. |
 
-## Keeping, saving and loading
+## Keeping, downloading and loading
 
 | Rule | Behaviour |
 |---|---|
 | Keep | Every change is kept at once; there is no action to keep. When the page opens, the kept schedule comes back. |
 | Not kept | When the browser cannot keep the schedule, the screen says that closing the page will lose it, and everything else works. |
-| Save | Saves the schedule file, `stud-planner-schedule.json`. |
+| Download | Downloads the schedule file, `stud-planner-schedule.json`: the browser writes it on the Organizer's computer. |
 | Load | Reads a schedule file the Organizer chooses. When the schedule holds a booking, the Organizer confirms that the file replaces it: *Replace the 2 meetings and 1 time block of the schedule with those of week.json?* |
 | Refused | A file that is not a schedule file, breaks one of its rules, or holds two bookings that overlap is refused with the reason; the schedule is left as it was. |

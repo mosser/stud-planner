@@ -89,7 +89,7 @@ describe('the findings', () => {
 
   it('say what the browser keeps', () => {
     expect(notKept()).toBe(
-      'This browser does not keep the schedule: closing the page loses it. Save it to keep a copy.',
+      'This browser does not keep the schedule: closing the page loses it. Download it to keep a copy.',
     )
     expect(setAside()).toBe(
       'The schedule this browser kept could not be read: it is set aside, and this schedule starts empty.',
