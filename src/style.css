@@ -296,7 +296,8 @@ button:disabled {
 
 /* A time block: the time no meeting can take, in grey, its cadence's colour as a border. */
 .booking.time-block,
-.booking.half.time-block {
+.booking.half.time-block,
+.preview.time-block {
   background: var(--color-blocked);
 }
 

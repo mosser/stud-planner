@@ -209,6 +209,7 @@ describe('adding a meeting', () => {
     expect(chosen()).toBe('Time block')
     press(day(root, Weekday.monday), point(Weekday.monday, '08:00'))
     moveTo(point(Weekday.monday, '09:45'))
+    expect(root.querySelector('.preview')?.classList.contains('time-block')).toBe(true)
     release(point(Weekday.monday, '09:45'))
     expect(dialog().querySelector('[name="note"]')).toBeNull()
     typeTitle('Teaching')

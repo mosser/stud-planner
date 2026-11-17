@@ -19,7 +19,8 @@ of the odd week, of the even week, or both for the overview: the colours its
 bi-weekly bookings are bordered with. A weekly booking looks alike on the three
 tabs, and unlike a bi-weekly one. A
 time block is grey, a meeting is tinted with the colour of its cadence; both
-are bordered with that colour. A time block without a title is shown as *Time block*.
+are bordered with that colour. So is what a drag shows of a booking added,
+moved or resized. A time block without a title is shown as *Time block*.
 
 ## Adding a meeting or a time block
 
