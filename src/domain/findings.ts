@@ -1,11 +1,34 @@
+import type { Booking } from './booking.ts'
 import type { Cadence } from './cadence.ts'
 import type { Duration } from './duration.ts'
-import type { Meeting } from './meeting.ts'
 import type { TimeOfDay } from './time-of-day.ts'
 
-/** A meeting's time: 10:00 to 11:00. */
-export function timeOf(meeting: Meeting): string {
-  return `${meeting.start} to ${meeting.end}`
+/** A booking's time: 10:00 to 11:00. */
+export function timeOf(booking: Booking): string {
+  return `${booking.start} to ${booking.end}`
+}
+
+/** What a time block is called when it has no title. */
+export const aTimeBlock = 'Time block'
+
+/** What a booking is shown as: a meeting's title; a time block's, or Time block. */
+export function labelOf(booking: Booking): string {
+  return booking.title ?? aTimeBlock
+}
+
+/**
+ * A booking named in a sentence: a meeting by its title; a time block as the time block Teaching,
+ * or a time block when it has no title.
+ */
+export function nameOf(booking: Booking): string {
+  if (!booking.isTimeBlock) {
+    return booking.title ?? ''
+  }
+  return booking.title === undefined ? 'a time block' : `the time block ${booking.title}`
+}
+
+function aBooking(isTimeBlock: boolean): string {
+  return isTimeBlock ? 'A time block' : 'A meeting'
 }
 
 /** A cadence as the interface writes it: weekly; bi-weekly, odd week. */
@@ -34,35 +57,46 @@ export function needsATitle(): string {
   return 'A meeting needs a title.'
 }
 
-/** Why a meeting cannot start that early. */
-export function startsBeforeTheDay(dayStart: TimeOfDay): string {
-  return `A meeting cannot start before ${dayStart}.`
+/** Why a meeting, or a time block, cannot start that early. */
+export function startsBeforeTheDay(isTimeBlock: boolean, dayStart: TimeOfDay): string {
+  return `${aBooking(isTimeBlock)} cannot start before ${dayStart}.`
 }
 
-/** Why a meeting cannot end that late. */
-export function endsAfterTheDay(dayEnd: TimeOfDay): string {
-  return `A meeting cannot end after ${dayEnd}.`
+/** Why a meeting, or a time block, cannot end that late. */
+export function endsAfterTheDay(isTimeBlock: boolean, dayEnd: TimeOfDay): string {
+  return `${aBooking(isTimeBlock)} cannot end after ${dayEnd}.`
 }
 
 /**
- * Why a meeting cannot take its slots: the meeting it would overlap, in the weeks both are held,
+ * Why a booking cannot take its slots: the booking it would overlap, in the weeks both are held,
  * and when: Overlaps Lab meeting, odd week, 10:00 to 11:00.
  */
-export function overlap(meeting: Meeting, other: Meeting): string {
-  const weeks = meeting.weeksSharedWith(other)
+export function overlap(booking: Booking, other: Booking): string {
+  const weeks = booking.weeksSharedWith(other)
   const when = weeks.length === 1 ? weeks[0]?.week : 'every week'
-  return `Overlaps ${other.title}, ${when}, ${timeOf(other)}.`
+  return `Overlaps ${nameOf(other)}, ${when}, ${timeOf(other)}.`
 }
 
-/** What the Organizer confirms before a meeting leaves the schedule. */
-export function removalQuestion(meeting: Meeting): string {
-  return `Remove ${meeting.title}, ${cadenceWritten(meeting.cadence)}, ${meeting.weekday.name} ${timeOf(meeting)}?`
+/** What the Organizer confirms before a booking leaves the schedule. */
+export function removalQuestion(booking: Booking): string {
+  return `Remove ${nameOf(booking)}, ${cadenceWritten(booking.cadence)}, ${booking.weekday.name} ${timeOf(booking)}?`
+}
+
+function counted(count: number, what: string): string {
+  return count === 1 ? `1 ${what}` : `${count} ${what}s`
 }
 
 /** What the Organizer confirms before a schedule file replaces the schedule. */
-export function replacementQuestion(meetingCount: number, fileName: string): string {
-  const meetings = meetingCount === 1 ? '1 meeting' : `${meetingCount} meetings`
-  return `Replace the ${meetings} of the schedule with those of ${fileName}?`
+export function replacementQuestion(
+  meetingCount: number,
+  timeBlockCount: number,
+  fileName: string,
+): string {
+  const held = [counted(meetingCount, 'meeting')]
+  if (timeBlockCount > 0) {
+    held.push(counted(timeBlockCount, 'time block'))
+  }
+  return `Replace the ${held.join(' and ')} of the schedule with those of ${fileName}?`
 }
 
 /** What the screen says when the browser does not keep the schedule. */
@@ -110,17 +144,22 @@ export function valueNotAllowed(part: string, field: string, value: unknown): st
   return `${part} cannot have ${JSON.stringify(value)} as its ${field}.`
 }
 
-/** Why a file is refused: a meeting of it breaks a rule of a meeting. */
-export function meetingBroken(part: string, reason: string): string {
+/** Why a file is refused: a meeting or a time block of it breaks one of its rules. */
+export function bookingBroken(part: string, reason: string): string {
   return `${part}: ${reason}`
 }
 
-/** Why a file is refused: two of its meetings overlap. */
-export function meetingsOverlap(part: string, otherPart: string, reason: string): string {
+/** Why a file is refused: two of its bookings overlap. */
+export function bookingsOverlap(part: string, otherPart: string, reason: string): string {
   return `${part} and ${otherPart} overlap. ${reason}`
 }
 
 /** A meeting of a schedule file, by its rank, the first being 1: meeting 3. */
 export function meetingOfTheFile(rank: number): string {
   return `meeting ${rank}`
+}
+
+/** A time block of a schedule file, by its rank, the first being 1: time block 2. */
+export function timeBlockOfTheFile(rank: number): string {
+  return `time block ${rank}`
 }

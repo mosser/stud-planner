@@ -1,8 +1,10 @@
 // @vitest-environment happy-dom
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { Cadence, Parity } from '../domain/cadence.ts'
+import { Duration } from '../domain/duration.ts'
 import { aMeeting, at } from '../domain/meeting.fixture.ts'
 import { Schedule } from '../domain/schedule.ts'
+import { TimeBlock } from '../domain/time-block.ts'
 import { Weekday } from '../domain/weekday.ts'
 import { scheduleFileOf } from '../io/schedule-file.ts'
 import { type ApplicationContext, mountApplication } from './application.ts'
@@ -63,11 +65,11 @@ function release(at_: { clientX: number; clientY: number }): void {
 
 const day = (root: HTMLElement, weekday: Weekday) =>
   root.querySelector(`.day[data-weekday="${weekday.key}"]`) as HTMLElement
-const meetingElement = (root: HTMLElement, rank: number) =>
-  root.querySelector(`[data-meeting="${rank}"]`) as HTMLElement
-const dialog = () => document.querySelector('dialog.meeting-dialog') as HTMLDialogElement
+const bookingElement = (root: HTMLElement, rank: number) =>
+  root.querySelector(`[data-booking="${rank}"]`) as HTMLElement
+const dialog = () => document.querySelector('dialog.booking-dialog') as HTMLDialogElement
 const titles = (root: HTMLElement) =>
-  [...root.querySelectorAll('.meeting-title')].map((title) => title.textContent)
+  [...root.querySelectorAll('.booking-title')].map((title) => title.textContent)
 const describeMeetings = (schedule: Schedule) =>
   schedule.meetings.map(
     (meeting) => `${meeting.title} ${meeting.weekday.name} ${meeting.start}-${meeting.end}`,
@@ -99,7 +101,7 @@ describe('the screen', () => {
     expect(titles(root)).toEqual(['Lab meeting'])
     ;(root.querySelector('[data-tab="overview"]') as HTMLElement).click()
     expect(root.querySelector('[role="tabpanel"]')?.getAttribute('aria-label')).toBe('Overview')
-    expect(root.querySelector<HTMLElement>('.meeting.odd')?.style.gridRow).toBe('9 / span 4')
+    expect(root.querySelector<HTMLElement>('.booking.odd')?.style.gridRow).toBe('9 / span 4')
   })
 })
 
@@ -144,20 +146,96 @@ describe('adding a meeting', () => {
     expect(application.schedule.meetings[0]?.cadence).toBe(Cadence.weekly)
   })
 
-  it('adds nothing from the overview', () => {
-    const { root } = mounted(new Schedule([ana]))
+  it('adds a weekly time block from the overview, and nothing from a slot taken in a week', () => {
+    const { root, application } = mounted(new Schedule([ana]))
     ;(root.querySelector('[data-tab="overview"]') as HTMLElement).click()
+    expect(root.querySelector('[data-adding]')).toBeNull()
+    press(day(root, Weekday.tuesday), point(Weekday.tuesday, '10:00'))
+    release(point(Weekday.tuesday, '10:00'))
+    expect(dialog()).toBeNull()
     press(day(root, Weekday.monday), point(Weekday.monday, '08:00'))
     release(point(Weekday.monday, '08:00'))
-    expect(dialog()).toBeNull()
+    expect(dialog().querySelector('h2')?.textContent).toBe('New time block')
+    const choices = [...dialog().querySelectorAll('[name="cadence"] option')].map(
+      (option) => option.textContent,
+    )
+    expect(choices).toEqual(['Weekly'])
+    dialog().querySelector('form')?.requestSubmit()
+    const [block] = application.schedule.timeBlocks
+    expect([block?.title, block?.cadence, block?.start.toString()]).toEqual([
+      undefined,
+      Cadence.weekly,
+      '08:00',
+    ])
+  })
+
+  it('adds a time block from a week once the switch says so', () => {
+    const { root, application } = mounted(new Schedule([lab]))
+    const chosen = () => root.querySelector('[aria-checked="true"]')?.textContent
+    expect(chosen()).toBe('Meeting')
+    ;(root.querySelector('[data-adding="time-block"]') as HTMLElement).click()
+    expect(chosen()).toBe('Time block')
+    press(day(root, Weekday.monday), point(Weekday.monday, '08:00'))
+    moveTo(point(Weekday.monday, '09:45'))
+    release(point(Weekday.monday, '09:45'))
+    expect(dialog().querySelector('[name="note"]')).toBeNull()
+    typeTitle('Teaching')
+    const [block] = application.schedule.timeBlocks
+    expect([block?.title, block?.cadence, block?.end.toString()]).toEqual([
+      'Teaching',
+      odd,
+      '10:00',
+    ])
+    expect(root.querySelector('.booking.time-block .booking-title')?.textContent).toBe('Teaching')
+    ;(root.querySelector('[data-tab="even"]') as HTMLElement).click()
+    expect(chosen()).toBe('Time block')
+  })
+
+  it('refuses a meeting moved onto a time block, and names it', () => {
+    const block = new TimeBlock({
+      title: 'Teaching',
+      cadence: Cadence.weekly,
+      weekday: Weekday.tuesday,
+      start: at('10:00'),
+      duration: Duration.ofQuarters(8),
+    })
+    const { root, application } = mounted(new Schedule([lab], [block]))
+    press(bookingElement(root, 0), point(Weekday.monday, '10:00'))
+    moveTo(point(Weekday.tuesday, '11:00'))
+    release(point(Weekday.tuesday, '11:00'))
+    expect(application.schedule.meetings[0]?.weekday).toBe(Weekday.monday)
+    expect(root.querySelector('.refusal')?.textContent).toBe(
+      'Overlaps the time block Teaching, every week, 10:00 to 12:00.',
+    )
+  })
+
+  it('moves, and removes once confirmed, a time block', async () => {
+    const block = new TimeBlock({
+      cadence: odd,
+      weekday: Weekday.friday,
+      start: at('14:00'),
+      duration: Duration.ofQuarters(4),
+    })
+    const { root, application, ask } = mounted(new Schedule([], [block]))
+    press(bookingElement(root, 0), point(Weekday.friday, '14:00'))
+    moveTo(point(Weekday.friday, '15:00'))
+    release(point(Weekday.friday, '15:00'))
+    expect(application.schedule.timeBlocks[0]?.start.toString()).toBe('15:00')
+    ;(root.querySelector('[data-remove="0"]') as HTMLElement).click()
+    await flush()
+    expect(ask).toHaveBeenCalledWith(
+      'Remove a time block, bi-weekly, odd week, Friday 15:00 to 16:00?',
+      'Remove',
+    )
+    expect(application.schedule.isEmpty).toBe(true)
   })
 })
 
 describe('moving and resizing a meeting', () => {
   it('moves a meeting to the slot it is dragged to, held where it was pressed', () => {
     const { root, application } = mounted(new Schedule([lab]))
-    press(meetingElement(root, 0), point(Weekday.monday, '10:30'))
-    expect(meetingElement(root, 0).classList.contains('dragging')).toBe(true)
+    press(bookingElement(root, 0), point(Weekday.monday, '10:30'))
+    expect(bookingElement(root, 0).classList.contains('dragging')).toBe(true)
     moveTo(point(Weekday.thursday, '14:30'))
     release(point(Weekday.thursday, '14:30'))
     expect(describeMeetings(application.schedule)).toEqual(['Lab meeting Thursday 14:00-15:00'])
@@ -165,7 +243,7 @@ describe('moving and resizing a meeting', () => {
 
   it('refuses a drop that would overlap another meeting, and says why', () => {
     const { root, application } = mounted(new Schedule([lab, ana]))
-    press(meetingElement(root, 0), point(Weekday.monday, '10:00'))
+    press(bookingElement(root, 0), point(Weekday.monday, '10:00'))
     moveTo(point(Weekday.tuesday, '10:30'))
     expect(root.querySelector('.preview.refused')).not.toBeNull()
     release(point(Weekday.tuesday, '10:30'))
@@ -185,7 +263,7 @@ describe('moving and resizing a meeting', () => {
 
   it('puts the meeting back on Escape', () => {
     const { root, application } = mounted(new Schedule([lab]))
-    press(meetingElement(root, 0), point(Weekday.monday, '10:00'))
+    press(bookingElement(root, 0), point(Weekday.monday, '10:00'))
     moveTo(point(Weekday.friday, '15:00'))
     document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }))
     release(point(Weekday.friday, '15:00'))
@@ -195,7 +273,7 @@ describe('moving and resizing a meeting', () => {
 
   it('opens the dialog of a meeting clicked without a drag', () => {
     const { root, application } = mounted(new Schedule([lab]))
-    press(meetingElement(root, 0), point(Weekday.monday, '10:00'))
+    press(bookingElement(root, 0), point(Weekday.monday, '10:00'))
     release(point(Weekday.monday, '10:00'))
     expect(dialog().querySelector('h2')?.textContent).toBe('Lab meeting')
     typeTitle('Lab')
@@ -204,7 +282,7 @@ describe('moving and resizing a meeting', () => {
 
   it('opens the dialog of a meeting from the keyboard', () => {
     const { root } = mounted(new Schedule([lab]))
-    meetingElement(root, 0).dispatchEvent(
+    bookingElement(root, 0).dispatchEvent(
       new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }),
     )
     expect(dialog()).not.toBeNull()
@@ -222,7 +300,7 @@ describe('removing a meeting', () => {
 
   it('changes nothing when the Organizer does not confirm', async () => {
     const { root, application } = mounted(new Schedule([lab]), { ask: vi.fn(async () => false) })
-    meetingElement(root, 0).dispatchEvent(
+    bookingElement(root, 0).dispatchEvent(
       new KeyboardEvent('keydown', { key: 'Delete', bubbles: true }),
     )
     await flush()
@@ -231,7 +309,7 @@ describe('removing a meeting', () => {
 
   it('asks from the dialog of the meeting', async () => {
     const { root, application, ask } = mounted(new Schedule([lab]))
-    meetingElement(root, 0).dispatchEvent(new KeyboardEvent('keydown', { key: ' ', bubbles: true }))
+    bookingElement(root, 0).dispatchEvent(new KeyboardEvent('keydown', { key: ' ', bubbles: true }))
     ;(dialog().querySelector('[data-action="remove"]') as HTMLElement).click()
     await flush()
     expect(ask).toHaveBeenCalledTimes(1)

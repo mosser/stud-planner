@@ -16,7 +16,12 @@ project adheres to [Semantic Versioning](https://semver.org/).
 - Adding a meeting by pressing a free slot and dragging down, on the odd or the even
   week: the meeting is held in that week, weekly or bi-weekly;
   moving it by dragging, resizing it by its lower edge, and changing it in its dialog.
-- Removing a meeting from its remove mark, the Delete key or its dialog, once confirmed.
+- Time blocks: the recurring time the Organizer is not available for meetings, with an
+  optional title, drawn striped. On the odd or the even week, a **Meeting | Time block**
+  switch says what a press adds; on the overview, a press adds a time block held in both
+  weeks. No meeting can be booked in a time block.
+- Removing a meeting or a time block from its remove mark, the Delete key or its dialog,
+  once confirmed.
 - A slot is never booked twice: a change or a file that would make two meetings overlap is
   refused, and the meeting overlapped is named.
 - The McMaster University colour palette, in a light and a dark theme: weekly meetings in

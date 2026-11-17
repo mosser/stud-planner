@@ -2,13 +2,15 @@ import { describe, expect, it } from 'vitest'
 import { Cadence, Parity } from './cadence.ts'
 import { Duration } from './duration.ts'
 import {
+  bookingBroken,
+  bookingsOverlap,
   cadenceChoice,
   durationWritten,
   fileRefused,
-  meetingBroken,
+  labelOf,
   meetingOfTheFile,
-  meetingsOverlap,
   missingField,
+  nameOf,
   notAScheduleFile,
   notJson,
   notKept,
@@ -20,7 +22,7 @@ import {
   unknownVersion,
   valueNotAllowed,
 } from './findings.ts'
-import { aMeeting } from './meeting.fixture.ts'
+import { aMeeting, aTimeBlock } from './meeting.fixture.ts'
 import { Weekday } from './weekday.ts'
 
 describe('the findings', () => {
@@ -41,11 +43,32 @@ describe('the findings', () => {
     expect(removalQuestion(ana)).toBe('Remove Ana, bi-weekly, odd week, Thursday 10:00 to 11:00?')
   })
 
+  it('name a time block by its title, or as a time block', () => {
+    expect(labelOf(aTimeBlock())).toBe('Time block')
+    expect(labelOf(aTimeBlock({ title: 'Teaching' }))).toBe('Teaching')
+    expect(labelOf(aMeeting())).toBe('Lab meeting')
+    expect(nameOf(aTimeBlock())).toBe('a time block')
+    expect(nameOf(aTimeBlock({ title: 'Teaching' }))).toBe('the time block Teaching')
+    expect(nameOf(aMeeting())).toBe('Lab meeting')
+    expect(removalQuestion(aTimeBlock({ title: 'Teaching' }))).toBe(
+      'Remove the time block Teaching, weekly, Wednesday 14:00 to 16:00?',
+    )
+    expect(overlap(aMeeting(), aTimeBlock())).toBe(
+      'Overlaps a time block, every week, 14:00 to 16:00.',
+    )
+  })
+
   it('ask to confirm a replacement by a schedule file', () => {
-    expect(replacementQuestion(1, 'a.json')).toBe(
+    expect(replacementQuestion(2, 1, 'a.json')).toBe(
+      'Replace the 2 meetings and 1 time block of the schedule with those of a.json?',
+    )
+    expect(replacementQuestion(0, 3, 'a.json')).toBe(
+      'Replace the 0 meetings and 3 time blocks of the schedule with those of a.json?',
+    )
+    expect(replacementQuestion(1, 0, 'a.json')).toBe(
       'Replace the 1 meeting of the schedule with those of a.json?',
     )
-    expect(replacementQuestion(3, 'a.json')).toBe(
+    expect(replacementQuestion(3, 0, 'a.json')).toBe(
       'Replace the 3 meetings of the schedule with those of a.json?',
     )
   })
@@ -89,10 +112,10 @@ describe('the findings', () => {
     expect(valueNotAllowed(part, 'weekday', 'sunday')).toBe(
       'meeting 2 cannot have "sunday" as its weekday.',
     )
-    expect(meetingBroken(part, 'A meeting needs a title.')).toBe(
+    expect(bookingBroken(part, 'A meeting needs a title.')).toBe(
       'meeting 2: A meeting needs a title.',
     )
-    expect(meetingsOverlap('meeting 1', part, 'Overlaps Ana.')).toBe(
+    expect(bookingsOverlap('meeting 1', part, 'Overlaps Ana.')).toBe(
       'meeting 1 and meeting 2 overlap. Overlaps Ana.',
     )
   })

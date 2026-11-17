@@ -1,4 +1,5 @@
-import { Cadence, type Parity } from '../domain/cadence.ts'
+import type { Booking } from '../domain/booking.ts'
+import type { Cadence } from '../domain/cadence.ts'
 import { theDay } from '../domain/day.ts'
 import {
   fileRefused,
@@ -8,16 +9,16 @@ import {
   replacementQuestion,
   setAside,
 } from '../domain/findings.ts'
-import type { Meeting } from '../domain/meeting.ts'
 import type { Schedule } from '../domain/schedule.ts'
 import { readScheduleFile, scheduleFileName, scheduleFileOf } from '../io/schedule-file.ts'
 import type { Restored, ScheduleStore } from '../io/schedule-store.ts'
+import { type Kind, openBookingDialog } from './booking-dialog.ts'
 import { askToConfirm } from './confirmation.ts'
 import {
+  bookingMoved,
+  bookingResized,
   cadenceOffered,
-  cadencesAddedIn,
-  meetingMoved,
-  meetingResized,
+  cadencesAddedFrom,
   type Slot,
   type Span,
   spanDragged,
@@ -25,9 +26,8 @@ import {
   type Tab,
   tabs,
 } from './gestures.ts'
-import { cadenceClass, gridOf, rowsOf, slotAt } from './grid.ts'
+import { cadenceClass, gridOf, kindClass, rowsOf, slotAt } from './grid.ts'
 import { html } from './html.ts'
-import { openMeetingDialog } from './meeting-dialog.ts'
 
 /** What the page needs from its surroundings to be mounted. */
 export interface ApplicationContext {
@@ -50,22 +50,25 @@ export interface Application {
 }
 
 const tabNames: Record<Tab, string> = { odd: 'Odd week', even: 'Even week', overview: 'Overview' }
+const kindNames: Record<Kind, string> = { meeting: 'Meeting', 'time-block': 'Time block' }
+const kinds: readonly Kind[] = ['meeting', 'time-block']
 
 /** A drag in progress on the grid; it has moved once the pointer left the slot pressed. */
 type Drag =
   | {
       readonly kind: 'add'
       readonly pressed: Slot
-      readonly parity: Parity
+      readonly adds: Kind
+      readonly cadence: Cadence
       span: Span
       hasMoved: boolean
     }
   | {
       readonly kind: 'move' | 'resize'
       readonly pressed: Slot
-      readonly meeting: Meeting
+      readonly booking: Booking
       readonly heldAt: number
-      candidate: Meeting
+      candidate: Booking
       hasMoved: boolean
     }
 
@@ -79,6 +82,8 @@ export function mountApplication(root: HTMLElement, context: ApplicationContext)
   const ask = context.ask ?? ((question, confirm) => askToConfirm(page, question, confirm))
   let schedule = context.restored.schedule
   let tab: Tab = 'odd'
+  /** What a press adds on a week's tab; on the overview, a press adds a time block. */
+  let adding: Kind = 'meeting'
   let isKept = context.store.isKept
   const isSetAside = context.restored.wasSetAside
   let refusal: string | undefined
@@ -93,6 +98,22 @@ export function mountApplication(root: HTMLElement, context: ApplicationContext)
     return html`${kept}${aside}${refused}`
   }
 
+  /** What a press on a free slot adds on the tab shown. */
+  function addedOnTab(): Kind {
+    return tab === 'overview' ? 'time-block' : adding
+  }
+
+  function addingSwitch() {
+    if (tab === 'overview') {
+      return ''
+    }
+    return html`<div class="adding" role="radiogroup" aria-label="Added by a press">${kinds.map(
+      (kind) =>
+        html`<button type="button" role="radio" data-adding="${kind}"
+          aria-checked="${kind === adding ? 'true' : 'false'}">${kindNames[kind]}</button>`,
+    )}</div>`
+  }
+
   function render(): void {
     root.innerHTML = html`
       <header class="masthead"><h1>Stud Planner</h1></header>
@@ -104,6 +125,7 @@ export function mountApplication(root: HTMLElement, context: ApplicationContext)
               html`<button type="button" role="tab" data-tab="${each}"
                 aria-selected="${each === tab ? 'true' : 'false'}">${tabNames[each]}</button>`,
           )}</div>
+          ${addingSwitch()}
           <div class="actions">
             <button type="button" data-action="save">Save</button>
             <button type="button" data-action="load">Load</button>
@@ -134,33 +156,35 @@ export function mountApplication(root: HTMLElement, context: ApplicationContext)
     render()
   }
 
-  function meetingOfRank(rank: string | undefined): Meeting | undefined {
-    return schedule.meetings[Number(rank)]
+  function bookingOfRank(rank: string | undefined): Booking | undefined {
+    return rank === undefined ? undefined : schedule.bookings[Number(rank)]
   }
 
-  /** Opens the dialog of a meeting added from the week of that parity: it is held in it. */
-  function openNew(span: Span, parity: Parity): void {
-    openMeetingDialog(page, {
+  /** Opens the dialog of a booking added from the tab shown: it is held in its week, or both. */
+  function openNew(adds: Kind, span: Span, cadence: Cadence): void {
+    openBookingDialog(page, {
       schedule,
-      proposal: { ...span, cadence: Cadence.biWeekly(parity) },
-      cadences: cadencesAddedIn(parity),
-      onDone: (meeting) => change(schedule.afterAdding(meeting)),
+      kind: adds,
+      proposal: { ...span, cadence },
+      cadences: cadencesAddedFrom(tab),
+      onDone: (booking) => change(schedule.afterAdding(booking)),
     })
   }
 
-  function openExisting(meeting: Meeting): void {
-    openMeetingDialog(page, {
+  function openExisting(booking: Booking): void {
+    openBookingDialog(page, {
       schedule,
-      meeting,
-      proposal: { ...meeting, cadence: meeting.cadence },
-      onDone: (changed) => change(schedule.afterReplacing(meeting, changed)),
+      kind: booking.isTimeBlock ? 'time-block' : 'meeting',
+      booking,
+      proposal: booking.timing,
+      onDone: (changed) => change(schedule.afterReplacing(booking, changed)),
       onRemove: (removed) => void remove(removed),
     })
   }
 
-  async function remove(meeting: Meeting): Promise<void> {
-    if (await ask(removalQuestion(meeting), 'Remove')) {
-      change(schedule.afterRemoving(meeting))
+  async function remove(booking: Booking): Promise<void> {
+    if (await ask(removalQuestion(booking), 'Remove')) {
+      change(schedule.afterRemoving(booking))
     }
   }
 
@@ -170,7 +194,11 @@ export function mountApplication(root: HTMLElement, context: ApplicationContext)
       refuse(fileRefused(file.name, read.reason))
       return
     }
-    const question = replacementQuestion(schedule.meetings.length, file.name)
+    const question = replacementQuestion(
+      schedule.meetings.length,
+      schedule.timeBlocks.length,
+      file.name,
+    )
     if (schedule.isEmpty || (await ask(question, 'Replace'))) {
       change(read.schedule)
     }
@@ -184,9 +212,15 @@ export function mountApplication(root: HTMLElement, context: ApplicationContext)
       render()
       return
     }
-    const removed = meetingOfRank(target.closest<HTMLElement>('[data-remove]')?.dataset.remove)
+    const removed = bookingOfRank(target.closest<HTMLElement>('[data-remove]')?.dataset.remove)
     if (removed !== undefined) {
       void remove(removed)
+      return
+    }
+    const kind = target.closest<HTMLElement>('[data-adding]')?.dataset.adding
+    if (kind !== undefined && kinds.includes(kind as Kind)) {
+      adding = kind as Kind
+      render()
       return
     }
     const action = target.closest<HTMLElement>('[data-action]')?.dataset.action
@@ -205,23 +239,23 @@ export function mountApplication(root: HTMLElement, context: ApplicationContext)
 
   root.addEventListener('keydown', (event) => {
     const target = event.target as Element
-    const meeting = meetingOfRank(target.closest<HTMLElement>('[data-meeting]')?.dataset.meeting)
-    if (meeting === undefined || target.closest('[data-remove]') !== null) {
+    const booking = bookingOfRank(target.closest<HTMLElement>('[data-booking]')?.dataset.booking)
+    if (booking === undefined || target.closest('[data-remove]') !== null) {
       return
     }
     if (event.key === 'Enter' || event.key === ' ') {
       event.preventDefault()
-      openExisting(meeting)
+      openExisting(booking)
     }
     if (event.key === 'Delete' || event.key === 'Backspace') {
       event.preventDefault()
-      void remove(meeting)
+      void remove(booking)
     }
   })
 
   attachDrags()
 
-  /** Adding, moving and resizing a meeting by dragging on the grid (ADR 0004). */
+  /** Adding, moving and resizing a booking by dragging on the grid (ADR 0004). */
   function attachDrags(): void {
     let drag: Drag | undefined
 
@@ -240,14 +274,19 @@ export function mountApplication(root: HTMLElement, context: ApplicationContext)
     function showDrag(current: Drag): void {
       if (current.kind === 'add') {
         const { span } = current
-        show(span.weekday.key, rowsOf(span), current.parity.key)
+        show(
+          span.weekday.key,
+          rowsOf(span),
+          `${current.adds} ${current.cadence.parity?.key ?? 'weekly'}`,
+        )
         return
       }
-      const isRefused = schedule.overlapOf(current.candidate, current.meeting) !== undefined
+      const isRefused = schedule.overlapOf(current.candidate, current.booking) !== undefined
+      const classes = `${kindClass(current.booking)} ${cadenceClass(current.booking)}`
       show(
         current.candidate.weekday.key,
         rowsOf(current.candidate),
-        `${cadenceClass(current.meeting)}${isRefused ? ' refused' : ''}`,
+        `${classes}${isRefused ? ' refused' : ''}`,
       )
     }
 
@@ -266,11 +305,11 @@ export function mountApplication(root: HTMLElement, context: ApplicationContext)
         return
       }
       if (drag.kind === 'add') {
-        drag.span = spanDragged(schedule, Cadence.biWeekly(drag.parity), drag.pressed, slot.quarter)
+        drag.span = spanDragged(schedule, drag.cadence, drag.pressed, slot.quarter)
       } else if (drag.kind === 'move') {
-        drag.candidate = meetingMoved(drag.meeting, drag.heldAt, slot)
+        drag.candidate = bookingMoved(drag.booking, drag.heldAt, slot)
       } else {
-        drag.candidate = meetingResized(drag.meeting, slot)
+        drag.candidate = bookingResized(drag.booking, slot)
       }
       drag.hasMoved ||= !isSameSlot(slot, drag.pressed)
       showDrag(drag)
@@ -286,31 +325,31 @@ export function mountApplication(root: HTMLElement, context: ApplicationContext)
       if (finished.kind === 'add') {
         const span = finished.hasMoved
           ? finished.span
-          : spanPressed(schedule, Cadence.biWeekly(finished.parity), finished.pressed)
-        openNew(span, finished.parity)
+          : spanPressed(schedule, finished.cadence, finished.pressed)
+        openNew(finished.adds, span, finished.cadence)
         return
       }
       if (!finished.hasMoved && finished.kind === 'move') {
-        openExisting(finished.meeting)
+        openExisting(finished.booking)
         return
       }
-      apply(finished.meeting, finished.candidate)
+      apply(finished.booking, finished.candidate)
     }
 
-    function apply(meeting: Meeting, candidate: Meeting): void {
+    function apply(booking: Booking, candidate: Booking): void {
       const isUnchanged =
-        candidate.weekday === meeting.weekday &&
-        candidate.start.equals(meeting.start) &&
-        candidate.duration.equals(meeting.duration)
+        candidate.weekday === booking.weekday &&
+        candidate.start.equals(booking.start) &&
+        candidate.duration.equals(booking.duration)
       if (isUnchanged) {
         return
       }
-      const other = schedule.overlapOf(candidate, meeting)
+      const other = schedule.overlapOf(candidate, booking)
       if (other !== undefined) {
         refuse(overlap(candidate, other))
         return
       }
-      change(schedule.afterReplacing(meeting, candidate))
+      change(schedule.afterReplacing(booking, candidate))
     }
 
     function onEscape(event: KeyboardEvent): void {
@@ -340,24 +379,24 @@ export function mountApplication(root: HTMLElement, context: ApplicationContext)
         return
       }
       event.preventDefault()
-      const resized = meetingOfRank(target.closest<HTMLElement>('[data-resize]')?.dataset.resize)
-      const held = target.closest<HTMLElement>('[data-meeting]')
-      const moved = meetingOfRank(held?.dataset.meeting)
+      const resized = bookingOfRank(target.closest<HTMLElement>('[data-resize]')?.dataset.resize)
+      const held = target.closest<HTMLElement>('[data-booking]')
+      const moved = bookingOfRank(held?.dataset.booking)
       if (resized !== undefined) {
-        const resize = { pressed: slot, meeting: resized, heldAt: 0, candidate: resized }
+        const resize = { pressed: slot, booking: resized, heldAt: 0, candidate: resized }
         begin({ kind: 'resize', ...resize, hasMoved: false })
         return
       }
       if (moved !== undefined) {
         const heldAt = slot.quarter - theDay.quarterAt(moved.start)
-        const move = { pressed: slot, meeting: moved, heldAt, candidate: moved }
+        const move = { pressed: slot, booking: moved, heldAt, candidate: moved }
         begin({ kind: 'move', ...move, hasMoved: false }, held ?? undefined)
         return
       }
-      const parity = cadenceOffered(schedule, tab, slot)?.parity
-      if (parity !== undefined) {
-        const span = spanDragged(schedule, Cadence.biWeekly(parity), slot, slot.quarter)
-        begin({ kind: 'add', pressed: slot, parity, span, hasMoved: false })
+      const cadence = cadenceOffered(schedule, tab, slot)
+      if (cadence !== undefined) {
+        const span = spanDragged(schedule, cadence, slot, slot.quarter)
+        begin({ kind: 'add', pressed: slot, adds: addedOnTab(), cadence, span, hasMoved: false })
       }
     })
   }

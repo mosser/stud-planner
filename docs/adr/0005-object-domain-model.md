@@ -7,7 +7,7 @@
 ## Context
 
 The rules of a schedule (a start and a duration within the day, a parity only
-for a bi-weekly meeting, no two meetings in the same slot of the same week) are what the system is for. They must hold whatever screen, drag or
+for a bi-weekly meeting, no two bookings in the same slot of the same week) are what the system is for. They must hold whatever screen, drag or
 file changes a meeting, and be read against `docs/specs/` by someone who
 knows the rules and not TypeScript.
 
@@ -21,13 +21,13 @@ Options considered:
 
 ## Decision
 
-- `Schedule`, `Meeting` and their values (`Cadence`, `Parity`, `Weekday`,
-  `TimeOfDay`, `Duration`) are immutable classes in
-  `src/domain/` whose constructor throws on a broken invariant. A change
-  returns an `after…` copy: `meeting.afterMovingTo(weekday, start)`,
-  `schedule.afterAdding(meeting)`.
-- The schedule refers to its meetings by reference, never by an identifier
-  map. Whether two meetings overlap is derived from them, never stored
+- `Schedule`, its bookings (`Meeting`, `TimeBlock`, ADR 0011) and their
+  values (`Cadence`, `Parity`, `Weekday`, `TimeOfDay`, `Duration`) are
+  immutable classes in `src/domain/` whose constructor throws on a broken
+  invariant. A change returns an `after…` copy:
+  `meeting.afterMovingTo(weekday, start)`, `schedule.afterAdding(booking)`.
+- The schedule refers to its bookings by reference, never by an identifier
+  map. Whether two bookings overlap is derived from them, never stored
   (ADR 0009).
 - Names are the glossary's (`docs/specs/domain-model.md`): a new concept is a
   glossary line first. One word, one meaning. No abbreviation, no

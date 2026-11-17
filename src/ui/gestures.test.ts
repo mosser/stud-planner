@@ -4,10 +4,10 @@ import { aMeeting } from '../domain/meeting.fixture.ts'
 import { Schedule } from '../domain/schedule.ts'
 import { Weekday } from '../domain/weekday.ts'
 import {
+  bookingMoved,
+  bookingResized,
   cadenceOffered,
-  cadencesAddedIn,
-  meetingMoved,
-  meetingResized,
+  cadencesAddedFrom,
   parityOf,
   type Span,
   spanDragged,
@@ -39,8 +39,9 @@ describe('the cadence offered from a free slot', () => {
     expect(cadenceOffered(schedule, 'even', monday(8))).toBe(even)
   })
 
-  it('is none on the overview, where nothing is added', () => {
-    expect(cadenceOffered(schedule, 'overview', monday(0))).toBeUndefined()
+  it('is weekly on the overview, from a slot free in both weeks', () => {
+    expect(cadenceOffered(schedule, 'overview', monday(0))).toBe(Cadence.weekly)
+    expect(cadenceOffered(schedule, 'overview', monday(8))).toBeUndefined()
   })
 
   it('is none from a slot taken in the week of the tab', () => {
@@ -48,10 +49,14 @@ describe('the cadence offered from a free slot', () => {
   })
 })
 
-describe('a meeting added from a week', () => {
-  it('is held in that week: bi-weekly in it, or weekly', () => {
-    expect(cadencesAddedIn(Parity.odd)).toEqual([Cadence.weekly, odd])
-    expect(cadencesAddedIn(Parity.even)).toEqual([Cadence.weekly, even])
+describe('a booking added from a tab', () => {
+  it('is weekly from the overview', () => {
+    expect(cadencesAddedFrom('overview')).toEqual([Cadence.weekly])
+  })
+
+  it('is held in the week of the tab: bi-weekly in it, or weekly', () => {
+    expect(cadencesAddedFrom('odd')).toEqual([Cadence.weekly, odd])
+    expect(cadencesAddedFrom('even')).toEqual([Cadence.weekly, even])
   })
 })
 
@@ -79,7 +84,7 @@ describe('adding by dragging', () => {
 
 describe('moving and resizing', () => {
   it('moves a meeting by the quarter it is held at, keeping its duration', () => {
-    const moved = meetingMoved(ana, 2, { weekday: Weekday.friday, quarter: 22 })
+    const moved = bookingMoved(ana, 2, { weekday: Weekday.friday, quarter: 22 })
     expect([moved.weekday, moved.start.toString(), moved.duration.quarters]).toEqual([
       Weekday.friday,
       '13:00',
@@ -88,14 +93,14 @@ describe('moving and resizing', () => {
   })
 
   it('keeps a moved meeting within the day', () => {
-    expect(meetingMoved(ana, 3, monday(0)).start.toString()).toBe('08:00')
-    expect(meetingMoved(ana, 0, monday(39)).end.toString()).toBe('18:00')
+    expect(bookingMoved(ana, 3, monday(0)).start.toString()).toBe('08:00')
+    expect(bookingMoved(ana, 0, monday(39)).end.toString()).toBe('18:00')
   })
 
   it('resizes a meeting to end with the quarter reached, one quarter at least', () => {
-    expect(meetingResized(ana, monday(13)).end.toString()).toBe('11:30')
-    expect(meetingResized(ana, monday(2)).duration.quarters).toBe(1)
-    expect(meetingResized(ana, { weekday: Weekday.friday, quarter: 9 }).weekday).toBe(
+    expect(bookingResized(ana, monday(13)).end.toString()).toBe('11:30')
+    expect(bookingResized(ana, monday(2)).duration.quarters).toBe(1)
+    expect(bookingResized(ana, { weekday: Weekday.friday, quarter: 9 }).weekday).toBe(
       Weekday.monday,
     )
   })

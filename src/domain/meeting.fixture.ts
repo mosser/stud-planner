@@ -1,6 +1,7 @@
 import { Cadence } from './cadence.ts'
 import { Duration } from './duration.ts'
 import { Meeting, type MeetingDescription } from './meeting.ts'
+import { TimeBlock, type TimeBlockDescription } from './time-block.ts'
 import { TimeOfDay } from './time-of-day.ts'
 import { Weekday } from './weekday.ts'
 
@@ -21,6 +22,17 @@ export function aMeeting(changes: Partial<MeetingDescription> = {}): Meeting {
     weekday: Weekday.monday,
     start: at('10:00'),
     duration: Duration.ofQuarters(4),
+    ...changes,
+  })
+}
+
+/** A time block on Wednesday from 14:00 to 16:00, weekly, without a title, unless told otherwise. */
+export function aTimeBlock(changes: Partial<TimeBlockDescription> = {}): TimeBlock {
+  return new TimeBlock({
+    cadence: Cadence.weekly,
+    weekday: Weekday.wednesday,
+    start: at('14:00'),
+    duration: Duration.ofQuarters(8),
     ...changes,
   })
 }

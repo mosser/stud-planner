@@ -1,19 +1,22 @@
+import type { Booking, Timing } from '../domain/booking.ts'
 import { Cadence, Parity } from '../domain/cadence.ts'
 import { Duration } from '../domain/duration.ts'
 import {
-  meetingBroken,
+  bookingBroken,
+  bookingsOverlap,
   meetingOfTheFile,
-  meetingsOverlap,
   missingField,
   notAScheduleFile,
   notJson,
   overlap,
+  timeBlockOfTheFile,
   unknownField,
   unknownVersion,
   valueNotAllowed,
 } from '../domain/findings.ts'
 import { Meeting } from '../domain/meeting.ts'
 import { Schedule } from '../domain/schedule.ts'
+import { TimeBlock } from '../domain/time-block.ts'
 import { TimeOfDay } from '../domain/time-of-day.ts'
 import { Weekday } from '../domain/weekday.ts'
 
@@ -22,19 +25,30 @@ export const scheduleFileName = 'stud-planner-schedule.json'
 
 const format = 'stud-planner/schedule'
 const version = 1
-const scheduleFields = ['format', 'version', 'meetings']
-const meetingFields = ['title', 'cadence', 'parity', 'weekday', 'start', 'duration', 'note']
+const scheduleFields = ['format', 'version', 'meetings', 'timeBlocks']
+const timingFields = ['cadence', 'parity', 'weekday', 'start', 'duration']
+const meetingFields = ['title', ...timingFields, 'note']
+const timeBlockFields = ['title', ...timingFields]
 const theSchedule = 'the schedule'
 
-/** A meeting as the schedule file holds it. */
-interface MeetingContent {
-  readonly title: string
+/** When a booking takes its slots, as the schedule file holds it. */
+interface TimingContent {
   readonly cadence: string
   readonly parity?: string
   readonly weekday: string
   readonly start: string
   readonly duration: number
+}
+
+/** A meeting as the schedule file holds it. */
+interface MeetingContent extends TimingContent {
+  readonly title: string
   readonly note?: string
+}
+
+/** A time block as the schedule file holds it. */
+interface TimeBlockContent extends TimingContent {
+  readonly title?: string
 }
 
 /** The schedule as the schedule file holds it, and as the browser keeps it (ADR 0006). */
@@ -42,6 +56,7 @@ export interface ScheduleContent {
   readonly format: string
   readonly version: number
   readonly meetings: readonly MeetingContent[]
+  readonly timeBlocks: readonly TimeBlockContent[]
 }
 
 /** What reading a schedule file gives: the schedule, or why the file is refused. */
@@ -49,21 +64,39 @@ export type ScheduleRead =
   | { readonly isRefused: false; readonly schedule: Schedule }
   | { readonly isRefused: true; readonly reason: string }
 
+function contentOfTiming(booking: Booking): TimingContent {
+  return {
+    cadence: booking.cadence.key,
+    ...(booking.cadence.parity === undefined ? {} : { parity: booking.cadence.parity.key }),
+    weekday: booking.weekday.key,
+    start: booking.start.toString(),
+    duration: booking.duration.minutes,
+  }
+}
+
 function contentOfMeeting(meeting: Meeting): MeetingContent {
   return {
     title: meeting.title,
-    cadence: meeting.cadence.key,
-    ...(meeting.cadence.parity === undefined ? {} : { parity: meeting.cadence.parity.key }),
-    weekday: meeting.weekday.key,
-    start: meeting.start.toString(),
-    duration: meeting.duration.minutes,
+    ...contentOfTiming(meeting),
     ...(meeting.note === undefined ? {} : { note: meeting.note }),
+  }
+}
+
+function contentOfTimeBlock(block: TimeBlock): TimeBlockContent {
+  return {
+    ...(block.title === undefined ? {} : { title: block.title }),
+    ...contentOfTiming(block),
   }
 }
 
 /** The content of the schedule file of a schedule, in `docs/specs/schedule-file.md`. */
 export function contentOf(schedule: Schedule): ScheduleContent {
-  return { format, version, meetings: schedule.meetings.map(contentOfMeeting) }
+  return {
+    format,
+    version,
+    meetings: schedule.meetings.map(contentOfMeeting),
+    timeBlocks: schedule.timeBlocks.map(contentOfTimeBlock),
+  }
 }
 
 /** The text of the schedule file of a schedule: JSON, indented, ending with a new line. */
@@ -135,24 +168,56 @@ function cadenceOf(part: string, record: Record<string, unknown>): Cadence {
   return Cadence.biWeekly(parity)
 }
 
-function meetingOf(part: string, value: unknown): Meeting {
-  if (!isRecord(value)) {
-    throw new Refusal(valueNotAllowed(theSchedule, 'meetings', value))
+function timingOf(part: string, record: Record<string, unknown>): Timing {
+  return {
+    cadence: cadenceOf(part, record),
+    weekday: fieldRead(part, record, 'weekday', weekday),
+    start: fieldRead(part, record, 'start', time),
+    duration: fieldRead(part, record, 'duration', duration),
   }
-  checkFields(part, value, meetingFields)
-  const description = {
-    title: fieldRead(part, value, 'title', text),
-    cadence: cadenceOf(part, value),
-    weekday: fieldRead(part, value, 'weekday', weekday),
-    start: fieldRead(part, value, 'start', time),
-    duration: fieldRead(part, value, 'duration', duration),
-    note: 'note' in value ? fieldRead(part, value, 'note', text) : undefined,
-  }
+}
+
+/** The booking `build` makes, or a refusal that says which part of the file breaks a rule. */
+function built<T extends Booking>(part: string, build: () => T): T {
   try {
-    return new Meeting(description)
+    return build()
   } catch (error) {
-    throw new Refusal(meetingBroken(part, (error as Error).message))
+    throw new Refusal(bookingBroken(part, (error as Error).message))
   }
+}
+
+function recordOf(list: string, value: unknown): Record<string, unknown> {
+  if (!isRecord(value)) {
+    throw new Refusal(valueNotAllowed(theSchedule, list, value))
+  }
+  return value
+}
+
+function meetingOf(part: string, value: unknown): Meeting {
+  const record = recordOf('meetings', value)
+  checkFields(part, record, meetingFields)
+  const description = {
+    title: fieldRead(part, record, 'title', text),
+    ...timingOf(part, record),
+    note: 'note' in record ? fieldRead(part, record, 'note', text) : undefined,
+  }
+  return built(part, () => new Meeting(description))
+}
+
+function timeBlockOf(part: string, value: unknown): TimeBlock {
+  const record = recordOf('timeBlocks', value)
+  checkFields(part, record, timeBlockFields)
+  const description = {
+    title: 'title' in record ? fieldRead(part, record, 'title', text) : undefined,
+    ...timingOf(part, record),
+  }
+  return built(part, () => new TimeBlock(description))
+}
+
+function listOf(content: Record<string, unknown>, field: string): unknown[] {
+  return fieldRead(theSchedule, content, field, (value) =>
+    Array.isArray(value) ? (value as unknown[]) : undefined,
+  )
 }
 
 function scheduleOf(content: unknown): Schedule {
@@ -163,17 +228,22 @@ function scheduleOf(content: unknown): Schedule {
   if (required(theSchedule, content, 'version') !== version) {
     throw new Refusal(unknownVersion(content.version))
   }
-  const meetings = fieldRead(theSchedule, content, 'meetings', (value) =>
-    Array.isArray(value) ? (value as unknown[]) : undefined,
-  ).map((value, index) => meetingOf(meetingOfTheFile(index + 1), value))
-  const pair = Schedule.firstOverlapAmong(meetings)
+  const meetings = listOf(content, 'meetings').map((value, index) =>
+    meetingOf(meetingOfTheFile(index + 1), value),
+  )
+  const timeBlocks = 'timeBlocks' in content ? listOf(content, 'timeBlocks') : []
+  const blocks = timeBlocks.map((value, index) => timeBlockOf(timeBlockOfTheFile(index + 1), value))
+  const partOf = new Map<Booking, string>([
+    ...meetings.map((meeting, index) => [meeting, meetingOfTheFile(index + 1)] as const),
+    ...blocks.map((block, index) => [block, timeBlockOfTheFile(index + 1)] as const),
+  ])
+  const pair = Schedule.firstOverlapAmong([...meetings, ...blocks])
   if (pair !== undefined) {
-    const [meeting, other] = pair
-    const part = meetingOfTheFile(meetings.indexOf(other) + 1)
-    const otherPart = meetingOfTheFile(meetings.indexOf(meeting) + 1)
-    throw new Refusal(meetingsOverlap(part, otherPart, overlap(meeting, other)))
+    const [booking, other] = pair
+    const reason = overlap(booking, other)
+    throw new Refusal(bookingsOverlap(partOf.get(other) ?? '', partOf.get(booking) ?? '', reason))
   }
-  return new Schedule(meetings)
+  return new Schedule(meetings, blocks)
 }
 
 /** The schedule a schedule file's content holds, or why it is refused: nothing is taken then. */

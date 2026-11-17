@@ -1,46 +1,62 @@
+import type { Booking } from '../domain/booking.ts'
 import type { Parity } from '../domain/cadence.ts'
 import { theDay } from '../domain/day.ts'
 import { Duration } from '../domain/duration.ts'
-import { cadenceWritten, timeOf } from '../domain/findings.ts'
-import type { Meeting } from '../domain/meeting.ts'
+import { cadenceWritten, labelOf, timeOf } from '../domain/findings.ts'
 import type { Schedule } from '../domain/schedule.ts'
 import type { TimeOfDay } from '../domain/time-of-day.ts'
 import { Weekday } from '../domain/weekday.ts'
 import { parityOf, type Slot, type Tab } from './gestures.ts'
 import { html, type Markup } from './html.ts'
 
-/** How a meeting is named to a screen reader: Lab meeting, weekly, Monday 10:00 to 11:00. */
-export function accessibleNameOf(meeting: Meeting): string {
-  return `${meeting.title}, ${cadenceWritten(meeting.cadence)}, ${meeting.weekday.name} ${timeOf(meeting)}`
+/**
+ * How a booking is named to a screen reader: Lab meeting, weekly, Monday 10:00 to 11:00; a time
+ * block as Time block: Teaching, and so on.
+ */
+export function accessibleNameOf(booking: Booking): string {
+  const name =
+    booking.isTimeBlock && booking.title !== undefined
+      ? `Time block: ${booking.title}`
+      : labelOf(booking)
+  return `${name}, ${cadenceWritten(booking.cadence)}, ${booking.weekday.name} ${timeOf(booking)}`
 }
 
-/** The class a meeting's cadence is drawn with: weekly, odd or even. */
-export function cadenceClass(meeting: Meeting): string {
-  return meeting.cadence.parity?.key ?? 'weekly'
+/** The class a booking's cadence is drawn with: weekly, odd or even. */
+export function cadenceClass(booking: Booking): string {
+  return booking.cadence.parity?.key ?? 'weekly'
 }
 
-/** The rows of the day column a meeting, or where one goes, takes, as a grid-row value. */
+/** The class a booking's kind is drawn with: meeting or time-block. */
+export function kindClass(booking: Booking): string {
+  return booking.isTimeBlock ? 'time-block' : 'meeting'
+}
+
+function classesOf(booking: Booking): string {
+  return `${kindClass(booking)} ${cadenceClass(booking)}`
+}
+
+/** The rows of the day column a booking, or where one goes, takes, as a grid-row value. */
 export function rowsOf(placed: { readonly start: TimeOfDay; readonly duration: Duration }): string {
   return `${theDay.quarterAt(placed.start) + 1} / span ${placed.duration.quarters}`
 }
 
-function removeMark(meeting: Meeting, rank: number): Markup {
+function removeMark(booking: Booking, rank: number): Markup {
   return html`<button type="button" class="remove" data-remove="${rank}"
-    aria-label="Remove ${meeting.title}" title="Remove">×</button>`
+    aria-label="Remove ${labelOf(booking)}" title="Remove">×</button>`
 }
 
-/** A meeting drawn whole: on a week's tab, or on the overview when it shares no time. */
-function wholeMeeting(meeting: Meeting, rank: number): Markup {
-  return html`<div class="meeting ${cadenceClass(meeting)}" style="grid-row: ${rowsOf(meeting)}"
-    data-meeting="${rank}" role="button" tabindex="0" aria-label="${accessibleNameOf(meeting)}">
-    <span class="meeting-title">${meeting.title}</span>
-    <span class="meeting-time">${timeOf(meeting)}</span>
-    ${removeMark(meeting, rank)}
+/** A booking drawn whole: on a week's tab, or on the overview when it shares no time. */
+function wholeBooking(booking: Booking, rank: number): Markup {
+  return html`<div class="booking ${classesOf(booking)}" style="grid-row: ${rowsOf(booking)}"
+    data-booking="${rank}" role="button" tabindex="0" aria-label="${accessibleNameOf(booking)}">
+    <span class="booking-title">${labelOf(booking)}</span>
+    <span class="booking-time">${timeOf(booking)}</span>
+    ${removeMark(booking, rank)}
     <span class="resize" data-resize="${rank}" aria-hidden="true"></span>
   </div>`
 }
 
-/** A part of a meeting's time on the overview: shared with a meeting of the other week, or not. */
+/** A part of a booking's time on the overview: shared with a booking of the other week, or not. */
 export interface Piece {
   readonly start: TimeOfDay
   readonly duration: Duration
@@ -60,28 +76,29 @@ function earlier(one: TimeOfDay, other: TimeOfDay): TimeOfDay {
 }
 
 /**
- * The parts of a meeting's time on the overview, in order: those it shares with a bi-weekly meeting
- * of the other week, on the same weekday, and those it holds alone. A weekly meeting shares none.
+ * The parts of a booking's time on the overview, in order: those it shares with a bi-weekly
+ * booking of the other week, meeting or time block, on the same weekday, and those it holds alone.
+ * A weekly booking shares none.
  */
-export function piecesOf(meeting: Meeting, schedule: Schedule): readonly Piece[] {
-  const parity = meeting.cadence.parity
-  const shared = schedule.meetings
+export function piecesOf(booking: Booking, schedule: Schedule): readonly Piece[] {
+  const parity = booking.cadence.parity
+  const shared = schedule.bookings
     .filter(
       (other) =>
         parity !== undefined &&
-        other.weekday === meeting.weekday &&
+        other.weekday === booking.weekday &&
         other.cadence.parity !== undefined &&
         other.cadence.parity !== parity &&
-        other.start.isBefore(meeting.end) &&
-        meeting.start.isBefore(other.end),
+        other.start.isBefore(booking.end) &&
+        booking.start.isBefore(other.end),
     )
     .map((other) => ({
-      from: later(meeting.start, other.start),
-      to: earlier(meeting.end, other.end),
+      from: later(booking.start, other.start),
+      to: earlier(booking.end, other.end),
     }))
     .sort((one, other) => one.from.minutes - other.from.minutes)
   const pieces: Piece[] = []
-  let reached = meeting.start
+  let reached = booking.start
   for (const { from, to } of shared) {
     if (reached.isBefore(from)) {
       pieces.push(pieceFrom(reached, from, false))
@@ -89,13 +106,13 @@ export function piecesOf(meeting: Meeting, schedule: Schedule): readonly Piece[]
     pieces.push(pieceFrom(from, to, true))
     reached = to
   }
-  if (reached.isBefore(meeting.end)) {
-    pieces.push(pieceFrom(reached, meeting.end, false))
+  if (reached.isBefore(booking.end)) {
+    pieces.push(pieceFrom(reached, booking.end, false))
   }
   return pieces
 }
 
-/** The classes of a piece: cut along its diagonal when shared, rounded at the meeting's ends. */
+/** The classes of a piece: cut along its diagonal when shared, rounded at the booking's ends. */
 function pieceClasses(piece: Piece, rank: number, count: number): string {
   const classes = [piece.isShared ? 'half' : 'alone']
   if (rank === 0) classes.push('first')
@@ -109,40 +126,41 @@ function sharedClass(piece: Piece): string {
 }
 
 /**
- * A bi-weekly meeting on the overview that shares time with a meeting of the other week: the time
+ * A bi-weekly booking on the overview that shares time with a booking of the other week: the time
  * shared cut along its diagonal, the upper left half for odd, the lower right half for even, the
  * rest whole; its title and remove mark over its first piece, its lower edge over its last.
  */
-function piecedMeeting(meeting: Meeting, rank: number, parity: Parity, pieces: readonly Piece[]) {
+function piecedBooking(booking: Booking, rank: number, parity: Parity, pieces: readonly Piece[]) {
   const first = pieces[0] as Piece
   const last = pieces[pieces.length - 1] as Piece
+  const kind = kindClass(booking)
   const drawn = pieces.map((piece, index) => {
     const focus =
-      index === 0 ? html`role="button" tabindex="0" aria-label="${accessibleNameOf(meeting)}"` : ''
-    return html`<div class="meeting piece ${parity.key} ${pieceClasses(piece, index, pieces.length)}"
-      style="grid-row: ${rowsOf(piece)}" data-meeting="${rank}" ${focus}></div>`
+      index === 0 ? html`role="button" tabindex="0" aria-label="${accessibleNameOf(booking)}"` : ''
+    return html`<div class="booking piece ${kind} ${parity.key} ${pieceClasses(piece, index, pieces.length)}"
+      style="grid-row: ${rowsOf(piece)}" data-booking="${rank}" ${focus}></div>`
   })
   return html`${drawn}
-    <div class="meeting-label ${parity.key} ${sharedClass(first)}" style="grid-row: ${rowsOf(first)}">
-      <span class="meeting-title">${meeting.title}</span>${removeMark(meeting, rank)}
+    <div class="booking-label ${parity.key} ${sharedClass(first)}" style="grid-row: ${rowsOf(first)}">
+      <span class="booking-title">${labelOf(booking)}</span>${removeMark(booking, rank)}
     </div>
     <div class="resize-zone ${parity.key} ${sharedClass(last)}" style="grid-row: ${rowsOf(last)}">
       <span class="resize" data-resize="${rank}" aria-hidden="true"></span>
     </div>`
 }
 
-function meetingOnTab(meeting: Meeting, rank: number, tab: Tab, schedule: Schedule): Markup {
-  const parity = meeting.cadence.parity
-  const pieces = piecesOf(meeting, schedule)
+function bookingOnTab(booking: Booking, rank: number, tab: Tab, schedule: Schedule): Markup {
+  const parity = booking.cadence.parity
+  const pieces = piecesOf(booking, schedule)
   if (tab === 'overview' && parity !== undefined && pieces.some((piece) => piece.isShared)) {
-    return piecedMeeting(meeting, rank, parity, pieces)
+    return piecedBooking(booking, rank, parity, pieces)
   }
-  return wholeMeeting(meeting, rank)
+  return wholeBooking(booking, rank)
 }
 
-function isShownOn(meeting: Meeting, tab: Tab): boolean {
+function isShownOn(booking: Booking, tab: Tab): boolean {
   const parity = parityOf(tab)
-  return parity === undefined || meeting.isHeldIn(parity)
+  return parity === undefined || booking.isHeldIn(parity)
 }
 
 function hourLabels(): Markup {
@@ -153,16 +171,19 @@ function hourLabels(): Markup {
   )}`
 }
 
-/** The grid of a tab: a weekday per column, a quarter of the day per row, and its meetings. */
+/**
+ * The grid of a tab: a weekday per column, a quarter of the day per row, and its bookings, each
+ * by its rank among the bookings of the schedule.
+ */
 export function gridOf(schedule: Schedule, tab: Tab): Markup {
-  const shown = schedule.meetings
-    .map((meeting, rank) => ({ meeting, rank }))
-    .filter(({ meeting }) => isShownOn(meeting, tab))
+  const shown = schedule.bookings
+    .map((booking, rank) => ({ booking, rank }))
+    .filter(({ booking }) => isShownOn(booking, tab))
   const columns = Weekday.all.map(
     (weekday) =>
       html`<div class="day" data-weekday="${weekday.key}">${shown
-        .filter(({ meeting }) => meeting.weekday === weekday)
-        .map(({ meeting, rank }) => meetingOnTab(meeting, rank, tab, schedule))}</div>`,
+        .filter(({ booking }) => booking.weekday === weekday)
+        .map(({ booking, rank }) => bookingOnTab(booking, rank, tab, schedule))}</div>`,
   )
   return html`<div class="week" data-shows="${tab}" style="--quarters: ${theDay.quarterCount}">
     <div class="corner"></div>

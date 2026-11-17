@@ -1,7 +1,7 @@
+import type { Booking } from '../domain/booking.ts'
 import { Cadence, Parity } from '../domain/cadence.ts'
 import { theDay } from '../domain/day.ts'
 import { Duration } from '../domain/duration.ts'
-import type { Meeting } from '../domain/meeting.ts'
 import type { Schedule } from '../domain/schedule.ts'
 import type { TimeOfDay } from '../domain/time-of-day.ts'
 import type { Weekday } from '../domain/weekday.ts'
@@ -41,23 +41,24 @@ function isFree(schedule: Schedule, cadence: Cadence, weekday: Weekday, quarter:
 }
 
 /**
- * The cadence a meeting added from a free slot is offered: bi-weekly in the week of the tab.
- * Absent on the overview, where nothing is added, and from a slot taken in that week.
+ * The cadence a booking added from a free slot is offered: bi-weekly in the week of the tab, or,
+ * on the overview, weekly. Absent from a slot taken in a week the cadence is held in.
  */
 export function cadenceOffered(schedule: Schedule, tab: Tab, slot: Slot): Cadence | undefined {
   const parity = parityOf(tab)
-  if (parity === undefined) {
-    return undefined
-  }
-  const cadence = Cadence.biWeekly(parity)
+  const cadence = parity === undefined ? Cadence.weekly : Cadence.biWeekly(parity)
   return isFree(schedule, cadence, slot.weekday, slot.quarter) ? cadence : undefined
 }
 
 /**
- * The cadences a meeting added from the week of that parity may have: it is always held in that
- * week, so it is weekly, or bi-weekly in that week.
+ * The cadences a booking added from a tab may have. From a week, it is held in that week: weekly,
+ * or bi-weekly in it. From the overview, it is held in both: weekly.
  */
-export function cadencesAddedIn(parity: Parity): readonly Cadence[] {
+export function cadencesAddedFrom(tab: Tab): readonly Cadence[] {
+  const parity = parityOf(tab)
+  if (parity === undefined) {
+    return [Cadence.weekly]
+  }
   return Cadence.all.filter((cadence) => cadence.isHeldIn(parity))
 }
 
@@ -95,17 +96,17 @@ export function spanPressed(schedule: Schedule, cadence: Cadence, pressed: Slot)
 }
 
 /**
- * The meeting dragged to a slot, held by the quarter it was pressed at: on the slot's weekday,
+ * The booking dragged to a slot, held by the quarter it was pressed at: on the slot's weekday,
  * lasting as long, within the day.
  */
-export function meetingMoved(meeting: Meeting, heldAt: number, slot: Slot): Meeting {
-  const latestStart = theDay.quarterCount - meeting.duration.quarters
+export function bookingMoved(booking: Booking, heldAt: number, slot: Slot): Booking {
+  const latestStart = theDay.quarterCount - booking.duration.quarters
   const quarter = Math.min(Math.max(slot.quarter - heldAt, 0), latestStart)
-  return meeting.afterMovingTo(slot.weekday, theDay.timeOfQuarter(quarter))
+  return booking.afterMovingTo(slot.weekday, theDay.timeOfQuarter(quarter))
 }
 
-/** The meeting whose lower edge is dragged to a quarter: ending with it, one quarter at least. */
-export function meetingResized(meeting: Meeting, slot: Slot): Meeting {
-  const quarters = Math.max(slot.quarter - theDay.quarterAt(meeting.start) + 1, 1)
-  return meeting.afterResizingTo(Duration.ofQuarters(quarters))
+/** The booking whose lower edge is dragged to a quarter: ending with it, one quarter at least. */
+export function bookingResized(booking: Booking, slot: Slot): Booking {
+  const quarters = Math.max(slot.quarter - theDay.quarterAt(booking.start) + 1, 1)
+  return booking.afterResizingTo(Duration.ofQuarters(quarters))
 }

@@ -27,7 +27,12 @@
   --color-even: var(--mac-gold);
   --color-refused: var(--mac-maroon);
   --color-error: var(--mac-maroon);
-  /* Backgrounds of meetings, mixed with the surface: black text on them in light, white in dark. */
+  /* Time blocks: stripes of grey over the surface, their cadence's colour as a border. */
+  --color-blocked: color-mix(in srgb, var(--mac-grey) 25%, var(--mac-white));
+  /* The kind a press adds, chosen: maroon on its tint in light, white on it in dark. */
+  --color-chosen-text: var(--mac-maroon);
+  --color-chosen-tint: color-mix(in srgb, var(--mac-maroon) 12%, var(--mac-white));
+  /* Backgrounds of bookings, mixed with the surface: black text on them in light, white in dark. */
   --tint: 22%;
   --half-tint: 40%;
   --quarter-height: 0.85rem;
@@ -46,6 +51,9 @@
     --color-odd: var(--mac-accent-sky);
     --color-refused: var(--mac-accent-pink);
     --color-error: var(--mac-accent-pink);
+    --color-blocked: color-mix(in srgb, var(--mac-accent-light-grey) 30%, var(--mac-black));
+    --color-chosen-text: var(--mac-white);
+    --color-chosen-tint: color-mix(in srgb, var(--mac-maroon) 40%, var(--mac-black));
     --tint: 30%;
     --half-tint: 45%;
   }
@@ -107,6 +115,7 @@ textarea {
 }
 
 .tabs,
+.adding,
 .actions {
   display: flex;
   gap: 0.25rem;
@@ -127,6 +136,16 @@ button.primary {
   border-color: var(--color-primary);
   background: var(--color-primary);
   color: var(--color-on-primary);
+}
+
+.adding {
+  margin-right: auto;
+}
+
+.adding button[aria-checked="true"] {
+  border-color: var(--color-chosen-text);
+  background: var(--color-chosen-tint);
+  color: var(--color-chosen-text);
 }
 
 button.danger {
@@ -185,7 +204,7 @@ button:disabled {
   grid-column: 1;
 }
 
-.meeting,
+.booking,
 .preview {
   --cadence: var(--color-weekly);
   margin: 0 2px;
@@ -193,17 +212,17 @@ button:disabled {
   background: color-mix(in srgb, var(--cadence) var(--tint), var(--color-surface));
 }
 
-.meeting.odd,
+.booking.odd,
 .preview.odd {
   --cadence: var(--color-odd);
 }
 
-.meeting.even,
+.booking.even,
 .preview.even {
   --cadence: var(--color-even);
 }
 
-.meeting {
+.booking {
   position: relative;
   overflow: hidden;
   padding: 0 0.3rem;
@@ -213,16 +232,26 @@ button:disabled {
   cursor: grab;
 }
 
-.meeting:focus-visible {
+.booking:focus-visible {
   outline: 2px solid var(--color-text);
   outline-offset: 1px;
 }
 
-.meeting.dragging {
+.booking.dragging {
   opacity: 0.4;
 }
 
-.meeting-title {
+/* A time block: the time no meeting can take, striped, its cadence's colour as a border. */
+.booking.time-block,
+.booking.half.time-block {
+  background: repeating-linear-gradient(
+    135deg,
+    var(--color-blocked) 0 6px,
+    var(--color-surface) 6px 12px
+  );
+}
+
+.booking-title {
   display: block;
   overflow: hidden;
   font-weight: 600;
@@ -230,7 +259,7 @@ button:disabled {
   white-space: nowrap;
 }
 
-.meeting-time {
+.booking-time {
   color: var(--color-secondary-text);
 }
 
@@ -260,9 +289,9 @@ button:disabled {
   opacity: 0;
 }
 
-.meeting:hover .remove,
-.meeting:focus-within .remove,
-.meeting-label:hover .remove,
+.booking:hover .remove,
+.booking:focus-within .remove,
+.booking-label:hover .remove,
 .remove:focus-visible {
   opacity: 1;
 }
@@ -287,34 +316,34 @@ button:disabled {
  * other week; the time shared is cut along its diagonal, the upper left for odd, the lower right
  * for even, and the rest is whole.
  */
-.meeting.piece {
+.booking.piece {
   border-radius: 0;
 }
 
-.meeting.piece.first {
+.booking.piece.first {
   border-top-left-radius: 0.25rem;
   border-top-right-radius: 0.25rem;
 }
 
-.meeting.piece.last {
+.booking.piece.last {
   border-bottom-left-radius: 0.25rem;
   border-bottom-right-radius: 0.25rem;
 }
 
-.meeting.half {
+.booking.half {
   border-left: 0;
   background: color-mix(in srgb, var(--cadence) var(--half-tint), var(--color-surface));
 }
 
-.meeting.half.odd {
+.booking.half.odd {
   clip-path: polygon(0 0, 100% 0, 0 100%);
 }
 
-.meeting.half.even {
+.booking.half.even {
   clip-path: polygon(100% 0, 100% 100%, 0 100%);
 }
 
-.meeting-label,
+.booking-label,
 .resize-zone {
   position: relative;
   z-index: 1;
@@ -322,32 +351,32 @@ button:disabled {
   pointer-events: none;
 }
 
-.meeting-label {
+.booking-label {
   display: flex;
   padding: 0 0.3rem 0 calc(0.3rem + 4px);
   font-size: 0.75rem;
   line-height: 1.2;
 }
 
-.meeting-label.shared {
+.booking-label.shared {
   padding-left: 0.3rem;
 }
 
-.meeting-label .meeting-title {
+.booking-label .booking-title {
   max-width: 60%;
 }
 
-.meeting-label.even.shared {
+.booking-label.even.shared {
   align-items: flex-end;
   justify-content: flex-end;
 }
 
-.meeting-label .remove,
+.booking-label .remove,
 .resize-zone .resize {
   pointer-events: auto;
 }
 
-.meeting-label.even.shared .remove {
+.booking-label.even.shared .remove {
   top: auto;
   right: auto;
   bottom: 0;

@@ -2,7 +2,7 @@
 import { describe, expect, it } from 'vitest'
 import { Cadence, Parity } from '../domain/cadence.ts'
 import { Duration } from '../domain/duration.ts'
-import { aMeeting, at } from '../domain/meeting.fixture.ts'
+import { aMeeting, aTimeBlock, at } from '../domain/meeting.fixture.ts'
 import { Schedule } from '../domain/schedule.ts'
 import { Weekday } from '../domain/weekday.ts'
 import { accessibleNameOf, gridOf, piecesOf, slotAt } from './grid.ts'
@@ -19,7 +19,7 @@ function rendered(tab: 'odd' | 'even' | 'overview'): HTMLElement {
 }
 
 const titles = (element: Element) =>
-  [...element.querySelectorAll('.meeting-title')].map((title) => title.textContent)
+  [...element.querySelectorAll('.booking-title')].map((title) => title.textContent)
 
 describe('the grid of a tab', () => {
   it('has a column per weekday', () => {
@@ -35,7 +35,7 @@ describe('the grid of a tab', () => {
   })
 
   it('places a meeting on the rows of its quarters', () => {
-    const meeting = rendered('odd').querySelector<HTMLElement>('[data-meeting="1"]')
+    const meeting = rendered('odd').querySelector<HTMLElement>('[data-booking="1"]')
     expect(meeting?.style.gridRow).toBe('9 / span 4')
     expect(meeting?.getAttribute('aria-label')).toBe(accessibleNameOf(ana))
   })
@@ -43,20 +43,20 @@ describe('the grid of a tab', () => {
   it('cuts on the overview only the time an odd and an even meeting share', () => {
     const overview = rendered('overview')
     const rowsOfPieces = (rank: number) =>
-      [...overview.querySelectorAll<HTMLElement>(`.piece[data-meeting="${rank}"]`)].map(
+      [...overview.querySelectorAll<HTMLElement>(`.piece[data-booking="${rank}"]`)].map(
         (piece) => `${piece.className.replace(/\s+/g, ' ').trim()} | ${piece.style.gridRow}`,
       )
     expect(rowsOfPieces(1)).toEqual([
-      'meeting piece odd alone first | 9 / span 2',
-      'meeting piece odd half last | 11 / span 2',
+      'booking piece meeting odd alone first | 9 / span 2',
+      'booking piece meeting odd half last | 11 / span 2',
     ])
     expect(rowsOfPieces(2)).toEqual([
-      'meeting piece even half first | 11 / span 2',
-      'meeting piece even alone last | 13 / span 2',
+      'booking piece meeting even half first | 11 / span 2',
+      'booking piece meeting even alone last | 13 / span 2',
     ])
-    expect(overview.querySelector('.meeting-label.even.shared [data-remove="2"]')).not.toBeNull()
+    expect(overview.querySelector('.booking-label.even.shared [data-remove="2"]')).not.toBeNull()
     expect(overview.querySelector('.resize-zone.odd.shared [data-resize="1"]')).not.toBeNull()
-    expect(overview.querySelectorAll('[data-meeting="1"][tabindex="0"]')).toHaveLength(1)
+    expect(overview.querySelectorAll('[data-booking="1"][tabindex="0"]')).toHaveLength(1)
     expect(titles(overview)).toEqual(['Ana', 'Bo <b>', 'Lab meeting'])
   })
 
@@ -68,13 +68,47 @@ describe('the grid of a tab', () => {
     const element = document.createElement('div')
     element.innerHTML = gridOf(alone, 'overview').text
     expect(element.querySelectorAll('.piece')).toHaveLength(0)
-    expect(element.querySelector<HTMLElement>('.meeting.odd')?.style.gridRow).toBe('9 / span 4')
+    expect(element.querySelector<HTMLElement>('.booking.odd')?.style.gridRow).toBe('9 / span 4')
   })
 
   it('marks every hour of the day', () => {
     const hours = [...rendered('odd').querySelectorAll('.hour')].map((hour) => hour.textContent)
     expect(hours[0]).toBe('08:00')
     expect(hours).toHaveLength(10)
+  })
+})
+
+describe('a time block on the grid', () => {
+  const block = aTimeBlock({
+    cadence: Cadence.biWeekly(Parity.odd),
+    weekday: Weekday.monday,
+    start: at('09:00'),
+  })
+  const named = aTimeBlock({ title: 'Teaching', weekday: Weekday.friday })
+  const withBlocks = new Schedule([bo], [block, named])
+
+  function drawn(tab: 'odd' | 'even' | 'overview'): HTMLElement {
+    const element = document.createElement('div')
+    element.innerHTML = gridOf(withBlocks, tab).text
+    return element
+  }
+
+  it('is drawn as a time block, by its rank among the bookings, titled when it has a title', () => {
+    const odd = drawn('odd')
+    const untitled = odd.querySelector<HTMLElement>('.booking.time-block[data-booking="1"]')
+    expect(untitled?.querySelector('.booking-title')?.textContent).toBe('Time block')
+    expect(untitled?.getAttribute('aria-label')).toBe(
+      'Time block, bi-weekly, odd week, Monday 09:00 to 11:00',
+    )
+    expect(odd.querySelector('[data-booking="2"]')?.getAttribute('aria-label')).toBe(
+      'Time block: Teaching, weekly, Friday 14:00 to 16:00',
+    )
+    expect(drawn('even').querySelector('[data-booking="1"]')).toBeNull()
+  })
+
+  it('shares on the overview the time it has in common with a meeting of the other week', () => {
+    expect(piecesOf(block, withBlocks).map((piece) => piece.isShared)).toEqual([false, true])
+    expect(drawn('overview').querySelectorAll('.piece.time-block.half')).toHaveLength(1)
   })
 })
 

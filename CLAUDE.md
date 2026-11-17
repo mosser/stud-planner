@@ -4,12 +4,14 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this project is
 
-`stud-planner` is a meeting scheduler for recurring meetings. The Organizer
-places weekly and bi-weekly meetings on two abstract weeks, odd and even, by
+`stud-planner` is a scheduler for recurring meetings with students. The
+Organizer places weekly and bi-weekly bookings, meetings and the time blocks
+they are not available for meetings, on two abstract weeks, odd and even, by
 pressing and dragging on them, and sees them one tab at a time or in the
-overview, where only the time an odd and an even meeting share is cut along
-its diagonal, odd upper left, even lower right. A slot is never booked twice. The schedule is kept in the browser
-and saved to, or loaded from, a schedule file.
+overview, where only the time an odd and an even booking share is cut along
+its diagonal, odd upper left, even lower right. A slot is never booked twice.
+The schedule is kept in the browser and saved to, or loaded from, a schedule
+file.
 
 It is a client-side web application in TypeScript, front-end only,
 delivered as **one self-contained `dist/stud-planner-vX.Y.Z.html`** that opens
@@ -19,16 +21,18 @@ from `file://` and is served by GitHub Pages at
 
 It follows the conventions of its siblings `macreport` and `streaming-hat`.
 
-**Current state:** the specification (`docs/specs/`) and ADRs 0001 to 0009
-are implemented: the three tabs, adding, moving, resizing and removing by
-dragging, the meeting dialog, overlaps refused, the schedule kept in
-IndexedDB, and saved to or loaded from its file. Not released yet.
+**Current state:** the specification (`docs/specs/`) and ADRs 0001 to 0011
+are implemented: the three tabs, meetings and time blocks added, moved,
+resized and removed by dragging, the dialog of a booking, overlaps refused,
+the schedule kept in IndexedDB, and saved to or loaded from its file. Not
+released yet.
 
 ## Where things live
 
 - `docs/specs/`: the functional specification, the source of truth for
   behaviour. `stakeholders.md`, `domain-model.md` (the glossary),
-  `plan-the-meetings.md` (the tabs, their gestures, overlaps refused),
+  `plan-the-meetings.md` (the tabs, the switch, their gestures, overlaps
+  refused),
   `schedule-file.md` (the file saved and loaded, and what the browser keeps). Read the relevant spec before implementing a feature; if a
   spec is missing or ambiguous, say so rather than guessing. Spec files are
   short, self-contained, and never cite or link to documents outside the
@@ -45,14 +49,15 @@ IndexedDB, and saved to or loaded from its file. Not released yet.
 Layout of the code:
 
 ```
-src/domain/   Schedule (no overlap), Meeting, Cadence and Parity, Weekday,
-              TimeOfDay, Duration, Day (config/calendar.json), findings.ts
-              (every sentence shown); *.fixture.ts are test helpers
+src/domain/   Schedule (no overlap), Booking with Meeting and TimeBlock,
+              Cadence and Parity, Weekday, TimeOfDay, Duration, Day
+              (config/calendar.json), findings.ts (every sentence shown);
+              *.fixture.ts are test helpers
 src/io/       schedule-file.ts (the JSON file), schedule-store.ts (IndexedDB),
               save.ts (hands a file to the browser)
 src/ui/       application.ts (state, toolbar, tabs, drags), gestures.ts (what a
               press or a drag makes, pure), grid.ts (a tab's grid, slotAt),
-              meeting-dialog.ts, confirmation.ts, dialog.ts, html.ts
+              booking-dialog.ts, confirmation.ts, dialog.ts, html.ts
 src/main.ts   entry point, mounted from index.html
 src/style.css palette tokens and all styling
 config/       calendar.json: the hours of the day; inlined at build time and
@@ -127,10 +132,10 @@ first.
 
 ### ADR 0005: object model
 
-- `Schedule`, `Meeting` and their values are immutable classes in
-  `src/domain/` that throw on a broken invariant; changes return `after…`
-  copies; the schedule holds its meetings by reference. Overlaps are derived,
-  never stored.
+- `Schedule`, its bookings (`Meeting`, `TimeBlock`) and their values are
+  immutable classes in `src/domain/` that throw on a broken invariant;
+  changes return `after…` copies; the schedule holds its bookings by
+  reference. Overlaps are derived, never stored.
 - Names are the glossary's (`docs/specs/domain-model.md`): add the glossary
   line first. One word, one meaning. No abbreviation, no single-letter name.
   Booleans are questions. Every `export` has a doc comment stating its rule in
@@ -158,22 +163,32 @@ first.
 ### ADR 0008: two abstract weeks
 
 - The schedule is planned on an odd week and an even week, without dates; the
-  system never reads today's date. A meeting is weekly (both weeks) or
+  system never reads today's date. A booking is weekly (both weeks) or
   bi-weekly (its parity's week); there is no monthly cadence.
 - Three tabs, one at a time: odd week, even week, overview (both; only
-  the time an odd and an even meeting share is cut along its diagonal, odd
+  the time an odd and an even booking share is cut along its diagonal, odd
   upper left, even lower right, by `piecesOf` in `grid.ts`). No occurrence: a
-  meeting is changed as a whole.
-- A meeting is added from a week's tab only, held in that week (weekly or
-  bi-weekly in it, `cadencesAddedIn`); nothing is added from the
-  overview.
+  booking is changed as a whole.
+- A booking added from a week's tab is held in that week (weekly or bi-weekly
+  in it, `cadencesAddedFrom`); a press on the overview adds a weekly time
+  block, never a meeting.
 
 ### ADR 0009: a slot is booked once
 
-- No two meetings overlap: an invariant of `Schedule`, whose constructor
-  throws. Adding, moving, resizing, changing a cadence or a parity, and
+- No two bookings overlap, meetings and time blocks alike: an invariant of
+  `Schedule`, whose constructor throws. Adding, moving, resizing, changing a cadence or a parity, and
   loading a file are refused when they would make one; a refused drop changes
   nothing. Ending as another starts is not an overlap.
+
+### ADR 0011: time blocks are bookings
+
+- `Booking` (abstract) holds the timing, the day's bounds and the overlap,
+  written once; `Meeting` (title, note) and `TimeBlock` (optional title, no
+  note) extend it. The grid, the gestures and the dialog work on bookings,
+  ranked among `schedule.bookings` (`data-booking`). A meeting never replaces
+  a time block, nor the reverse.
+- On a week's tab, the Meeting | Time block switch says what a press adds.
+  The schedule file holds `timeBlocks`, which a file may leave out.
 
 ## Writing
 

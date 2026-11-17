@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { Cadence, Parity } from '../domain/cadence.ts'
-import { aMeeting, at } from '../domain/meeting.fixture.ts'
+import { aMeeting, aTimeBlock, at } from '../domain/meeting.fixture.ts'
 import { Schedule } from '../domain/schedule.ts'
 import { Weekday } from '../domain/weekday.ts'
 import {
@@ -39,6 +39,69 @@ function fileWith(meetings: unknown[], fields: Record<string, unknown> = {}): un
   return { format: 'stud-planner/schedule', version: 1, meetings, ...fields }
 }
 
+const aTimeBlockContent = {
+  cadence: 'bi-weekly',
+  parity: 'odd',
+  weekday: 'wednesday',
+  start: '14:00',
+  duration: 120,
+}
+
+describe('the time blocks of the schedule file', () => {
+  const withBlocks = new Schedule(
+    [aMeeting()],
+    [
+      aTimeBlock({ title: 'Teaching' }),
+      aTimeBlock({ cadence: Cadence.biWeekly(Parity.odd), weekday: Weekday.friday }),
+    ],
+  )
+
+  it('are written after the meetings, a title only when there is one', () => {
+    expect(contentOf(withBlocks).timeBlocks).toEqual([
+      { title: 'Teaching', cadence: 'weekly', weekday: 'wednesday', start: '14:00', duration: 120 },
+      { cadence: 'bi-weekly', parity: 'odd', weekday: 'friday', start: '14:00', duration: 120 },
+    ])
+  })
+
+  it('are read back as they were written', () => {
+    const read = readScheduleFile(scheduleFileOf(withBlocks))
+    expect(!read.isRefused && contentOf(read.schedule)).toEqual(contentOf(withBlocks))
+  })
+
+  it('are none when the file has no list of time blocks', () => {
+    const read = scheduleFromContent(fileWith([aMeetingContent]))
+    expect(!read.isRefused && read.schedule.timeBlocks).toEqual([])
+  })
+
+  it('refuse a time block that breaks a rule, or has a field a time block does not have', () => {
+    expect(
+      reasonOf(
+        scheduleFromContent(
+          fileWith([], { timeBlocks: [{ ...aTimeBlockContent, start: '17:00' }] }),
+        ),
+      ),
+    ).toBe('time block 1: A time block cannot end after 18:00.')
+    expect(
+      reasonOf(
+        scheduleFromContent(fileWith([], { timeBlocks: [{ ...aTimeBlockContent, note: 'x' }] })),
+      ),
+    ).toBe('time block 1 has a field note, which a schedule file does not have.')
+    expect(reasonOf(scheduleFromContent(fileWith([], { timeBlocks: 'none' })))).toBe(
+      'the schedule cannot have "none" as its timeBlocks.',
+    )
+    expect(reasonOf(scheduleFromContent(fileWith([], { timeBlocks: [3] })))).toBe(
+      'the schedule cannot have 3 as its timeBlocks.',
+    )
+  })
+
+  it('refuse a meeting booked in a time block, naming both', () => {
+    const inside = { ...aMeetingContent, weekday: 'wednesday', start: '15:00', cadence: 'weekly' }
+    expect(
+      reasonOf(scheduleFromContent(fileWith([inside], { timeBlocks: [aTimeBlockContent] }))),
+    ).toBe('meeting 1 and time block 1 overlap. Overlaps Lab meeting, odd week, 15:00 to 16:00.')
+  })
+})
+
 describe('the schedule file', () => {
   it('is saved as stud-planner-schedule.json', () => {
     expect(scheduleFileName).toBe('stud-planner-schedule.json')
@@ -67,6 +130,7 @@ describe('the schedule file', () => {
           duration: 60,
         },
       ],
+      timeBlocks: [],
     })
   })
 

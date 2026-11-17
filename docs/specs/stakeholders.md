@@ -12,7 +12,7 @@ interface, no invitation and no shared calendar.
 
 | Stakeholder | Kind | Interest in the system |
 |---|---|---|
-| Organizer | Direct | Places, moves, reshapes and removes recurring meetings on the odd and the even week; wants no time booked twice, and the schedule kept between sessions. |
+| Organizer | Direct | Places, moves, reshapes and removes recurring meetings on the odd and the even week, and the time blocks they are not available for meetings; wants no time booked twice, and the schedule kept between sessions. |
 | Participants | Indirect | The people the Organizer meets. Never use the system. Their names may appear in a meeting's title or note, which therefore never leave the Organizer's computer unless the Organizer saves the schedule file. |
 
 ## Project roles

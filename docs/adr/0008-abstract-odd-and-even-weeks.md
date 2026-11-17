@@ -39,9 +39,10 @@ Options considered:
   not.
   The time shared is cut as one, not quarter by quarter: a quarter is a row
   too flat for its halves to be read.
-- A meeting is added from a week's tab and is held in that week: weekly, or
-  bi-weekly in it. Nothing is added from the overview, which would ask
-  which week was meant.
+- A booking added from a week's tab is held in that week: weekly, or
+  bi-weekly in it. A press on the overview adds a time block held in both
+  weeks; no meeting is added from it, which would ask which week was
+  meant.
 - There is no occurrence of a meeting: a meeting is changed as a whole, in
   every week it is held.
 

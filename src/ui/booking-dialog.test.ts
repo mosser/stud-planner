@@ -2,11 +2,11 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { Cadence, Parity } from '../domain/cadence.ts'
 import { Duration } from '../domain/duration.ts'
-import { aMeeting, at } from '../domain/meeting.fixture.ts'
+import { aMeeting, aTimeBlock, at } from '../domain/meeting.fixture.ts'
 import { Schedule } from '../domain/schedule.ts'
 import { Weekday } from '../domain/weekday.ts'
+import { openBookingDialog } from './booking-dialog.ts'
 import { askToConfirm } from './confirmation.ts'
-import { openMeetingDialog } from './meeting-dialog.ts'
 
 const lab = aMeeting({ note: 'Room 201' })
 const schedule = new Schedule([lab])
@@ -44,7 +44,12 @@ afterEach(() => {
 
 describe('the meeting dialog of a new meeting', () => {
   it('opens where the meeting goes, with the cadence offered and no title', () => {
-    const dialog = openMeetingDialog(document, { schedule, proposal, onDone: vi.fn() })
+    const dialog = openBookingDialog(document, {
+      schedule,
+      kind: 'meeting',
+      proposal,
+      onDone: vi.fn(),
+    })
     expect(dialog.querySelector('h2')?.textContent).toBe('New meeting')
     const selected = (name: string) => {
       const select = field<HTMLSelectElement>(dialog, name)
@@ -61,7 +66,7 @@ describe('the meeting dialog of a new meeting', () => {
 
   it('refuses Done until the meeting has a title', () => {
     const onDone = vi.fn()
-    const dialog = openMeetingDialog(document, { schedule, proposal, onDone })
+    const dialog = openBookingDialog(document, { schedule, kind: 'meeting', proposal, onDone })
     expect(done(dialog).disabled).toBe(true)
     expect(finding(dialog)).toBe('')
     type(dialog, 'title', ' Ana ')
@@ -75,7 +80,12 @@ describe('the meeting dialog of a new meeting', () => {
   })
 
   it('refuses Done while the meeting would overlap another, and names it', () => {
-    const dialog = openMeetingDialog(document, { schedule, proposal, onDone: vi.fn() })
+    const dialog = openBookingDialog(document, {
+      schedule,
+      kind: 'meeting',
+      proposal,
+      onDone: vi.fn(),
+    })
     type(dialog, 'title', 'Ana')
     choose(dialog, 'weekday', 'Monday')
     choose(dialog, 'start', '10:30')
@@ -86,18 +96,23 @@ describe('the meeting dialog of a new meeting', () => {
   })
 
   it('refuses Done while the meeting would end after the day', () => {
-    const dialog = openMeetingDialog(document, { schedule, proposal, onDone: vi.fn() })
+    const dialog = openBookingDialog(document, {
+      schedule,
+      kind: 'meeting',
+      proposal,
+      onDone: vi.fn(),
+    })
     choose(dialog, 'start', '17:30')
     expect(finding(dialog)).toBe('A meeting cannot end after 18:00.')
   })
 
   it('changes nothing on Cancel, Escape or a click outside', () => {
     const onDone = vi.fn()
-    const cancelled = openMeetingDialog(document, { schedule, proposal, onDone })
+    const cancelled = openBookingDialog(document, { schedule, kind: 'meeting', proposal, onDone })
     ;(cancelled.querySelector('[data-action="cancel"]') as HTMLElement).click()
-    const escaped = openMeetingDialog(document, { schedule, proposal, onDone })
+    const escaped = openBookingDialog(document, { schedule, kind: 'meeting', proposal, onDone })
     escaped.dispatchEvent(new Event('cancel', { cancelable: true }))
-    const outside = openMeetingDialog(document, { schedule, proposal, onDone })
+    const outside = openBookingDialog(document, { schedule, kind: 'meeting', proposal, onDone })
     outside.dispatchEvent(new MouseEvent('click', { bubbles: true }))
     expect([cancelled, escaped, outside].map((dialog) => dialog.isConnected)).toEqual([
       false,
@@ -111,7 +126,13 @@ describe('the meeting dialog of a new meeting', () => {
 describe('the meeting dialog of a meeting of the schedule', () => {
   it('opens with the meeting, and does not count it as an overlap', () => {
     const onDone = vi.fn()
-    const dialog = openMeetingDialog(document, { schedule, meeting: lab, proposal: lab, onDone })
+    const dialog = openBookingDialog(document, {
+      schedule,
+      kind: 'meeting',
+      booking: lab,
+      proposal: lab,
+      onDone,
+    })
     expect(dialog.querySelector('h2')?.textContent).toBe('Lab meeting')
     expect(field<HTMLTextAreaElement>(dialog, 'note').value).toBe('Room 201')
     choose(dialog, 'duration', '1 h 30')
@@ -121,9 +142,10 @@ describe('the meeting dialog of a meeting of the schedule', () => {
 
   it('asks to remove the meeting', () => {
     const onRemove = vi.fn()
-    const dialog = openMeetingDialog(document, {
+    const dialog = openBookingDialog(document, {
       schedule,
-      meeting: lab,
+      kind: 'meeting',
+      booking: lab,
       proposal: lab,
       onDone: vi.fn(),
       onRemove,
@@ -131,6 +153,53 @@ describe('the meeting dialog of a meeting of the schedule', () => {
     ;(dialog.querySelector('[data-action="remove"]') as HTMLElement).click()
     expect(onRemove).toHaveBeenCalledWith(lab)
     expect(dialog.isConnected).toBe(false)
+  })
+})
+
+describe('the dialog of a time block', () => {
+  it('adds a time block without a title, and has no note', () => {
+    const onDone = vi.fn()
+    const dialog = openBookingDialog(document, { schedule, kind: 'time-block', proposal, onDone })
+    expect(dialog.querySelector('h2')?.textContent).toBe('New time block')
+    expect(dialog.querySelector('[name="note"]')).toBeNull()
+    expect(done(dialog).disabled).toBe(false)
+    dialog.querySelector('form')?.requestSubmit()
+    const added = onDone.mock.calls[0]?.[0]
+    expect([added.isTimeBlock, added.title, added.weekday]).toEqual([
+      true,
+      undefined,
+      Weekday.tuesday,
+    ])
+  })
+
+  it('refuses Done while the time block would overlap a meeting', () => {
+    const dialog = openBookingDialog(document, {
+      schedule,
+      kind: 'time-block',
+      proposal,
+      onDone: vi.fn(),
+    })
+    choose(dialog, 'weekday', 'Monday')
+    choose(dialog, 'start', '10:30')
+    expect(finding(dialog)).toBe('Overlaps Lab meeting, odd week, 10:00 to 11:00.')
+    expect(done(dialog).disabled).toBe(true)
+  })
+
+  it('opens with a time block of the schedule, headed by its title or as a time block', () => {
+    const block = aTimeBlock()
+    const withBlock = new Schedule([lab], [block])
+    const onDone = vi.fn()
+    const dialog = openBookingDialog(document, {
+      schedule: withBlock,
+      kind: 'time-block',
+      booking: block,
+      proposal: block.timing,
+      onDone,
+    })
+    expect(dialog.querySelector('h2')?.textContent).toBe('Time block')
+    type(dialog, 'title', 'Research')
+    dialog.querySelector('form')?.requestSubmit()
+    expect(onDone.mock.calls[0]?.[0].title).toBe('Research')
   })
 })
 
