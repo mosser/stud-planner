@@ -6,7 +6,7 @@ cd "$(dirname "$0")/.."
 failures=0
 fail() { echo "ADR check failed: $*" >&2; failures=$((failures + 1)); }
 
-business=$(find src -name '*.ts' ! -name '*.test.ts')
+business=$(find src -name '*.ts' ! -name '*.test.ts' ! -name '*.fixture.ts')
 version=$(node -p "require('./package.json').version")
 
 # ADR 0001: one file, named after the version; no network API; TypeScript only; pinned build.
@@ -41,7 +41,7 @@ grep -qE '^\s+needs: release$' .github/workflows/release.yml || fail "release.ym
 grep -q '^## \[Unreleased\]$' CHANGELOG.md || fail "CHANGELOG.md must keep an [Unreleased] section"
 
 # ADR 0003: business code imports no test, vitest or node: module; no TODO; no silent ignore.
-grep -nE "from '(vitest|node:[^']*)'|from '[^']*\.test(\.ts)?'" $business && fail "business code imports a test, vitest or node: module"
+grep -nE "from '(vitest|node:[^']*)'|from '[^']*\.(test|fixture)(\.ts)?'" $business && fail "business code imports a test, vitest or node: module"
 grep -rn 'TODO' src scripts --exclude=check-adr.sh && fail "TODO in the code"
 grep -nE 'biome-ignore[^:]*$' $(find src -name '*.ts') && fail "biome-ignore without a reason"
 
