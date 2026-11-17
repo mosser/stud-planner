@@ -23,7 +23,7 @@ Options considered:
   system built itself, never text the user typed or a file name.
 - A click changes the state and re-renders the screen. An edit made while
   typing updates the DOM in place, so keyboard focus is kept.
-- Drags on the template weeks (adding, moving, resizing a meeting) are
+- Drags on the grids (adding, moving, resizing a meeting) are
   written on Pointer Events, with no drag-and-drop library and not the HTML
   drag-and-drop API, which gives no control over snapping to a quarter. A
   drag shows where the meeting would go and changes the schedule once, when it

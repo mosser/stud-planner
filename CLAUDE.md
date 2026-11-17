@@ -5,9 +5,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## What this project is
 
 `stud-planner` is a meeting scheduler for recurring meetings. The Organizer
-places weekly, bi-weekly and monthly meetings on three template weeks (odd,
-even, monthly) by pressing and dragging on them, and sees at a glance how the
-weeks fill up and where meetings clash. The schedule is kept in the browser
+places weekly and bi-weekly meetings on two abstract weeks, odd and even, by
+pressing and dragging on them, and sees them one tab at a time or merged as
+the month, each slot cut diagonally in an odd and an even half. A slot is
+never booked twice. The schedule is kept in the browser
 and saved to, or loaded from, a schedule file.
 
 It is a client-side web application in TypeScript, front-end only,
@@ -19,7 +20,7 @@ from `file://` and is served by GitHub Pages at
 It follows the conventions of its siblings `macreport` and `streaming-hat`.
 
 **Current state:** specified, not implemented. The specification
-(`docs/specs/`) and ADRs 0001 to 0008 describe the system; the code is the
+(`docs/specs/`) and ADRs 0001 to 0009 describe the system; the code is the
 toolchain, the release pipeline and an empty page shell (masthead, screen,
 footer with the version). There is no domain code yet.
 
@@ -27,7 +28,7 @@ footer with the version). There is no domain code yet.
 
 - `docs/specs/`: the functional specification, the source of truth for
   behaviour. `stakeholders.md`, `domain-model.md` (the glossary),
-  `plan-the-meetings.md` (the screen, its gestures and the table of clashes),
+  `plan-the-meetings.md` (the tabs, their gestures, overlaps refused),
   `schedule-file.md` (the file saved and loaded, and what the browser keeps). Read the relevant spec before implementing a feature; if a
   spec is missing or ambiguous, say so rather than guessing. Spec files are
   short, self-contained, and never cite or link to documents outside the
@@ -44,12 +45,12 @@ footer with the version). There is no domain code yet.
 Layout of the code:
 
 ```
-src/domain/   Schedule, Meeting and their values, clashes, findings.ts: pure,
-              no DOM, no today's date (not created yet)
+src/domain/   Schedule, Meeting and their values, overlaps, findings.ts: pure,
+              no DOM, no date (not created yet)
 src/io/       schedule-store.ts (IndexedDB), schedule-file.ts (the JSON file),
               save.ts (hands a file to the browser) (not created yet)
 src/ui/       html.ts (the escaping template), application.ts (the page shell),
-              the template weeks, their drags and the meeting dialog
+              the tabs, their grids and drags, and the meeting dialog
 src/main.ts   entry point, mounted from index.html
 src/style.css palette tokens and all styling
 config/       calendar.json: the hours of the day; inlined at build time
@@ -117,7 +118,7 @@ first.
 
 - `Schedule`, `Meeting` and their values are immutable classes in
   `src/domain/` that throw on a broken invariant; changes return `after…`
-  copies; the schedule holds its meetings by reference. A clash is derived,
+  copies; the schedule holds its meetings by reference. Overlaps are derived,
   never stored.
 - Names are the glossary's (`docs/specs/domain-model.md`): add the glossary
   line first. One word, one meaning. No abbreviation, no single-letter name.
@@ -125,7 +126,7 @@ first.
   the specification's words.
 - Sentences shown to the Organizer are worded only in `src/domain/findings.ts`,
   pinned by exact-string tests. `src/domain/` imports nothing from `src/io/`
-  or `src/ui/`, uses no browser API, and is given today's date.
+  or `src/ui/`, uses no browser API, and holds no date.
 
 ### ADR 0006: the kept schedule
 
@@ -143,13 +144,21 @@ first.
 - "Upload" and "download" never appear under `src/` (except the `download`
   attribute in `src/io/save.ts`) nor in `docs/specs/`.
 
-### ADR 0008: template weeks, strict alternation
+### ADR 0008: two abstract weeks
 
-- Three template weeks, odd, even and monthly; no dated view, no occurrence:
-  a meeting is changed as a whole.
-- Odd and even alternate strictly from the reference week (odd), the only date
-  a schedule holds; never from the ISO week number. A monthly meeting is on
-  the first to fourth or last weekday of the month.
+- The schedule is planned on an odd week and an even week, without dates; the
+  system never reads today's date. A meeting is weekly (both weeks) or
+  bi-weekly (its parity's week); there is no monthly cadence.
+- Three tabs, one at a time: odd week, even week, month (both merged, each
+  slot cut diagonally: odd upper left, even lower right). No occurrence: a
+  meeting is changed as a whole.
+
+### ADR 0009: a slot is booked once
+
+- No two meetings overlap: an invariant of `Schedule`, whose constructor
+  throws. Adding, moving, resizing, changing a cadence or a parity, and
+  loading a file are refused when they would make one; a refused drop changes
+  nothing. Ending as another starts is not an overlap.
 
 ## Writing
 

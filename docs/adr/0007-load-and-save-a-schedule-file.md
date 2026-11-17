@@ -14,7 +14,7 @@ say otherwise.
 Options considered:
 
 - **An iCalendar file.** Imported by calendar applications, but it cannot
-  carry template weeks without dates, and reading one back is a large format
+  carry abstract weeks without dates, and reading one back is a large format
   to support.
 - **A versioned JSON file** of the schedule, specified in
   `docs/specs/schedule-file.md`. Small, read back exactly, and the same content
@@ -26,7 +26,8 @@ Options considered:
   from a file the Organizer chooses, in the format of
   `docs/specs/schedule-file.md`, `version` 1. A change of format is a new
   version, and the system reads every version it has written.
-- A file is checked completely before anything is taken; a refused file
+- A file is checked completely before anything is taken, overlaps included
+  (ADR 0009); a refused file
   leaves the schedule as it was, and the reason is shown.
 - Loading replaces the schedule, once confirmed when it holds a meeting.
 - Only `src/io/schedule-file.ts` maps a schedule to and from the file;

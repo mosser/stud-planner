@@ -9,17 +9,15 @@ content (ADR 0006).
 |---|---|
 | `format` | `"stud-planner/schedule"`. |
 | `version` | `1`. A file of another version is refused. |
-| `referenceWeek` | The Monday of the reference week, `YYYY-MM-DD`. |
-| `meetings` | The meetings, an array, possibly empty. |
+| `meetings` | The meetings, an array, possibly empty, in no particular order. |
 
 ## A meeting
 
 | Field | Value |
 |---|---|
 | `title` | Its title. |
-| `cadence` | `"weekly"`, `"bi-weekly"` or `"monthly"`. |
+| `cadence` | `"weekly"` or `"bi-weekly"`. |
 | `parity` | `"odd"` or `"even"`; for a bi-weekly meeting only. |
-| `ordinal` | `"first"`, `"second"`, `"third"`, `"fourth"` or `"last"`; for a monthly meeting only. |
 | `weekday` | `"monday"` to `"friday"`. |
 | `start` | `HH:MM`, a quarter of the day. |
 | `duration` | In minutes, a whole number of quarters. |
@@ -28,5 +26,6 @@ content (ADR 0006).
 ## Refusal
 
 A file is refused, with the first reason found, when it is not JSON, has a
-field missing, a field the table does not list, or a value the table or the
-domain model does not allow. Nothing of a refused file is taken.
+field missing, a field the tables do not list, a value the tables or the
+domain model do not allow, or two meetings that overlap. Nothing of a
+refused file is taken.

@@ -27,9 +27,8 @@ Options considered:
   as the content of its schedule file (`docs/specs/schedule-file.md`): one
   mapping serves the store and the file.
 - **Every change is kept at once.** There is no action to keep.
-- **At opening**, the kept schedule comes back; without one, a new schedule
-  starts with no meeting and the first ISO week of the current year as its
-  reference week.
+- **At opening**, the kept schedule comes back; without one, the schedule
+  has no meeting.
 - **Best effort.** Every access is guarded: when IndexedDB is unavailable,
   refused or fails, the system works without it and the screen says that
   closing the page will lose the schedule. A kept schedule the system cannot

@@ -50,8 +50,11 @@ grep -nE 'draggable|ondragstart|dragstart' $business && fail "the HTML drag-and-
 
 # ADR 0005: the domain imports nothing from io or ui, and uses no browser API.
 if [ -d src/domain ]; then
-  grep -nE "from '\.\./(io|ui)/|\b(window|document|navigator|indexedDB|globalThis)\.|new Date\(\)|Date\.now\(" $(find src/domain -name '*.ts' ! -name '*.test.ts') && fail "src/domain/ depends on io, ui, the browser or today's date"
+  grep -nE "from '\.\./(io|ui)/|\b(window|document|navigator|indexedDB|globalThis)\." $(find src/domain -name '*.ts' ! -name '*.test.ts') && fail "src/domain/ depends on io, ui or the browser"
 fi
+
+# ADR 0008: abstract weeks; nothing reads today's date.
+grep -nE 'new Date\(|Date\.now\(|Temporal\.' $business && fail "src/ reads a date: the weeks are abstract"
 
 # ADR 0006: no storage but IndexedDB, and IndexedDB only in the schedule store.
 grep -nE 'localStorage|sessionStorage|document\.cookie|caches\.' $business && fail "browser storage other than IndexedDB"

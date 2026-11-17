@@ -7,8 +7,7 @@
 ## Context
 
 The rules of a schedule (a start and a duration within the day, a parity only
-for a bi-weekly meeting, an ordinal only for a monthly one, when two meetings
-clash) are what the system is for. They must hold whatever screen, drag or
+for a bi-weekly meeting, no two meetings in the same slot of the same week) are what the system is for. They must hold whatever screen, drag or
 file changes a meeting, and be read against `docs/specs/` by someone who
 knows the rules and not TypeScript.
 
@@ -22,28 +21,30 @@ Options considered:
 
 ## Decision
 
-- `Schedule`, `Meeting` and their values (`Cadence`, `Ordinal`, `Weekday`,
-  `TimeOfDay`, `Duration`, `ReferenceWeek`, `Clash`) are immutable classes in
+- `Schedule`, `Meeting` and their values (`Cadence`, `Parity`, `Weekday`,
+  `TimeOfDay`, `Duration`) are immutable classes in
   `src/domain/` whose constructor throws on a broken invariant. A change
   returns an `after…` copy: `meeting.afterMovingTo(weekday, start)`,
   `schedule.afterAdding(meeting)`.
 - The schedule refers to its meetings by reference, never by an identifier
-  map. A clash is derived from two meetings, never stored.
+  map. Whether two meetings overlap is derived from them, never stored
+  (ADR 0009).
 - Names are the glossary's (`docs/specs/domain-model.md`): a new concept is a
   glossary line first. One word, one meaning. No abbreviation, no
   single-letter name. Booleans are questions. Every `export` has a doc comment
   stating its rule in the specification's words.
-- Sentences shown to the Organizer (clashes, refusals) are worded only in
+- Sentences shown to the Organizer (overlaps, refusals) are worded only in
   `src/domain/findings.ts`, pinned by exact-string tests.
 - `src/domain/` imports nothing from `src/io/` or `src/ui/`, and uses no
-  browser API. Today's date is passed in, never read.
+  browser API, and no date (ADR 0008).
 
 ## Consequences
 
 **Positive**
 
 - A rule is written once, next to the concept it belongs to, with its test.
-- The screen and the file cannot build a meeting the specification forbids.
+- The screen and the file cannot build a meeting, or a schedule, the
+  specification forbids.
 
 **Negative / accepted trade-offs**
 

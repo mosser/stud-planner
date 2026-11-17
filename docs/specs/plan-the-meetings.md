@@ -1,58 +1,48 @@
 # Plan the meetings
 
-The system has one screen. It shows the three template weeks side by side
-(stacked when the window is narrow): the odd week, the even week and the
-monthly week. Above them stand this week, Add a meeting, Save and Load.
+The system has one screen. It shows one tab at a time, the odd week, the even
+week or the month, each a grid with a weekday per column and a quarter of the
+day per row. Above the grid stand the tabs, Add a meeting, Save and Load. The
+tab shown is the odd week when the page opens.
 
-## This week
+## The tabs
 
-| Rule | Behaviour |
+| Tab | Shows |
 |---|---|
-| Parity of this week | The week of today, by its Monday, and whether it is odd or even: *Week of 16 November 2026: odd*. |
-| Switch | *Make this week even* (or *odd*) sets the reference week so that this week has that parity. Every meeting stays where it is on the template weeks. |
+| Odd week | The weekly meetings and the bi-weekly meetings held in the odd week. |
+| Even week | The weekly meetings and the bi-weekly meetings held in the even week. |
+| Month | Every meeting. A weekly meeting fills its slots; a bi-weekly meeting fills the half of each of its slots that is its week's: the upper left for odd, the lower right for even. Its title is written in its first slot. |
+
+A weekly meeting looks alike on the three tabs, and unlike a bi-weekly one.
 
 ## Adding a meeting
 
 | Rule | Behaviour |
 |---|---|
-| From a slot | Pressing an empty slot and dragging down marks the meeting's start and duration, one quarter at a time, within the day. A press without a drag marks one hour, or up to the end of the day. |
-| Cadence offered | The meeting dialog opens with the cadence of the template week pressed: bi-weekly in odd weeks, bi-weekly in even weeks, or monthly on the first of the month. The Organizer may change it, weekly among the choices. |
-| Without a pointer | Add a meeting opens the same dialog, empty, Monday at 09:00 for one hour, bi-weekly in odd weeks. |
-| Done | Adds the meeting once it has a title. Cancel, Escape or a click outside the dialog add nothing. |
+| From a slot | Pressing a free slot and dragging down marks the meeting's start and duration, one quarter at a time, within the day and over free slots only. A press without a drag marks one hour, or less when a taken slot or the end of the day comes first. |
+| Cadence offered | The meeting dialog opens with the cadence of where the press was: bi-weekly in the odd week from the odd week tab, bi-weekly in the even week from the even week tab; on the month, weekly from a slot free in both weeks, else bi-weekly in the week whose half was free. Any other cadence that overlaps nothing may be chosen. |
+| Without a pointer | Add a meeting opens the same dialog, empty: the first free hour of the week shown, Monday first; on the month, weekly. |
+| Done | Adds the meeting once it has a title and overlaps nothing. Cancel, Escape or a click outside the dialog add nothing. |
 
-## Moving and reshaping a meeting
+## Moving, resizing and removing a meeting
 
 | Rule | Behaviour |
 |---|---|
-| Move | Dragging a meeting to another slot changes its weekday and its start, never its duration; it cannot end after the day. |
-| Odd to even | Dragging a bi-weekly meeting from one parity's week to the other's changes its parity. |
-| A weekly meeting | Appears on the odd and on the even week, alike; moving it on either moves it on both. |
-| The monthly week | A monthly meeting moves within the monthly week only, and nothing else moves onto it: a cadence changes in the meeting dialog. |
+| Move | Dragging a meeting to another slot changes its weekday and its start, never its duration, cadence or parity; it cannot end after the day. |
 | Resize | Dragging the lower edge of a meeting changes its duration, one quarter at a time, within the day. |
+| A weekly meeting | Moved or resized on any tab, it changes in both weeks. |
+| Refused | While a drag would make an overlap, the meeting shows where it would go as refused; dropped there, it goes back where it was and nothing changes. |
 | Escape | During a drag, Escape puts the meeting back where it was. |
+| Remove | The remove mark of a meeting, or Delete while the meeting has the focus, takes the meeting out of the schedule. A weekly meeting removed from one week's tab leaves both weeks. |
 
 ## The meeting dialog
 
 A click on a meeting, without a drag, opens its dialog: title, cadence,
-parity (bi-weekly) or ordinal (monthly), weekday, start, duration, note, and
-the meeting's clashes. Done applies the changes; Remove takes the meeting
-out of the schedule, once confirmed. Every change a drag makes can also be
-made here, with the keyboard.
-
-## Clashes
-
-A meeting in a clash is marked on its template week, the meetings that share
-a slot standing side by side, and its dialog lists each clash: *Clashes with
-Lab meeting, every week*.
-
-| Meeting | with weekly | with bi-weekly | with monthly |
-|---|---|---|---|
-| Weekly | every week | every other week | every month |
-| Bi-weekly | every other week | every other week, same parity; never otherwise | some months |
-| Monthly | every month | some months | every month, same ordinal; some months, fourth and last; never otherwise |
-
-Two meetings clash only when they share a weekday and their times overlap: one
-ending as the other starts do not clash.
+parity (bi-weekly), weekday, start, duration and note, with Done and Remove.
+Every change a drag makes can also be made here, with the keyboard. Done is
+refused while the meeting would overlap another, and the dialog names it:
+*Overlaps Lab meeting, odd week, 10:00 to 11:00*. A bi-weekly meeting made
+weekly overlaps whatever takes its slots in the other week.
 
 ## Keeping, saving and loading
 
@@ -62,4 +52,4 @@ ending as the other starts do not clash.
 | Not kept | When the browser cannot keep the schedule, the screen says that closing the page will lose it, and everything else works. |
 | Save | Saves the schedule file, `stud-planner-schedule.json`. |
 | Load | Reads a schedule file the Organizer chooses. When the schedule holds a meeting, the Organizer confirms that the file replaces it. |
-| Refused | A file that is not a schedule file, or breaks one of its rules, is refused with the reason; the schedule is left as it was. |
+| Refused | A file that is not a schedule file, breaks one of its rules, or holds two meetings that overlap is refused with the reason; the schedule is left as it was. |
