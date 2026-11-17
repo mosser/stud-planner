@@ -15,8 +15,8 @@ week when the page opens, and the switch is on Meeting.
 | Overview | Every booking, each filling its slots, except the time an odd and an even booking share on a weekday: that time is cut along its diagonal, the upper left half for the odd booking, the lower right half for the even one, and each booking is whole before and after it. A title starting in a shared time is written in its half's corner. |
 
 A weekly booking looks alike on the three tabs, and unlike a bi-weekly one. A
-time block is striped, a meeting is not; both are bordered with the colour of
-their cadence. A time block without a title is shown as *Time block*.
+time block is grey, a meeting is tinted with the colour of its cadence; both
+are bordered with that colour. A time block without a title is shown as *Time block*.
 
 ## Adding a meeting or a time block
 

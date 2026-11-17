@@ -58,7 +58,7 @@ role (`--color-*`) defined from them, or a tint mixed from them with
 | Weekly meeting | King's Forest Green | Cootes Paradise Green |
 | Odd week | Bayfront Blue | Albion Falls Blue |
 | Even week | Gold | Gold |
-| Time block: stripes over the surface | Grey, 25 % on white | Dundurn Grey, 30 % on black |
+| Time block | Grey, 25 % on white | Dundurn Grey, 30 % on black |
 | Kind a press adds, chosen | Maroon on maroon 12 % on white | White on maroon 40 % on black |
 | Refused, errors | Maroon | Royal Botanical Pink |
 
@@ -86,8 +86,8 @@ month, 40 % on white, 45 % on black.
    | Dundurn Grey | each cadence, 30 % on black | 7.1 at least |
    | White | each cadence, 45 % on black | 5.8 at least |
    | Royal Botanical Pink | Black | 10.1 |
-   | Black / Grey | Grey, 25 % on white (stripes) | 14.4 / 4.9 |
-   | White / Dundurn Grey | Dundurn Grey, 30 % on black (stripes) | 10.0 / 7.3 |
+   | Black / Grey | Grey, 25 % on white (time block) | 14.4 / 4.9 |
+   | White / Dundurn Grey | Dundurn Grey, 30 % on black (time block) | 10.0 / 7.3 |
    | Maroon | Maroon, 12 % on white | 8.7 |
    | White | Maroon, 40 % on black | 18.4 |
 

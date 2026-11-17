@@ -17,7 +17,7 @@ project adheres to [Semantic Versioning](https://semver.org/).
   weekly or bi-weekly, or, from the overview, in both weeks; moving it by dragging,
   resizing it by its lower edge, and changing it in its dialog.
 - Time blocks: the recurring time the Organizer is not available for meetings, with an
-  optional title, drawn striped. A **Meeting | Time block** switch under the grid says what
+  optional title, drawn in grey. A **Meeting | Time block** switch under the grid says what
   a press adds, on every tab; one added from the overview is held in both weeks. No meeting
   can be booked in a time block.
 - Removing a meeting or a time block from its remove mark, the Delete key or its dialog,
