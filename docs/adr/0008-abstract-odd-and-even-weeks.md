@@ -32,11 +32,12 @@ Options considered:
 - A meeting is **weekly** (held in both weeks) or **bi-weekly** (held in its
   parity's week). There is no monthly cadence.
 - The screen shows **three tabs**, one at a time: the odd week, the even week,
-  and the **month**, which merges them, the slots of a bi-weekly meeting cut
-  along their diagonal in an odd half and an even half
-  (`docs/specs/plan-the-meetings.md`). A meeting is cut along its own
-  diagonal rather than each quarter along its own: a quarter is a row too
-  flat for its halves to be read.
+  and the **month**, which merges them (`docs/specs/plan-the-meetings.md`).
+  Only the time an odd and an even meeting share is cut, along the diagonal
+  of that time, in an odd half and an even half; the rest of each meeting is
+  whole, so that the month shows at once what alternates and what does not.
+  The time shared is cut as one, not quarter by quarter: a quarter is a row
+  too flat for its halves to be read.
 - There is no occurrence of a meeting: a meeting is changed as a whole, in
   every week it is held.
 

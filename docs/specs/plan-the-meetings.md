@@ -11,7 +11,7 @@ tab shown is the odd week when the page opens.
 |---|---|
 | Odd week | The weekly meetings and the bi-weekly meetings held in the odd week. |
 | Even week | The weekly meetings and the bi-weekly meetings held in the even week. |
-| Month | Every meeting. A weekly meeting fills its slots. A bi-weekly meeting fills the half of its slots that is its week's, cut along their diagonal: the upper left for odd, the lower right for even, so that an odd and an even meeting at the same time share their slots. Its title is written in its corner, upper left for odd, lower right for even. |
+| Month | Every meeting, each filling its slots, except the time an odd and an even meeting share on a weekday: that time is cut along its diagonal, the upper left half for the odd meeting, the lower right half for the even one, and each meeting is whole before and after it. A title starting in a shared time is written in its half's corner. |
 
 A weekly meeting looks alike on the three tabs, and unlike a bi-weekly one.
 
@@ -20,7 +20,7 @@ A weekly meeting looks alike on the three tabs, and unlike a bi-weekly one.
 | Rule | Behaviour |
 |---|---|
 | From a slot | Pressing a free slot and dragging down marks the meeting's start and duration, one quarter at a time, within the day and over free slots only. A press without a drag marks one hour, or less when a taken slot or the end of the day comes first. |
-| Cadence offered | The meeting dialog opens with the cadence of where the press was: bi-weekly in the odd week from the odd week tab, bi-weekly in the even week from the even week tab; on the month, weekly from a slot free in both weeks, else bi-weekly in the week whose half was free. Any other cadence that overlaps nothing may be chosen. |
+| Cadence offered | The meeting dialog opens with the cadence of where the press was: bi-weekly in the odd week from the odd week tab, bi-weekly in the even week from the even week tab; weekly on the month, where a slot is free only when it is free in both weeks. Any other cadence that overlaps nothing may be chosen. |
 | Without a pointer | Add a meeting opens the same dialog, empty: the first free hour of the week shown, Monday first; on the month, weekly. |
 | Done | Adds the meeting once it has a title and overlaps nothing. Cancel, Escape or a click outside the dialog add nothing. |
 

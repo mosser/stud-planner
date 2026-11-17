@@ -40,12 +40,9 @@ describe('the cadence offered from a free slot', () => {
     expect(cadenceOffered(schedule, 'even', monday(8))).toBe(even)
   })
 
-  it('is weekly on the month from a slot free in both weeks', () => {
+  it('is weekly on the month, from a slot free in both weeks', () => {
     expect(cadenceOffered(schedule, 'month', monday(0))).toBe(Cadence.weekly)
-  })
-
-  it('is bi-weekly on the month in the week whose half is free', () => {
-    expect(cadenceOffered(schedule, 'month', monday(8))).toBe(even)
+    expect(cadenceOffered(schedule, 'month', monday(8))).toBeUndefined()
   })
 
   it('is none from a slot taken in the week of the tab', () => {

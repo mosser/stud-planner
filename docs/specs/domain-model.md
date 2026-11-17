@@ -28,7 +28,7 @@ in the specification, in the interface and in the code.
 | Quarter | Fifteen minutes. Starts and durations are whole quarters. |
 | Start | The time of day a meeting begins: a quarter of the day, its end within the day. |
 | Duration | How long a meeting lasts: one quarter at least, ending at the end of the day at most. |
-| Slot | A quarter of a weekday. On the month, the slots of a bi-weekly meeting are cut along their diagonal in two halves: the upper left for the odd week, the lower right for the even week. |
+| Slot | A quarter of a weekday. On the month, the slots an odd and an even meeting share are cut, together, along their diagonal: the upper left half for the odd week, the lower right half for the even week. |
 | Free, taken | A slot is taken in a week when a meeting held that week covers it, and free otherwise. A weekly meeting takes its slots in both weeks, a bi-weekly one in its week only. |
 | Overlap | Two meetings that would take the same slot in the same week. The system refuses an overlap, whatever makes it: adding, moving, resizing, changing a cadence or a parity, or loading a file. |
 | Tab | One of the three grids the screen shows, one at a time: the odd week, the even week, the month. |

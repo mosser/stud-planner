@@ -1,6 +1,6 @@
 import type { Parity } from '../domain/cadence.ts'
 import { theDay } from '../domain/day.ts'
-import type { Duration } from '../domain/duration.ts'
+import { Duration } from '../domain/duration.ts'
 import { cadenceWritten, timeOf } from '../domain/findings.ts'
 import type { Meeting } from '../domain/meeting.ts'
 import type { Schedule } from '../domain/schedule.ts'
@@ -29,7 +29,7 @@ function removeMark(meeting: Meeting, rank: number): Markup {
     aria-label="Remove ${meeting.title}" title="Remove">×</button>`
 }
 
-/** A meeting drawn whole: on a week's tab, or a weekly meeting on the month. */
+/** A meeting drawn whole: on a week's tab, or on the month when it shares no time. */
 function wholeMeeting(meeting: Meeting, rank: number): Markup {
   return html`<div class="meeting ${cadenceClass(meeting)}" style="grid-row: ${rowsOf(meeting)}"
     data-meeting="${rank}" role="button" tabindex="0" aria-label="${accessibleNameOf(meeting)}">
@@ -40,24 +40,102 @@ function wholeMeeting(meeting: Meeting, rank: number): Markup {
   </div>`
 }
 
+/** A part of a meeting's time on the month: shared with a meeting of the other week, or not. */
+export interface Piece {
+  readonly start: TimeOfDay
+  readonly duration: Duration
+  readonly isShared: boolean
+}
+
+function pieceFrom(start: TimeOfDay, end: TimeOfDay, isShared: boolean): Piece {
+  return { start, duration: Duration.ofQuarters(start.quartersUntil(end)), isShared }
+}
+
+function later(one: TimeOfDay, other: TimeOfDay): TimeOfDay {
+  return one.isBefore(other) ? other : one
+}
+
+function earlier(one: TimeOfDay, other: TimeOfDay): TimeOfDay {
+  return one.isBefore(other) ? one : other
+}
+
 /**
- * A bi-weekly meeting on the month: its slots cut along their diagonal, the upper left half for
- * odd, the lower right half for even, and its title, remove mark and lower edge over them.
+ * The parts of a meeting's time on the month, in order: those it shares with a bi-weekly meeting
+ * of the other week, on the same weekday, and those it holds alone. A weekly meeting shares none.
  */
-function halvedMeeting(meeting: Meeting, rank: number, parity: Parity): Markup {
-  const rows = rowsOf(meeting)
-  return html`<div class="meeting half ${parity.key}" style="grid-row: ${rows}" data-meeting="${rank}"
-      role="button" tabindex="0" aria-label="${accessibleNameOf(meeting)}"></div>
-    <div class="half-label ${parity.key}" style="grid-row: ${rows}">
+export function piecesOf(meeting: Meeting, schedule: Schedule): readonly Piece[] {
+  const parity = meeting.cadence.parity
+  const shared = schedule.meetings
+    .filter(
+      (other) =>
+        parity !== undefined &&
+        other.weekday === meeting.weekday &&
+        other.cadence.parity !== undefined &&
+        other.cadence.parity !== parity &&
+        other.start.isBefore(meeting.end) &&
+        meeting.start.isBefore(other.end),
+    )
+    .map((other) => ({
+      from: later(meeting.start, other.start),
+      to: earlier(meeting.end, other.end),
+    }))
+    .sort((one, other) => one.from.minutes - other.from.minutes)
+  const pieces: Piece[] = []
+  let reached = meeting.start
+  for (const { from, to } of shared) {
+    if (reached.isBefore(from)) {
+      pieces.push(pieceFrom(reached, from, false))
+    }
+    pieces.push(pieceFrom(from, to, true))
+    reached = to
+  }
+  if (reached.isBefore(meeting.end)) {
+    pieces.push(pieceFrom(reached, meeting.end, false))
+  }
+  return pieces
+}
+
+/** The classes of a piece: cut along its diagonal when shared, rounded at the meeting's ends. */
+function pieceClasses(piece: Piece, rank: number, count: number): string {
+  const classes = [piece.isShared ? 'half' : 'alone']
+  if (rank === 0) classes.push('first')
+  if (rank === count - 1) classes.push('last')
+  return classes.join(' ')
+}
+
+/** Where a shared piece writes or holds something: in the half of its week. */
+function sharedClass(piece: Piece): string {
+  return piece.isShared ? 'shared' : ''
+}
+
+/**
+ * A bi-weekly meeting on the month that shares time with a meeting of the other week: the time
+ * shared cut along its diagonal, the upper left half for odd, the lower right half for even, the
+ * rest whole; its title and remove mark over its first piece, its lower edge over its last.
+ */
+function piecedMeeting(meeting: Meeting, rank: number, parity: Parity, pieces: readonly Piece[]) {
+  const first = pieces[0] as Piece
+  const last = pieces[pieces.length - 1] as Piece
+  const drawn = pieces.map((piece, index) => {
+    const focus =
+      index === 0 ? html`role="button" tabindex="0" aria-label="${accessibleNameOf(meeting)}"` : ''
+    return html`<div class="meeting piece ${parity.key} ${pieceClasses(piece, index, pieces.length)}"
+      style="grid-row: ${rowsOf(piece)}" data-meeting="${rank}" ${focus}></div>`
+  })
+  return html`${drawn}
+    <div class="meeting-label ${parity.key} ${sharedClass(first)}" style="grid-row: ${rowsOf(first)}">
       <span class="meeting-title">${meeting.title}</span>${removeMark(meeting, rank)}
+    </div>
+    <div class="resize-zone ${parity.key} ${sharedClass(last)}" style="grid-row: ${rowsOf(last)}">
       <span class="resize" data-resize="${rank}" aria-hidden="true"></span>
     </div>`
 }
 
-function meetingOnTab(meeting: Meeting, rank: number, tab: Tab): Markup {
+function meetingOnTab(meeting: Meeting, rank: number, tab: Tab, schedule: Schedule): Markup {
   const parity = meeting.cadence.parity
-  if (tab === 'month' && parity !== undefined) {
-    return halvedMeeting(meeting, rank, parity)
+  const pieces = piecesOf(meeting, schedule)
+  if (tab === 'month' && parity !== undefined && pieces.some((piece) => piece.isShared)) {
+    return piecedMeeting(meeting, rank, parity, pieces)
   }
   return wholeMeeting(meeting, rank)
 }
@@ -84,7 +162,7 @@ export function gridOf(schedule: Schedule, tab: Tab): Markup {
     (weekday) =>
       html`<div class="day" data-weekday="${weekday.key}">${shown
         .filter(({ meeting }) => meeting.weekday === weekday)
-        .map(({ meeting, rank }) => meetingOnTab(meeting, rank, tab))}</div>`,
+        .map(({ meeting, rank }) => meetingOnTab(meeting, rank, tab, schedule))}</div>`,
   )
   return html`<div class="week" data-shows="${tab}" style="--quarters: ${theDay.quarterCount}">
     <div class="corner"></div>

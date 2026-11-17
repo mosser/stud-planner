@@ -99,7 +99,7 @@ describe('the screen', () => {
     expect(titles(root)).toEqual(['Lab meeting'])
     ;(root.querySelector('[data-tab="month"]') as HTMLElement).click()
     expect(root.querySelector('[role="tabpanel"]')?.getAttribute('aria-label')).toBe('Month')
-    expect(root.querySelectorAll('.half.odd')).toHaveLength(1)
+    expect(root.querySelector<HTMLElement>('.meeting.odd')?.style.gridRow).toBe('9 / span 4')
   })
 })
 
@@ -128,13 +128,21 @@ describe('adding a meeting', () => {
     expect(describeMeetings(application.schedule)[1]).toBe('Bo Monday 09:30-10:00')
   })
 
-  it('offers on the month the week whose half of the slot is free', () => {
+  it('offers a weekly meeting on the month', () => {
     const { root, application } = mounted(new Schedule([ana]))
+    ;(root.querySelector('[data-tab="month"]') as HTMLElement).click()
+    press(day(root, Weekday.tuesday), point(Weekday.tuesday, '08:00'))
+    release(point(Weekday.tuesday, '08:00'))
+    typeTitle('Bo')
+    expect(application.schedule.meetings[1]?.cadence).toBe(Cadence.weekly)
+  })
+
+  it('adds nothing from a slot of the month taken in one week', () => {
+    const { root } = mounted(new Schedule([ana]))
     ;(root.querySelector('[data-tab="month"]') as HTMLElement).click()
     press(day(root, Weekday.tuesday), point(Weekday.tuesday, '10:00'))
     release(point(Weekday.tuesday, '10:00'))
-    typeTitle('Bo')
-    expect(application.schedule.meetings[1]?.cadence).toBe(Cadence.biWeekly(Parity.even))
+    expect(dialog()).toBeNull()
   })
 
   it('adds from the toolbar at the first free hour of the week shown', () => {

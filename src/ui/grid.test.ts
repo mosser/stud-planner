@@ -1,10 +1,11 @@
 // @vitest-environment happy-dom
 import { describe, expect, it } from 'vitest'
 import { Cadence, Parity } from '../domain/cadence.ts'
+import { Duration } from '../domain/duration.ts'
 import { aMeeting, at } from '../domain/meeting.fixture.ts'
 import { Schedule } from '../domain/schedule.ts'
 import { Weekday } from '../domain/weekday.ts'
-import { accessibleNameOf, gridOf, slotAt } from './grid.ts'
+import { accessibleNameOf, gridOf, piecesOf, slotAt } from './grid.ts'
 
 const lab = aMeeting({ weekday: Weekday.tuesday })
 const ana = aMeeting({ title: 'Ana', cadence: Cadence.biWeekly(Parity.odd) })
@@ -39,22 +40,103 @@ describe('the grid of a tab', () => {
     expect(meeting?.getAttribute('aria-label')).toBe(accessibleNameOf(ana))
   })
 
-  it('cuts the slots of a bi-weekly meeting in half on the month, odd and even', () => {
+  it('cuts on the month only the time an odd and an even meeting share', () => {
     const month = rendered('month')
-    const odd = month.querySelector<HTMLElement>('.half.odd[data-meeting="1"]')
-    expect(odd?.style.gridRow).toBe('9 / span 4')
-    expect(month.querySelector<HTMLElement>('.half.even[data-meeting="2"]')?.style.gridRow).toBe(
-      '11 / span 4',
-    )
-    expect(month.querySelectorAll('.meeting.weekly:not(.half)')).toHaveLength(1)
-    expect(month.querySelector('.half-label.odd [data-resize="1"]')).not.toBeNull()
+    const rowsOfPieces = (rank: number) =>
+      [...month.querySelectorAll<HTMLElement>(`.piece[data-meeting="${rank}"]`)].map(
+        (piece) => `${piece.className.replace(/\s+/g, ' ').trim()} | ${piece.style.gridRow}`,
+      )
+    expect(rowsOfPieces(1)).toEqual([
+      'meeting piece odd alone first | 9 / span 2',
+      'meeting piece odd half last | 11 / span 2',
+    ])
+    expect(rowsOfPieces(2)).toEqual([
+      'meeting piece even half first | 11 / span 2',
+      'meeting piece even alone last | 13 / span 2',
+    ])
+    expect(month.querySelector('.meeting-label.even.shared [data-remove="2"]')).not.toBeNull()
+    expect(month.querySelector('.resize-zone.odd.shared [data-resize="1"]')).not.toBeNull()
+    expect(month.querySelectorAll('[data-meeting="1"][tabindex="0"]')).toHaveLength(1)
     expect(titles(month)).toEqual(['Ana', 'Bo <b>', 'Lab meeting'])
+  })
+
+  it('draws whole on the month a bi-weekly meeting that shares no time', () => {
+    const alone = new Schedule([
+      ana,
+      aMeeting({ title: 'Bo', cadence: Cadence.biWeekly(Parity.even), start: at('11:00') }),
+    ])
+    const element = document.createElement('div')
+    element.innerHTML = gridOf(alone, 'month').text
+    expect(element.querySelectorAll('.piece')).toHaveLength(0)
+    expect(element.querySelector<HTMLElement>('.meeting.odd')?.style.gridRow).toBe('9 / span 4')
   })
 
   it('marks every hour of the day', () => {
     const hours = [...rendered('odd').querySelectorAll('.hour')].map((hour) => hour.textContent)
     expect(hours[0]).toBe('08:00')
     expect(hours).toHaveLength(10)
+  })
+})
+
+describe('the pieces of a meeting on the month', () => {
+  const written = (meeting: typeof ana, within: Schedule) =>
+    piecesOf(meeting, within).map(
+      (piece) => `${piece.start}+${piece.duration.minutes}${piece.isShared ? ' shared' : ''}`,
+    )
+
+  it('are the time shared with a meeting of the other week, and the rest', () => {
+    expect(written(ana, schedule)).toEqual(['10:00+30', '10:30+30 shared'])
+    expect(written(bo, schedule)).toEqual(['10:30+30 shared', '11:00+30'])
+  })
+
+  it('share each meeting of the other week in turn, in order', () => {
+    const long = aMeeting({
+      title: 'Long',
+      cadence: Cadence.biWeekly(Parity.odd),
+      start: at('09:00'),
+      duration: Duration.ofQuarters(12),
+    })
+    const first = aMeeting({
+      title: 'One',
+      cadence: Cadence.biWeekly(Parity.even),
+      start: at('10:30'),
+      duration: Duration.ofQuarters(2),
+    })
+    const second = aMeeting({
+      title: 'Two',
+      cadence: Cadence.biWeekly(Parity.even),
+      start: at('09:30'),
+      duration: Duration.ofQuarters(2),
+    })
+    expect(written(long, new Schedule([long, first, second]))).toEqual([
+      '09:00+30',
+      '09:30+30 shared',
+      '10:00+30',
+      '10:30+30 shared',
+      '11:00+60',
+    ])
+  })
+
+  it('are one, unshared, for a weekly meeting or a meeting alone on its weekday', () => {
+    expect(written(lab, schedule)).toEqual(['10:00+60'])
+    expect(
+      written(
+        ana,
+        new Schedule([
+          ana,
+          aMeeting({
+            title: 'Bo',
+            cadence: Cadence.biWeekly(Parity.even),
+            weekday: Weekday.friday,
+          }),
+        ]),
+      ),
+    ).toEqual(['10:00+60'])
+  })
+
+  it('cover the whole meeting when it shares all its time', () => {
+    const twin = aMeeting({ title: 'Twin', cadence: Cadence.biWeekly(Parity.even) })
+    expect(written(ana, new Schedule([ana, twin]))).toEqual(['10:00+60 shared'])
   })
 })
 

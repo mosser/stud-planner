@@ -41,14 +41,13 @@ function isFree(schedule: Schedule, cadence: Cadence, weekday: Weekday, quarter:
 }
 
 /**
- * The cadence a meeting added from a free slot is offered: bi-weekly in the week of the tab; on
- * the month, weekly from a slot free in both weeks, else bi-weekly in the week it is free in.
- * Absent when the slot is free in no week the tab shows.
+ * The cadence a meeting added from a free slot is offered: bi-weekly in the week of the tab, and
+ * weekly on the month. Absent when the slot is taken in a week the cadence is held in.
  */
 export function cadenceOffered(schedule: Schedule, tab: Tab, slot: Slot): Cadence | undefined {
   const parity = parityOf(tab)
-  const candidates = parity === undefined ? Cadence.all : [Cadence.biWeekly(parity)]
-  return candidates.find((cadence) => isFree(schedule, cadence, slot.weekday, slot.quarter))
+  const cadence = parity === undefined ? Cadence.weekly : Cadence.biWeekly(parity)
+  return isFree(schedule, cadence, slot.weekday, slot.quarter) ? cadence : undefined
 }
 
 /**

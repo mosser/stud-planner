@@ -194,14 +194,12 @@ button:disabled {
 }
 
 .meeting.odd,
-.preview.odd,
-.half-label.odd {
+.preview.odd {
   --cadence: var(--color-odd);
 }
 
 .meeting.even,
-.preview.even,
-.half-label.even {
+.preview.even {
   --cadence: var(--color-even);
 }
 
@@ -264,7 +262,7 @@ button:disabled {
 
 .meeting:hover .remove,
 .meeting:focus-within .remove,
-.half-label:hover .remove,
+.meeting-label:hover .remove,
 .remove:focus-visible {
   opacity: 1;
 }
@@ -284,11 +282,27 @@ button:disabled {
   cursor: ns-resize;
 }
 
-/* The month: each slot cut diagonally, the upper left for odd, the lower right for even. */
+/*
+ * The month: a bi-weekly meeting is drawn in pieces when it shares time with a meeting of the
+ * other week; the time shared is cut along its diagonal, the upper left for odd, the lower right
+ * for even, and the rest is whole.
+ */
+.meeting.piece {
+  border-radius: 0;
+}
+
+.meeting.piece.first {
+  border-top-left-radius: 0.25rem;
+  border-top-right-radius: 0.25rem;
+}
+
+.meeting.piece.last {
+  border-bottom-left-radius: 0.25rem;
+  border-bottom-right-radius: 0.25rem;
+}
+
 .meeting.half {
-  margin: 0 2px;
-  border: 0;
-  border-radius: 0.25rem;
+  border-left: 0;
   background: color-mix(in srgb, var(--cadence) var(--half-tint), var(--color-surface));
 }
 
@@ -300,41 +314,49 @@ button:disabled {
   clip-path: polygon(100% 0, 100% 100%, 0 100%);
 }
 
-.half-label {
+.meeting-label,
+.resize-zone {
   position: relative;
   z-index: 1;
-  display: flex;
   margin: 0 2px;
-  padding: 0 0.3rem;
-  font-size: 0.75rem;
-  line-height: 1.2;
   pointer-events: none;
 }
 
-.half-label .meeting-title {
+.meeting-label {
+  display: flex;
+  padding: 0 0.3rem 0 calc(0.3rem + 4px);
+  font-size: 0.75rem;
+  line-height: 1.2;
+}
+
+.meeting-label.shared {
+  padding-left: 0.3rem;
+}
+
+.meeting-label .meeting-title {
   max-width: 60%;
 }
 
-.half-label.even {
+.meeting-label.even.shared {
   align-items: flex-end;
   justify-content: flex-end;
 }
 
-.half-label .remove,
-.half-label .resize {
+.meeting-label .remove,
+.resize-zone .resize {
   pointer-events: auto;
 }
 
-/* The lower edge of an odd half is its lower left corner: the handle stays within it. */
-.half-label.odd .resize {
-  right: 70%;
-}
-
-.half-label.even .remove {
+.meeting-label.even.shared .remove {
   top: auto;
   right: auto;
   bottom: 0;
   left: 0;
+}
+
+/* The lower edge of an odd half is its lower left corner: the handle stays within it. */
+.resize-zone.odd.shared .resize {
+  right: 70%;
 }
 
 /* Dialogs. */
