@@ -107,9 +107,31 @@ textarea {
 }
 
 .masthead h1 {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
   margin: 0;
   font-size: 1.25rem;
   font-weight: 600;
+}
+
+/* The icon: a calendar page, its square cut along its diagonal, week A and week B. */
+.icon {
+  width: 1.75rem;
+  height: 1.75rem;
+  flex: none;
+}
+
+.icon-frame {
+  stroke: currentColor;
+}
+
+.icon-week-a {
+  fill: var(--half-fill-week-a);
+}
+
+.icon-week-b {
+  fill: var(--color-week-b);
 }
 
 .screen {

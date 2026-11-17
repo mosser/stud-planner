@@ -29,6 +29,7 @@ import {
 } from './gestures.ts'
 import { cadenceClass, gridOf, kindClass, rowsOf, slotAt, weekClass } from './grid.ts'
 import { html } from './html.ts'
+import { iconMarkup, systemName } from './icon.ts'
 
 /** What the page needs from its surroundings to be mounted. */
 export interface ApplicationContext {
@@ -135,7 +136,7 @@ export function mountApplication(root: HTMLElement, context: ApplicationContext)
   function render(): void {
     root.innerHTML = html`
       <header class="masthead">
-        <h1>Stud Planner</h1>
+        <h1>${iconMarkup()}${systemName}</h1>
         <div class="masthead-actions">${sharedChooser()}${lockButton()}</div>
       </header>
       <main class="screen">

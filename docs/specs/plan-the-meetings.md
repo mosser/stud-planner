@@ -1,6 +1,8 @@
 # Plan the meetings
 
-The system has one screen. It shows one tab at a time, the overview, week A
+The system has one screen, headed *Supervision Planner* with its icon, a
+calendar page whose square is cut along its diagonal, week A and week B. It
+shows one tab at a time, the overview, week A
 or week B, each a grid with a weekday per column and a quarter of the
 day per row. Above the grid stand the tabs, and Save and Load; under it, on
 every tab, the switch between Meeting and Time block. At the right of the

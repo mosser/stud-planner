@@ -99,7 +99,8 @@ describe('the screen', () => {
   it('opens on the overview, its tab first, with a masthead and the version', () => {
     const { root, application } = mounted(new Schedule([lab, ana]), {}, 'as opened')
     expect(application.tab).toBe('overview')
-    expect(root.querySelector('.masthead h1')?.textContent).toBe('Stud Planner')
+    expect(root.querySelector('.masthead h1')?.textContent).toBe('Supervision Planner')
+    expect(root.querySelector('.masthead h1 svg.icon')).not.toBeNull()
     expect(root.querySelector('.site-footer')?.textContent).toBe('stud-planner v1.2.3')
     expect(root.querySelector('[aria-selected="true"]')?.textContent).toBe('Overview')
     const order = [...root.querySelectorAll('[role="tab"]')].map((each) => each.textContent)

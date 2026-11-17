@@ -8,6 +8,7 @@ project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- **Supervision Planner**, with its icon in the masthead and the browser's tab.
 - A schedule of recurring meetings, weekly or bi-weekly, planned on two abstract weeks,
   week A and week B, which alternate, without dates, Monday to Friday from 08:00 to 18:00, by the quarter.
 - Three tabs, shown one at a time, each marked with the colour of its week: **Overview**,

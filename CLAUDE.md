@@ -4,7 +4,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this project is
 
-`stud-planner` is a scheduler for recurring meetings with students. The
+`stud-planner`, titled **Supervision Planner** (`systemName` in
+`src/ui/icon.ts`), is a scheduler for recurring meetings with students. The
 Organizer places weekly and bi-weekly bookings, meetings and the time blocks
 they are not available for meetings, on two abstract weeks, A and B, by
 pressing and dragging on them, and sees them one tab at a time or in the
