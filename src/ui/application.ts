@@ -19,7 +19,6 @@ import {
   bookingMoved,
   bookingResized,
   cadenceOffered,
-  cadencesAddedFrom,
   type Slot,
   type Span,
   spanDragged,
@@ -209,13 +208,12 @@ export function mountApplication(root: HTMLElement, context: ApplicationContext)
     return rank === undefined ? undefined : schedule.bookings[Number(rank)]
   }
 
-  /** Opens the dialog of a booking added from the tab shown: it is held in its week, or both. */
+  /** Opens the dialog of a booking added from the tab shown: held in its week, or in both. */
   function openNew(adds: Kind, span: Span, cadence: Cadence): void {
     openBookingDialog(page, {
       schedule,
       kind: adds,
       proposal: { ...span, cadence },
-      cadences: cadencesAddedFrom(tab),
       onDone: (booking) => change(schedule.afterAdding(booking)),
     })
   }

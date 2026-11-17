@@ -11,6 +11,7 @@ import {
   meetingOfTheFile,
   missingField,
   nameOf,
+  newBookingHeading,
   notAScheduleFile,
   notJson,
   notKept,
@@ -90,12 +91,10 @@ describe('the findings', () => {
     )
   })
 
-  it('write cadences and durations', () => {
-    expect(Cadence.all.map(cadenceChoice)).toEqual([
-      'Weekly',
-      'Bi-weekly, week A',
-      'Bi-weekly, week B',
-    ])
+  it('write weeks and durations', () => {
+    expect(Cadence.all.map(cadenceChoice)).toEqual(['Both weeks', 'Week A', 'Week B'])
+    expect(newBookingHeading(false, Cadence.biWeekly(Week.a))).toBe('New meeting in week A')
+    expect(newBookingHeading(true, Cadence.weekly)).toBe('New time block in both weeks')
     expect([1, 4, 6, 9].map((quarters) => durationWritten(Duration.ofQuarters(quarters)))).toEqual([
       '15 min',
       '1 h',

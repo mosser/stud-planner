@@ -2,7 +2,13 @@ import type { Booking, Timing } from '../domain/booking.ts'
 import { Cadence } from '../domain/cadence.ts'
 import { theDay } from '../domain/day.ts'
 import { Duration } from '../domain/duration.ts'
-import { aTimeBlock, cadenceChoice, durationWritten, overlap } from '../domain/findings.ts'
+import {
+  aTimeBlock,
+  cadenceChoice,
+  durationWritten,
+  newBookingHeading,
+  overlap,
+} from '../domain/findings.ts'
 import { Meeting } from '../domain/meeting.ts'
 import type { Participant } from '../domain/participant.ts'
 import type { Schedule } from '../domain/schedule.ts'
@@ -25,8 +31,6 @@ export interface BookingDialogOptions {
   readonly proposal: Timing
   /** Whether the booking is only shown, the schedule being locked: nothing can be changed. */
   readonly isReadOnly?: boolean | undefined
-  /** The cadences the booking may have; every cadence when absent. */
-  readonly cadences?: readonly Cadence[] | undefined
   /** Called with the booking as Done leaves it: never one that overlaps another. */
   readonly onDone: (booking: Booking) => void
   /** Called when the Organizer asks to remove the booking changed. */
@@ -40,11 +44,6 @@ type Outcome =
 
 /** A title that stands in while the Organizer has typed none, to check everything else. */
 const standInTitle = 'Meeting'
-
-/** The cadences the dialog offers. */
-function cadencesOf(given: BookingDialogOptions): readonly Cadence[] {
-  return given.cadences ?? Cadence.all
-}
 
 /** The options of a list, each valued by its rank; which is chosen is set by `choose`. */
 function options<T>(values: readonly T[], label: (value: T) => string): Markup {
@@ -60,7 +59,7 @@ function headingOf(given: BookingDialogOptions): string {
   if (booking !== undefined) {
     return booking.title ?? aTimeBlock
   }
-  return given.kind === 'meeting' ? 'New meeting' : 'New time block'
+  return newBookingHeading(given.kind === 'time-block', given.proposal.cadence)
 }
 
 function noteField(given: BookingDialogOptions): Markup | string {
@@ -117,7 +116,7 @@ function markupOf(given: BookingDialogOptions): Markup {
     <h2>${headingOf(given)}</h2>
     <fieldset ${given.isReadOnly === true ? 'disabled' : ''}>
     <label>Title <input name="title" value="${booking?.title ?? ''}" autocomplete="off"></label>
-    <label>Cadence <select name="cadence">${options(cadencesOf(given), cadenceChoice)}</select></label>
+    ${weeksField(given)}
     <label>Weekday <select name="weekday">${options(Weekday.all, (weekday) => weekday.name)}</select></label>
     <label>Start <select name="start">${options(theDay.quarters, String)}</select></label>
     <label>Duration <select name="duration">${options(durations, durationWritten)}</select></label>
@@ -129,11 +128,22 @@ function markupOf(given: BookingDialogOptions): Markup {
   </form>`
 }
 
+/**
+ * The weeks a booking is held in, chosen when it is changed. A booking added is held in the weeks
+ * of the tab it is added from, which its heading says: there is nothing to choose.
+ */
+function weeksField(given: BookingDialogOptions): Markup | string {
+  if (given.booking === undefined) {
+    return ''
+  }
+  return html`<label>Weeks <select name="cadence">${options(Cadence.all, cadenceChoice)}</select></label>`
+}
+
 /** Chooses in each list of the dialog what the booking, or the new one, has. */
 function choose(form: HTMLFormElement, given: BookingDialogOptions): void {
   const shown = given.booking ?? given.proposal
   const ranks: Record<string, number> = {
-    cadence: cadencesOf(given).indexOf(shown.cadence),
+    cadence: Cadence.all.indexOf(shown.cadence),
     weekday: Weekday.all.indexOf(shown.weekday),
     start: theDay.quarterAt(shown.start),
     duration: shown.duration.quarters - 1,
@@ -162,7 +172,8 @@ function textOf(form: HTMLFormElement, name: string): string {
 }
 
 function timingOf(form: HTMLFormElement, given: BookingDialogOptions): Timing | undefined {
-  const cadence = chosen(form, 'cadence', cadencesOf(given))
+  const cadence =
+    given.booking === undefined ? given.proposal.cadence : chosen(form, 'cadence', Cadence.all)
   const weekday = chosen(form, 'weekday', Weekday.all)
   const start = chosen(form, 'start', theDay.quarters)
   const duration = chosen(form, 'duration', durations)

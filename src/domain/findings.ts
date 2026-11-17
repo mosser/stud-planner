@@ -36,10 +36,20 @@ export function cadenceWritten(cadence: Cadence): string {
   return cadence.week === undefined ? 'weekly' : `bi-weekly, ${cadence.week.name}`
 }
 
-/** A cadence as a choice of the meeting dialog: Weekly; Bi-weekly, week A. */
+/** The weeks of a booking as a choice of its dialog: Both weeks; Week A. */
 export function cadenceChoice(cadence: Cadence): string {
-  const written = cadenceWritten(cadence)
+  const written = weeksWritten(cadence)
   return written.charAt(0).toUpperCase() + written.slice(1)
+}
+
+/** The weeks a booking is held in, as the interface writes them: both weeks; week A. */
+export function weeksWritten(cadence: Cadence): string {
+  return cadence.week === undefined ? 'both weeks' : cadence.week.name
+}
+
+/** The heading of the dialog of a booking added: New meeting in week A; New time block in both weeks. */
+export function newBookingHeading(isTimeBlock: boolean, cadence: Cadence): string {
+  return `New ${isTimeBlock ? 'time block' : 'meeting'} in ${weeksWritten(cadence)}`
 }
 
 /** A duration as the interface writes it: 15 min, 1 h, 1 h 30. */

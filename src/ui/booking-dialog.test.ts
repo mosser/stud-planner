@@ -44,24 +44,20 @@ afterEach(() => {
 })
 
 describe('the meeting dialog of a new meeting', () => {
-  it('opens where the meeting goes, with the cadence offered and no title', () => {
+  it('opens where the meeting goes, held in the weeks its heading says, without a title', () => {
     const dialog = openBookingDialog(document, {
       schedule,
       kind: 'meeting',
       proposal,
       onDone: vi.fn(),
     })
-    expect(dialog.querySelector('h2')?.textContent).toBe('New meeting')
+    expect(dialog.querySelector('h2')?.textContent).toBe('New meeting in week A')
+    expect(dialog.querySelector('[name="cadence"]')).toBeNull()
     const selected = (name: string) => {
       const select = field<HTMLSelectElement>(dialog, name)
       return select.options[select.selectedIndex]?.textContent
     }
-    expect(['cadence', 'weekday', 'start', 'duration'].map(selected)).toEqual([
-      'Bi-weekly, week A',
-      'Tuesday',
-      '09:00',
-      '1 h',
-    ])
+    expect(['weekday', 'start', 'duration'].map(selected)).toEqual(['Tuesday', '09:00', '1 h'])
     expect(dialog.querySelector('[data-action="remove"]')).toBeNull()
   })
 
@@ -202,7 +198,7 @@ describe('the dialog of a time block', () => {
   it('adds a time block without a title, and has no note', () => {
     const onDone = vi.fn()
     const dialog = openBookingDialog(document, { schedule, kind: 'time-block', proposal, onDone })
-    expect(dialog.querySelector('h2')?.textContent).toBe('New time block')
+    expect(dialog.querySelector('h2')?.textContent).toBe('New time block in week A')
     expect(dialog.querySelector('[name="note"]')).toBeNull()
     expect(done(dialog).disabled).toBe(false)
     dialog.querySelector('form')?.requestSubmit()

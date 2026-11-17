@@ -41,7 +41,7 @@ choice from tab to tab. Where it is held depends on the tab:
 | Rule | Behaviour |
 |---|---|
 | From a slot | Pressing a free slot and dragging down marks the booking's start and duration, one quarter at a time, within the day and over free slots only. A press without a drag marks one hour, or less when a taken slot or the end of the day comes first. On the overview, a slot is free when it is free in both weeks. |
-| Cadence offered | From a week's tab, the dialog opens bi-weekly in the week of the tab; the other cadence it offers is weekly, held in that week too, never bi-weekly in the other week. From the overview, it offers weekly only. |
+| Its weeks | A booking added is held in the weeks of the tab it is added from: in week A or week B, bi-weekly; from the overview, in both, weekly. The dialog says so in its heading, *New meeting in week A*, and asks for nothing more about its weeks. |
 | Done | Adds the booking once it overlaps nothing, and, for a meeting, once it has a title. Cancel, Escape or a click outside the dialog add nothing. |
 
 ## Moving, resizing and removing a booking
@@ -78,8 +78,8 @@ itself on hover: its title, cadence, weekday, time and participants.
 
 ## The dialog of a booking
 
-A click on a booking, without a drag, opens its dialog: title, cadence,
-week (bi-weekly), weekday, start and duration, and for a meeting its
+A click on a booking, without a drag, opens its dialog: title, weeks (both
+weeks, week A or week B), weekday, start and duration, and for a meeting its
 participants and its note, with
 Done and Remove. Every change a move or a resize makes can also be made here,
 with the keyboard. Done is refused while the booking would overlap another,

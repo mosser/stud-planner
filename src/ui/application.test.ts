@@ -144,20 +144,15 @@ describe('adding a meeting', () => {
     expect(describeMeetings(application.schedule)[1]).toBe('Bo Monday 09:30-10:00')
   })
 
-  it('offers only the cadences held in the week of the tab', () => {
+  it('adds a meeting held in the week of the tab, with no weeks to choose', () => {
     const { root, application } = mounted(new Schedule())
     ;(root.querySelector('[data-tab="b"]') as HTMLElement).click()
     press(day(root, Weekday.tuesday), point(Weekday.tuesday, '08:00'))
     release(point(Weekday.tuesday, '08:00'))
-    const choices = [...dialog().querySelectorAll('[name="cadence"] option')].map(
-      (option) => option.textContent,
-    )
-    expect(choices).toEqual(['Weekly', 'Bi-weekly, week B'])
-    const cadence = dialog().querySelector('[name="cadence"]') as HTMLSelectElement
-    cadence.value = '0'
-    cadence.dispatchEvent(new Event('change', { bubbles: true }))
+    expect(dialog().querySelector('h2')?.textContent).toBe('New meeting in week B')
+    expect(dialog().querySelector('[name="cadence"]')).toBeNull()
     typeTitle('Bo')
-    expect(application.schedule.meetings[0]?.cadence).toBe(Cadence.weekly)
+    expect(application.schedule.meetings[0]?.cadence).toBe(Cadence.biWeekly(Week.b))
   })
 
   it('adds a weekly meeting from the overview, held in both weeks', () => {
@@ -170,11 +165,8 @@ describe('adding a meeting', () => {
     press(day(root, Weekday.monday), point(Weekday.monday, '08:00'))
     moveTo(point(Weekday.monday, '09:15'))
     release(point(Weekday.monday, '09:15'))
-    expect(dialog().querySelector('h2')?.textContent).toBe('New meeting')
-    const choices = [...dialog().querySelectorAll('[name="cadence"] option')].map(
-      (option) => option.textContent,
-    )
-    expect(choices).toEqual(['Weekly'])
+    expect(dialog().querySelector('h2')?.textContent).toBe('New meeting in both weeks')
+    expect(dialog().querySelector('[name="cadence"]')).toBeNull()
     typeTitle('Seminar')
     expect(describeMeetings(application.schedule)[1]).toBe('Seminar Monday 08:00-09:30')
     expect(application.schedule.meetings[1]?.cadence).toBe(Cadence.weekly)
@@ -186,7 +178,7 @@ describe('adding a meeting', () => {
     ;(root.querySelector('[data-adding="time-block"]') as HTMLElement).click()
     press(day(root, Weekday.friday), point(Weekday.friday, '08:00'))
     release(point(Weekday.friday, '08:00'))
-    expect(dialog().querySelector('h2')?.textContent).toBe('New time block')
+    expect(dialog().querySelector('h2')?.textContent).toBe('New time block in both weeks')
     dialog().querySelector('form')?.requestSubmit()
     const [block] = application.schedule.timeBlocks
     expect([block?.title, block?.cadence, block?.end.toString()]).toEqual([

@@ -7,7 +7,6 @@ import {
   bookingMoved,
   bookingResized,
   cadenceOffered,
-  cadencesAddedFrom,
   type Span,
   spanDragged,
   spanPressed,
@@ -46,17 +45,6 @@ describe('the cadence offered from a free slot', () => {
 
   it('is none from a slot taken in the week of the tab', () => {
     expect(cadenceOffered(schedule, 'a', monday(8))).toBeUndefined()
-  })
-})
-
-describe('a booking added from a tab', () => {
-  it('is weekly from the overview', () => {
-    expect(cadencesAddedFrom('overview')).toEqual([Cadence.weekly])
-  })
-
-  it('is held in the week of the tab: bi-weekly in it, or weekly', () => {
-    expect(cadencesAddedFrom('a')).toEqual([Cadence.weekly, inWeekA])
-    expect(cadencesAddedFrom('b')).toEqual([Cadence.weekly, inWeekB])
   })
 })
 

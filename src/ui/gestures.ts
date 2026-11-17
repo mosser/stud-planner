@@ -51,18 +51,6 @@ export function cadenceOffered(schedule: Schedule, tab: Tab, slot: Slot): Cadenc
 }
 
 /**
- * The cadences a booking added from a tab may have. From a week, it is held in that week: weekly,
- * or bi-weekly in it. From the overview, it is held in both: weekly.
- */
-export function cadencesAddedFrom(tab: Tab): readonly Cadence[] {
-  const week = weekOf(tab)
-  if (week === undefined) {
-    return [Cadence.weekly]
-  }
-  return Cadence.all.filter((cadence) => cadence.isHeldIn(week))
-}
-
-/**
  * The span marked by pressing a free slot and dragging to a quarter of the same weekday: from the
  * slot pressed to that quarter, over free slots only, stopping before the first taken one.
  */
