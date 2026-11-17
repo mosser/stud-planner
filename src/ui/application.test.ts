@@ -8,6 +8,7 @@ import { TimeBlock } from '../domain/time-block.ts'
 import { Weekday } from '../domain/weekday.ts'
 import { scheduleFileOf } from '../io/schedule-file.ts'
 import { type ApplicationContext, mountApplication } from './application.ts'
+import type { Tab } from './gestures.ts'
 
 const odd = Cadence.biWeekly(Parity.odd)
 /** Monday 10:00 to 11:00, weekly. */
@@ -35,7 +36,12 @@ afterEach(() => {
   document.body.innerHTML = ''
 })
 
-function mounted(schedule: Schedule, changes: Partial<ApplicationContext> = {}) {
+/** The page mounted, on the odd week unless told otherwise, or as it opens. */
+function mounted(
+  schedule: Schedule,
+  changes: Partial<ApplicationContext> = {},
+  shown: Tab | 'as opened' = 'odd',
+) {
   const root = document.createElement('div')
   document.body.append(root)
   const keep = vi.fn(async () => true)
@@ -50,6 +56,9 @@ function mounted(schedule: Schedule, changes: Partial<ApplicationContext> = {}) 
     ...changes,
   }
   const application = mountApplication(root, context)
+  if (shown !== 'as opened') {
+    ;(root.querySelector(`[data-tab="${shown}"]`) as HTMLElement).click()
+  }
   return { root, application, keep, ask: context.ask, save }
 }
 
@@ -85,12 +94,14 @@ function typeTitle(title: string): void {
 const flush = () => new Promise((resolve) => setTimeout(resolve, 0))
 
 describe('the screen', () => {
-  it('shows the odd week first, a masthead and the version', () => {
-    const { root, application } = mounted(new Schedule([lab, ana]))
-    expect(application.tab).toBe('odd')
+  it('opens on the overview, its tab first, with a masthead and the version', () => {
+    const { root, application } = mounted(new Schedule([lab, ana]), {}, 'as opened')
+    expect(application.tab).toBe('overview')
     expect(root.querySelector('.masthead h1')?.textContent).toBe('Stud Planner')
     expect(root.querySelector('.site-footer')?.textContent).toBe('stud-planner v1.2.3')
-    expect(root.querySelector('[aria-selected="true"]')?.textContent).toBe('Odd week')
+    expect(root.querySelector('[aria-selected="true"]')?.textContent).toBe('Overview')
+    const order = [...root.querySelectorAll('[role="tab"]')].map((each) => each.textContent)
+    expect(order).toEqual(['Overview', 'Odd week', 'Even week'])
     expect(titles(root)).toEqual(['Lab meeting', 'Ana'])
   })
 

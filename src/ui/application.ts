@@ -81,7 +81,7 @@ export function mountApplication(root: HTMLElement, context: ApplicationContext)
   const page = root.ownerDocument
   const ask = context.ask ?? ((question, confirm) => askToConfirm(page, question, confirm))
   let schedule = context.restored.schedule
-  let tab: Tab = 'odd'
+  let tab: Tab = 'overview'
   /** What a press on a free slot adds, on every tab: a meeting or a time block. */
   let adding: Kind = 'meeting'
   let isKept = context.store.isKept

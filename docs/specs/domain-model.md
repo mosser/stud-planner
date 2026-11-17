@@ -33,7 +33,7 @@ in the specification, in the interface and in the code.
 | Slot | A quarter of a weekday. On the overview, the slots an odd and an even booking share are cut, together, along their diagonal: the upper left half for the odd week, the lower right half for the even week. |
 | Free, taken | A slot is taken in a week when a booking held that week covers it, and free otherwise. A weekly booking takes its slots in both weeks, a bi-weekly one in its week only. |
 | Overlap | Two bookings that would take the same slot in the same week: two meetings, a meeting in a time block, or two time blocks. The system refuses an overlap, whatever makes it: adding, moving, resizing, changing a cadence or a parity, or loading a file. |
-| Tab | One of the three grids the screen shows, one at a time: the odd week, the even week, the overview. |
+| Tab | One of the three grids the screen shows, one at a time: the overview, first, the odd week and the even week. |
 | Switch | What a press adds, on every tab: Meeting or Time block. It stands under the grid. |
 | Keep | What the browser does of the schedule: it holds it between two sessions, best effort, and gives it back when the page opens. |
 | Schedule file | The schedule as a file of the Organizer's computer, saved and loaded: see `schedule-file.md`. |

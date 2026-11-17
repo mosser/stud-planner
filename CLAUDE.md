@@ -165,10 +165,10 @@ first.
 - The schedule is planned on an odd week and an even week, without dates; the
   system never reads today's date. A booking is weekly (both weeks) or
   bi-weekly (its parity's week); there is no monthly cadence.
-- Three tabs, one at a time: odd week, even week, overview (both; only
+- Three tabs, one at a time: overview (first, shown when the page opens; only
   the time an odd and an even booking share is cut along its diagonal, odd
-  upper left, even lower right, by `piecesOf` in `grid.ts`). No occurrence: a
-  booking is changed as a whole.
+  upper left, even lower right, by `piecesOf` in `grid.ts`), then odd week and
+  even week. No occurrence: a booking is changed as a whole.
 - A booking added from a week's tab is held in that week (weekly or bi-weekly
   in it, `cadencesAddedFrom`); one added from the overview is weekly.
 

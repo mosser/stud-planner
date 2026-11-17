@@ -1,18 +1,18 @@
 # Plan the meetings
 
-The system has one screen. It shows one tab at a time, the odd week, the even
-week or the overview, each a grid with a weekday per column and a quarter of the
+The system has one screen. It shows one tab at a time, the overview, the odd
+week or the even week, each a grid with a weekday per column and a quarter of the
 day per row. Above the grid stand the tabs, and Save and Load; under it, on
-every tab, the switch between Meeting and Time block. The tab shown is the odd
-week when the page opens, and the switch is on Meeting.
+every tab, the switch between Meeting and Time block. The overview is the first tab,
+and the one shown when the page opens; the switch is then on Meeting.
 
 ## The tabs
 
 | Tab | Shows |
 |---|---|
+| Overview | Every booking, each filling its slots, except the time an odd and an even booking share on a weekday: that time is cut along its diagonal, the upper left half for the odd booking, the lower right half for the even one, and each booking is whole before and after it. A title starting in a shared time is written in its half's corner. |
 | Odd week | The weekly bookings and the bi-weekly bookings held in the odd week. |
 | Even week | The weekly bookings and the bi-weekly bookings held in the even week. |
-| Overview | Every booking, each filling its slots, except the time an odd and an even booking share on a weekday: that time is cut along its diagonal, the upper left half for the odd booking, the lower right half for the even one, and each booking is whole before and after it. A title starting in a shared time is written in its half's corner. |
 
 Each tab is marked under its name with the colour of the week it shows, that
 of the odd week, of the even week, or both for the overview: the colours its

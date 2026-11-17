@@ -31,8 +31,9 @@ Options considered:
   It holds no date, and the system never reads today's date.
 - A meeting is **weekly** (held in both weeks) or **bi-weekly** (held in its
   parity's week). There is no monthly cadence.
-- The screen shows **three tabs**, one at a time: the odd week, the even week,
-  and the **overview**, which merges them (`docs/specs/plan-the-meetings.md`).
+- The screen shows **three tabs**, one at a time: the **overview**, which
+  merges the two weeks and is the tab shown first, then the odd week and the
+  even week (`docs/specs/plan-the-meetings.md`).
   Only the time an odd and an even meeting share is cut, along the diagonal
   of that time, in an odd half and an even half; the rest of each meeting is
   whole, so that the overview shows at once what alternates and what does

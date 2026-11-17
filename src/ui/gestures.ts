@@ -10,7 +10,7 @@ import type { Weekday } from '../domain/weekday.ts'
 export type Tab = 'odd' | 'even' | 'overview'
 
 /** The tabs, in the order the screen shows them. */
-export const tabs: readonly Tab[] = ['odd', 'even', 'overview']
+export const tabs: readonly Tab[] = ['overview', 'odd', 'even']
 
 /** The week a tab shows, or absent for the overview, which shows both. */
 export function parityOf(tab: Tab): Parity | undefined {
