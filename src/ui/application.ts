@@ -16,10 +16,8 @@ import { askToConfirm } from './confirmation.ts'
 import {
   cadenceOffered,
   cadencesAddedIn,
-  firstFreeHour,
   meetingMoved,
   meetingResized,
-  parityOf,
   type Slot,
   type Span,
   spanDragged,
@@ -51,7 +49,7 @@ export interface Application {
   readonly tab: Tab
 }
 
-const tabNames: Record<Tab, string> = { odd: 'Odd week', even: 'Even week', merged: 'Merged' }
+const tabNames: Record<Tab, string> = { odd: 'Odd week', even: 'Even week', overview: 'Overview' }
 
 /** A drag in progress on the grid; it has moved once the pointer left the slot pressed. */
 type Drag =
@@ -107,7 +105,6 @@ export function mountApplication(root: HTMLElement, context: ApplicationContext)
                 aria-selected="${each === tab ? 'true' : 'false'}">${tabNames[each]}</button>`,
           )}</div>
           <div class="actions">
-            <button type="button" data-action="add" ${tab === 'merged' ? 'disabled' : ''}>Add a meeting</button>
             <button type="button" data-action="save">Save</button>
             <button type="button" data-action="load">Load</button>
             <input type="file" accept=".json,application/json" data-file hidden>
@@ -179,13 +176,6 @@ export function mountApplication(root: HTMLElement, context: ApplicationContext)
     }
   }
 
-  function addFromTheToolbar(): void {
-    const parity = parityOf(tab)
-    if (parity !== undefined) {
-      openNew(firstFreeHour(schedule, Cadence.biWeekly(parity)), parity)
-    }
-  }
-
   root.addEventListener('click', (event) => {
     const target = event.target as Element
     const tabPressed = target.closest<HTMLElement>('[data-tab]')
@@ -200,7 +190,6 @@ export function mountApplication(root: HTMLElement, context: ApplicationContext)
       return
     }
     const action = target.closest<HTMLElement>('[data-action]')?.dataset.action
-    if (action === 'add') addFromTheToolbar()
     if (action === 'save') context.save(scheduleFileOf(schedule), scheduleFileName)
     if (action === 'load') root.querySelector<HTMLInputElement>('[data-file]')?.click()
   })

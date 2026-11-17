@@ -27,8 +27,8 @@ Options considered:
   written on Pointer Events, with no drag-and-drop library and not the HTML
   drag-and-drop API, which gives no control over snapping to a quarter. A
   drag shows where the meeting would go and changes the schedule once, when it
-  ends. Every change a drag makes can also be made with the keyboard, in a
-  dialog.
+  ends. Moving and resizing can also be done with the keyboard, in the
+  meeting dialog; adding is done on the grid, with a pointer.
 - Colours come from the palette of ADR 0010, through the `--color-*` roles
   of `src/style.css`.
 
@@ -44,6 +44,8 @@ Options considered:
 - Re-rendering is explicit and coarse; screens must stay small.
 - Snapping, the preview of a drag and its cancellation are code of our own,
   with their tests.
+- A meeting cannot be added without a pointer: the screen offers no other way
+  to add one than pressing a slot.
 
 ## Compliance
 

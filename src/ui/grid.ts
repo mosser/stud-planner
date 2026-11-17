@@ -29,7 +29,7 @@ function removeMark(meeting: Meeting, rank: number): Markup {
     aria-label="Remove ${meeting.title}" title="Remove">×</button>`
 }
 
-/** A meeting drawn whole: on a week's tab, or on the merged view when it shares no time. */
+/** A meeting drawn whole: on a week's tab, or on the overview when it shares no time. */
 function wholeMeeting(meeting: Meeting, rank: number): Markup {
   return html`<div class="meeting ${cadenceClass(meeting)}" style="grid-row: ${rowsOf(meeting)}"
     data-meeting="${rank}" role="button" tabindex="0" aria-label="${accessibleNameOf(meeting)}">
@@ -40,7 +40,7 @@ function wholeMeeting(meeting: Meeting, rank: number): Markup {
   </div>`
 }
 
-/** A part of a meeting's time on the merged view: shared with a meeting of the other week, or not. */
+/** A part of a meeting's time on the overview: shared with a meeting of the other week, or not. */
 export interface Piece {
   readonly start: TimeOfDay
   readonly duration: Duration
@@ -60,7 +60,7 @@ function earlier(one: TimeOfDay, other: TimeOfDay): TimeOfDay {
 }
 
 /**
- * The parts of a meeting's time on the merged view, in order: those it shares with a bi-weekly meeting
+ * The parts of a meeting's time on the overview, in order: those it shares with a bi-weekly meeting
  * of the other week, on the same weekday, and those it holds alone. A weekly meeting shares none.
  */
 export function piecesOf(meeting: Meeting, schedule: Schedule): readonly Piece[] {
@@ -109,7 +109,7 @@ function sharedClass(piece: Piece): string {
 }
 
 /**
- * A bi-weekly meeting on the merged view that shares time with a meeting of the other week: the time
+ * A bi-weekly meeting on the overview that shares time with a meeting of the other week: the time
  * shared cut along its diagonal, the upper left half for odd, the lower right half for even, the
  * rest whole; its title and remove mark over its first piece, its lower edge over its last.
  */
@@ -134,7 +134,7 @@ function piecedMeeting(meeting: Meeting, rank: number, parity: Parity, pieces: r
 function meetingOnTab(meeting: Meeting, rank: number, tab: Tab, schedule: Schedule): Markup {
   const parity = meeting.cadence.parity
   const pieces = piecesOf(meeting, schedule)
-  if (tab === 'merged' && parity !== undefined && pieces.some((piece) => piece.isShared)) {
+  if (tab === 'overview' && parity !== undefined && pieces.some((piece) => piece.isShared)) {
     return piecedMeeting(meeting, rank, parity, pieces)
   }
   return wholeMeeting(meeting, rank)

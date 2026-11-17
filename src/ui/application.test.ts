@@ -97,8 +97,8 @@ describe('the screen', () => {
     ;(root.querySelector('[data-tab="even"]') as HTMLElement).click()
     expect(application.tab).toBe('even')
     expect(titles(root)).toEqual(['Lab meeting'])
-    ;(root.querySelector('[data-tab="merged"]') as HTMLElement).click()
-    expect(root.querySelector('[role="tabpanel"]')?.getAttribute('aria-label')).toBe('Merged')
+    ;(root.querySelector('[data-tab="overview"]') as HTMLElement).click()
+    expect(root.querySelector('[role="tabpanel"]')?.getAttribute('aria-label')).toBe('Overview')
     expect(root.querySelector<HTMLElement>('.meeting.odd')?.style.gridRow).toBe('9 / span 4')
   })
 })
@@ -144,24 +144,12 @@ describe('adding a meeting', () => {
     expect(application.schedule.meetings[0]?.cadence).toBe(Cadence.weekly)
   })
 
-  it('adds nothing from the merged view', () => {
+  it('adds nothing from the overview', () => {
     const { root } = mounted(new Schedule([ana]))
-    ;(root.querySelector('[data-tab="merged"]') as HTMLElement).click()
+    ;(root.querySelector('[data-tab="overview"]') as HTMLElement).click()
     press(day(root, Weekday.monday), point(Weekday.monday, '08:00'))
     release(point(Weekday.monday, '08:00'))
     expect(dialog()).toBeNull()
-    const add = root.querySelector('[data-action="add"]') as HTMLButtonElement
-    expect(add.disabled).toBe(true)
-    add.dispatchEvent(new MouseEvent('click', { bubbles: true }))
-    expect(dialog()).toBeNull()
-  })
-
-  it('adds from the toolbar at the first free hour of the week shown', () => {
-    const { root, application } = mounted(new Schedule([aMeeting({ start: at('08:00') })]))
-    ;(root.querySelector('[data-action="add"]') as HTMLElement).click()
-    typeTitle('Ana')
-    expect(describeMeetings(application.schedule)[1]).toBe('Ana Monday 09:00-10:00')
-    expect(application.schedule.meetings[1]?.cadence).toBe(odd)
   })
 })
 

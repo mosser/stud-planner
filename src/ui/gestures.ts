@@ -4,17 +4,17 @@ import { Duration } from '../domain/duration.ts'
 import type { Meeting } from '../domain/meeting.ts'
 import type { Schedule } from '../domain/schedule.ts'
 import type { TimeOfDay } from '../domain/time-of-day.ts'
-import { Weekday } from '../domain/weekday.ts'
+import type { Weekday } from '../domain/weekday.ts'
 
 /** The three grids the screen shows, one at a time. */
-export type Tab = 'odd' | 'even' | 'merged'
+export type Tab = 'odd' | 'even' | 'overview'
 
 /** The tabs, in the order the screen shows them. */
-export const tabs: readonly Tab[] = ['odd', 'even', 'merged']
+export const tabs: readonly Tab[] = ['odd', 'even', 'overview']
 
-/** The week a tab shows, or absent for the merged view, which shows both. */
+/** The week a tab shows, or absent for the overview, which shows both. */
 export function parityOf(tab: Tab): Parity | undefined {
-  if (tab === 'merged') {
+  if (tab === 'overview') {
     return undefined
   }
   return tab === 'odd' ? Parity.odd : Parity.even
@@ -42,7 +42,7 @@ function isFree(schedule: Schedule, cadence: Cadence, weekday: Weekday, quarter:
 
 /**
  * The cadence a meeting added from a free slot is offered: bi-weekly in the week of the tab.
- * Absent on the merged view, where nothing is added, and from a slot taken in that week.
+ * Absent on the overview, where nothing is added, and from a slot taken in that week.
  */
 export function cadenceOffered(schedule: Schedule, tab: Tab, slot: Slot): Cadence | undefined {
   const parity = parityOf(tab)
@@ -92,23 +92,6 @@ export function spanDragged(
 export function spanPressed(schedule: Schedule, cadence: Cadence, pressed: Slot): Span {
   const lastQuarter = Math.min(pressed.quarter + quartersInAnHour - 1, theDay.quarterCount - 1)
   return spanDragged(schedule, cadence, pressed, lastQuarter)
-}
-
-/**
- * Where Add a meeting proposes a meeting of that cadence: the first hour free in every week of
- * the cadence, Monday first; Monday at the start of the day when no hour is free.
- */
-export function firstFreeHour(schedule: Schedule, cadence: Cadence): Span {
-  const latestStart = theDay.quarterCount - quartersInAnHour
-  for (const weekday of Weekday.all) {
-    for (let quarter = 0; quarter <= latestStart; quarter++) {
-      const hour = Array.from({ length: quartersInAnHour }, (_unused, offset) => quarter + offset)
-      if (hour.every((each) => isFree(schedule, cadence, weekday, each))) {
-        return { weekday, start: theDay.timeOfQuarter(quarter), duration: Duration.ofQuarters(4) }
-      }
-    }
-  }
-  return { weekday: Weekday.monday, start: theDay.start, duration: Duration.ofQuarters(4) }
 }
 
 /**

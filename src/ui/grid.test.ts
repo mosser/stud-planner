@@ -12,7 +12,7 @@ const ana = aMeeting({ title: 'Ana', cadence: Cadence.biWeekly(Parity.odd) })
 const bo = aMeeting({ title: 'Bo <b>', cadence: Cadence.biWeekly(Parity.even), start: at('10:30') })
 const schedule = new Schedule([lab, ana, bo])
 
-function rendered(tab: 'odd' | 'even' | 'merged'): HTMLElement {
+function rendered(tab: 'odd' | 'even' | 'overview'): HTMLElement {
   const element = document.createElement('div')
   element.innerHTML = gridOf(schedule, tab).text
   return element
@@ -40,10 +40,10 @@ describe('the grid of a tab', () => {
     expect(meeting?.getAttribute('aria-label')).toBe(accessibleNameOf(ana))
   })
 
-  it('cuts on the merged view only the time an odd and an even meeting share', () => {
-    const merged = rendered('merged')
+  it('cuts on the overview only the time an odd and an even meeting share', () => {
+    const overview = rendered('overview')
     const rowsOfPieces = (rank: number) =>
-      [...merged.querySelectorAll<HTMLElement>(`.piece[data-meeting="${rank}"]`)].map(
+      [...overview.querySelectorAll<HTMLElement>(`.piece[data-meeting="${rank}"]`)].map(
         (piece) => `${piece.className.replace(/\s+/g, ' ').trim()} | ${piece.style.gridRow}`,
       )
     expect(rowsOfPieces(1)).toEqual([
@@ -54,19 +54,19 @@ describe('the grid of a tab', () => {
       'meeting piece even half first | 11 / span 2',
       'meeting piece even alone last | 13 / span 2',
     ])
-    expect(merged.querySelector('.meeting-label.even.shared [data-remove="2"]')).not.toBeNull()
-    expect(merged.querySelector('.resize-zone.odd.shared [data-resize="1"]')).not.toBeNull()
-    expect(merged.querySelectorAll('[data-meeting="1"][tabindex="0"]')).toHaveLength(1)
-    expect(titles(merged)).toEqual(['Ana', 'Bo <b>', 'Lab meeting'])
+    expect(overview.querySelector('.meeting-label.even.shared [data-remove="2"]')).not.toBeNull()
+    expect(overview.querySelector('.resize-zone.odd.shared [data-resize="1"]')).not.toBeNull()
+    expect(overview.querySelectorAll('[data-meeting="1"][tabindex="0"]')).toHaveLength(1)
+    expect(titles(overview)).toEqual(['Ana', 'Bo <b>', 'Lab meeting'])
   })
 
-  it('draws whole on the merged view a bi-weekly meeting that shares no time', () => {
+  it('draws whole on the overview a bi-weekly meeting that shares no time', () => {
     const alone = new Schedule([
       ana,
       aMeeting({ title: 'Bo', cadence: Cadence.biWeekly(Parity.even), start: at('11:00') }),
     ])
     const element = document.createElement('div')
-    element.innerHTML = gridOf(alone, 'merged').text
+    element.innerHTML = gridOf(alone, 'overview').text
     expect(element.querySelectorAll('.piece')).toHaveLength(0)
     expect(element.querySelector<HTMLElement>('.meeting.odd')?.style.gridRow).toBe('9 / span 4')
   })
@@ -78,7 +78,7 @@ describe('the grid of a tab', () => {
   })
 })
 
-describe('the pieces of a meeting on the merged view', () => {
+describe('the pieces of a meeting on the overview', () => {
   const written = (meeting: typeof ana, within: Schedule) =>
     piecesOf(meeting, within).map(
       (piece) => `${piece.start}+${piece.duration.minutes}${piece.isShared ? ' shared' : ''}`,

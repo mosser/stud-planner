@@ -1,8 +1,8 @@
 # Plan the meetings
 
 The system has one screen. It shows one tab at a time, the odd week, the even
-week or the merged view, each a grid with a weekday per column and a quarter of the
-day per row. Above the grid stand the tabs, Add a meeting, Save and Load. The
+week or the overview, each a grid with a weekday per column and a quarter of the
+day per row. Above the grid stand the tabs, Save and Load. The
 tab shown is the odd week when the page opens.
 
 ## The tabs
@@ -11,21 +11,20 @@ tab shown is the odd week when the page opens.
 |---|---|
 | Odd week | The weekly meetings and the bi-weekly meetings held in the odd week. |
 | Even week | The weekly meetings and the bi-weekly meetings held in the even week. |
-| Merged | Every meeting, each filling its slots, except the time an odd and an even meeting share on a weekday: that time is cut along its diagonal, the upper left half for the odd meeting, the lower right half for the even one, and each meeting is whole before and after it. A title starting in a shared time is written in its half's corner. |
+| Overview | Every meeting, each filling its slots, except the time an odd and an even meeting share on a weekday: that time is cut along its diagonal, the upper left half for the odd meeting, the lower right half for the even one, and each meeting is whole before and after it. A title starting in a shared time is written in its half's corner. |
 
 A weekly meeting looks alike on the three tabs, and unlike a bi-weekly one.
 
 ## Adding a meeting
 
-A meeting is added from the odd week or the even week tab, and is held in the
-week of that tab. Nothing is added from the merged view: Add a meeting is not
-offered there, and pressing a slot adds nothing.
+A meeting is added on the grid, by pressing a slot, from the odd week or the
+even week tab, and is held in the week of that tab. Nothing is added from the
+overview: pressing a slot there adds nothing.
 
 | Rule | Behaviour |
 |---|---|
 | From a slot | Pressing a free slot and dragging down marks the meeting's start and duration, one quarter at a time, within the day and over free slots only. A press without a drag marks one hour, or less when a taken slot or the end of the day comes first. |
 | Cadence offered | The meeting dialog opens bi-weekly in the week of the tab. The other cadence it offers is weekly, held in that week too; never bi-weekly in the other week. |
-| Without a pointer | Add a meeting opens the same dialog, empty: the first free hour of the week of the tab, Monday first. |
 | Done | Adds the meeting once it has a title and overlaps nothing. Cancel, Escape or a click outside the dialog add nothing. |
 
 ## Moving, resizing and removing a meeting
@@ -43,7 +42,7 @@ offered there, and pressing a slot adds nothing.
 
 A click on a meeting, without a drag, opens its dialog: title, cadence,
 parity (bi-weekly), weekday, start, duration and note, with Done and Remove.
-Every change a drag makes can also be made here, with the keyboard. Done is
+Every change a move or a resize makes can also be made here, with the keyboard. Done is
 refused while the meeting would overlap another, and the dialog names it:
 *Overlaps Lab meeting, odd week, 10:00 to 11:00*. A bi-weekly meeting made
 weekly overlaps whatever takes its slots in the other week.

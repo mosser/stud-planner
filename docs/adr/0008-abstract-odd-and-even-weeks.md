@@ -23,7 +23,7 @@ Options considered:
   every odd (or even) week of the template while it meets in one of them, and
   a cycle of four weeks doubles the grids for a few meetings.
 - **Two abstract weeks, odd and even, weekly and bi-weekly meetings only**,
-  shown one at a time or merged.
+  shown one at a time or merged in an overview.
 
 ## Decision
 
@@ -32,15 +32,15 @@ Options considered:
 - A meeting is **weekly** (held in both weeks) or **bi-weekly** (held in its
   parity's week). There is no monthly cadence.
 - The screen shows **three tabs**, one at a time: the odd week, the even week,
-  and the **merged view** (`docs/specs/plan-the-meetings.md`).
+  and the **overview**, which merges them (`docs/specs/plan-the-meetings.md`).
   Only the time an odd and an even meeting share is cut, along the diagonal
   of that time, in an odd half and an even half; the rest of each meeting is
-  whole, so that the merged view shows at once what alternates and what does
+  whole, so that the overview shows at once what alternates and what does
   not.
   The time shared is cut as one, not quarter by quarter: a quarter is a row
   too flat for its halves to be read.
 - A meeting is added from a week's tab and is held in that week: weekly, or
-  bi-weekly in it. Nothing is added from the merged view, which would ask
+  bi-weekly in it. Nothing is added from the overview, which would ask
   which week was meant.
 - There is no occurrence of a meeting: a meeting is changed as a whole, in
   every week it is held.
