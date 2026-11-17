@@ -58,6 +58,7 @@ role (`--color-*`) defined from them, or a tint mixed from them with
 | Weekly meeting | King's Forest Green | Cootes Paradise Green |
 | Odd week | Bayfront Blue | Albion Falls Blue |
 | Even week | Gold | Gold |
+| Mark under a tab's name, 4 px: odd week, even week, overview | Blue, gold, half each | Sky, gold, half each |
 | Time block | Grey, 25 % on white | Dundurn Grey, 30 % on black |
 | Kind a press adds, chosen | Maroon on maroon 12 % on white | White on maroon 40 % on black |
 | Refused, errors | Maroon | Royal Botanical Pink |

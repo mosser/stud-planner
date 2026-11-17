@@ -14,7 +14,10 @@ week when the page opens, and the switch is on Meeting.
 | Even week | The weekly bookings and the bi-weekly bookings held in the even week. |
 | Overview | Every booking, each filling its slots, except the time an odd and an even booking share on a weekday: that time is cut along its diagonal, the upper left half for the odd booking, the lower right half for the even one, and each booking is whole before and after it. A title starting in a shared time is written in its half's corner. |
 
-A weekly booking looks alike on the three tabs, and unlike a bi-weekly one. A
+Each tab is marked under its name with the colour of the week it shows, that
+of the odd week, of the even week, or both for the overview: the colours its
+bi-weekly bookings are bordered with. A weekly booking looks alike on the three
+tabs, and unlike a bi-weekly one. A
 time block is grey, a meeting is tinted with the colour of its cadence; both
 are bordered with that colour. A time block without a title is shown as *Time block*.
 

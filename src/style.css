@@ -134,8 +134,29 @@ textarea {
 .tabs button[aria-selected="true"],
 button.primary {
   border-color: var(--color-primary);
-  background: var(--color-primary);
+  background-color: var(--color-primary);
   color: var(--color-on-primary);
+}
+
+/* Each tab is marked, under its name, with the colour of the week it shows; the overview, both. */
+.tabs button[data-tab] {
+  --mark: linear-gradient(transparent, transparent);
+  background-image: var(--mark);
+  background-repeat: no-repeat;
+  background-position: bottom;
+  background-size: 100% 4px;
+}
+
+.tabs button[data-tab="odd"] {
+  --mark: linear-gradient(var(--color-odd), var(--color-odd));
+}
+
+.tabs button[data-tab="even"] {
+  --mark: linear-gradient(var(--color-even), var(--color-even));
+}
+
+.tabs button[data-tab="overview"] {
+  --mark: linear-gradient(to right, var(--color-odd) 50%, var(--color-even) 50%);
 }
 
 .adding {
