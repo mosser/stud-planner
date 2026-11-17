@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { Cadence, Parity } from './cadence.ts'
+import { Cadence, Week } from './cadence.ts'
 import { Duration } from './duration.ts'
 import { aMeeting, at } from './meeting.fixture.ts'
 import { Weekday } from './weekday.ts'
@@ -24,35 +24,35 @@ describe('a meeting', () => {
     expect(() => aMeeting({ start: at('07:45') })).toThrow('A meeting cannot start before 08:00.')
   })
 
-  it('is held in both weeks when weekly, in its parity week when bi-weekly', () => {
-    const odd = aMeeting({ cadence: Cadence.biWeekly(Parity.odd) })
-    expect(aMeeting().isHeldIn(Parity.even)).toBe(true)
-    expect(odd.isHeldIn(Parity.odd)).toBe(true)
-    expect(odd.isHeldIn(Parity.even)).toBe(false)
+  it('is held in both weeks when weekly, in its week week when bi-weekly', () => {
+    const inWeekA = aMeeting({ cadence: Cadence.biWeekly(Week.a) })
+    expect(aMeeting().isHeldIn(Week.b)).toBe(true)
+    expect(inWeekA.isHeldIn(Week.a)).toBe(true)
+    expect(inWeekA.isHeldIn(Week.b)).toBe(false)
   })
 
   it('takes the quarters from its start to its end, on its weekday, in its weeks', () => {
-    const odd = aMeeting({ cadence: Cadence.biWeekly(Parity.odd) })
-    expect(odd.takes(Weekday.monday, at('10:00'), Parity.odd)).toBe(true)
-    expect(odd.takes(Weekday.monday, at('10:45'), Parity.odd)).toBe(true)
-    expect(odd.takes(Weekday.monday, at('11:00'), Parity.odd)).toBe(false)
-    expect(odd.takes(Weekday.monday, at('09:45'), Parity.odd)).toBe(false)
-    expect(odd.takes(Weekday.monday, at('10:00'), Parity.even)).toBe(false)
-    expect(odd.takes(Weekday.tuesday, at('10:00'), Parity.odd)).toBe(false)
+    const inWeekA = aMeeting({ cadence: Cadence.biWeekly(Week.a) })
+    expect(inWeekA.takes(Weekday.monday, at('10:00'), Week.a)).toBe(true)
+    expect(inWeekA.takes(Weekday.monday, at('10:45'), Week.a)).toBe(true)
+    expect(inWeekA.takes(Weekday.monday, at('11:00'), Week.a)).toBe(false)
+    expect(inWeekA.takes(Weekday.monday, at('09:45'), Week.a)).toBe(false)
+    expect(inWeekA.takes(Weekday.monday, at('10:00'), Week.b)).toBe(false)
+    expect(inWeekA.takes(Weekday.tuesday, at('10:00'), Week.a)).toBe(false)
   })
 
   it('overlaps another on the same weekday, in a week in common, at times that overlap', () => {
     const lab = aMeeting()
     expect(lab.overlaps(aMeeting({ start: at('10:45') }))).toBe(true)
-    expect(lab.overlaps(aMeeting({ cadence: Cadence.biWeekly(Parity.even) }))).toBe(true)
+    expect(lab.overlaps(aMeeting({ cadence: Cadence.biWeekly(Week.b) }))).toBe(true)
     expect(lab.overlaps(aMeeting({ weekday: Weekday.tuesday }))).toBe(false)
   })
 
   it('does not overlap one that ends as it starts, nor one held in the other week', () => {
-    const odd = aMeeting({ cadence: Cadence.biWeekly(Parity.odd) })
-    expect(odd.overlaps(aMeeting({ start: at('11:00') }))).toBe(false)
-    expect(odd.overlaps(aMeeting({ start: at('09:00') }))).toBe(false)
-    expect(odd.overlaps(aMeeting({ cadence: Cadence.biWeekly(Parity.even) }))).toBe(false)
+    const inWeekA = aMeeting({ cadence: Cadence.biWeekly(Week.a) })
+    expect(inWeekA.overlaps(aMeeting({ start: at('11:00') }))).toBe(false)
+    expect(inWeekA.overlaps(aMeeting({ start: at('09:00') }))).toBe(false)
+    expect(inWeekA.overlaps(aMeeting({ cadence: Cadence.biWeekly(Week.b) }))).toBe(false)
   })
 
   it('moves and resizes as a copy, keeping the rest', () => {

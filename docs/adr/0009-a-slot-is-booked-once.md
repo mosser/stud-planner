@@ -23,7 +23,7 @@ Options considered:
   `Schedule`, whose constructor throws on a broken one, so that no screen,
   store or file can hold an overlap.
 - Every way of changing a schedule asks first: adding, moving, resizing,
-  changing a cadence or a parity, and loading a file. A drag shows a refused
+  changing a cadence or a week, and loading a file. A drag shows a refused
   place as refused and, dropped, changes nothing; the screen and the dialog
   name the booking overlapped; a file is refused whole.
 - One booking ending as another starts is not an overlap.
@@ -43,6 +43,6 @@ Options considered:
 ## Compliance
 
 A change is compliant with this ADR when `Schedule` cannot be built with two
-bookings that overlap, which a test shows for each cadence and parity and for
+bookings that overlap, which a test shows for each cadence and week and for
 meetings and time blocks, and
 every change of the schedule goes through it.

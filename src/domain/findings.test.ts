@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { Cadence, Parity } from './cadence.ts'
+import { Cadence, Week } from './cadence.ts'
 import { Duration } from './duration.ts'
 import {
   bookingBroken,
@@ -28,8 +28,8 @@ import { Weekday } from './weekday.ts'
 describe('the findings', () => {
   it('name the meeting overlapped, the weeks both are held in, and its time', () => {
     const lab = aMeeting()
-    const ana = aMeeting({ title: 'Ana', cadence: Cadence.biWeekly(Parity.even) })
-    expect(overlap(ana, lab)).toBe('Overlaps Lab meeting, even week, 10:00 to 11:00.')
+    const ana = aMeeting({ title: 'Ana', cadence: Cadence.biWeekly(Week.b) })
+    expect(overlap(ana, lab)).toBe('Overlaps Lab meeting, week B, 10:00 to 11:00.')
     expect(overlap(lab, aMeeting({ title: 'Bo' }))).toBe('Overlaps Bo, every week, 10:00 to 11:00.')
   })
 
@@ -37,10 +37,10 @@ describe('the findings', () => {
     expect(removalQuestion(aMeeting())).toBe('Remove Lab meeting, weekly, Monday 10:00 to 11:00?')
     const ana = aMeeting({
       title: 'Ana',
-      cadence: Cadence.biWeekly(Parity.odd),
+      cadence: Cadence.biWeekly(Week.a),
       weekday: Weekday.thursday,
     })
-    expect(removalQuestion(ana)).toBe('Remove Ana, bi-weekly, odd week, Thursday 10:00 to 11:00?')
+    expect(removalQuestion(ana)).toBe('Remove Ana, bi-weekly, week A, Thursday 10:00 to 11:00?')
   })
 
   it('name a time block by its title, or as a time block', () => {
@@ -76,8 +76,8 @@ describe('the findings', () => {
   it('write cadences and durations', () => {
     expect(Cadence.all.map(cadenceChoice)).toEqual([
       'Weekly',
-      'Bi-weekly, odd week',
-      'Bi-weekly, even week',
+      'Bi-weekly, week A',
+      'Bi-weekly, week B',
     ])
     expect([1, 4, 6, 9].map((quarters) => durationWritten(Duration.ofQuarters(quarters)))).toEqual([
       '15 min',
@@ -102,8 +102,8 @@ describe('the findings', () => {
       'a.json is refused: it is not a schedule file, nor JSON.',
     )
     expect(notAScheduleFile()).toBe('it is not a schedule file.')
-    expect(unknownVersion(2)).toBe(
-      'it is a schedule file of version 2, and this system reads version 1.',
+    expect(unknownVersion(3)).toBe(
+      'it is a schedule file of version 3, and this system reads versions 1 and 2.',
     )
     expect(missingField(part, 'title')).toBe('meeting 2 has no title.')
     expect(unknownField(part, 'room')).toBe(

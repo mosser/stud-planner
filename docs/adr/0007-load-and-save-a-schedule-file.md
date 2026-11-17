@@ -24,8 +24,10 @@ Options considered:
 
 - The schedule is **saved** as `stud-planner-schedule.json` and **loaded**
   from a file the Organizer chooses, in the format of
-  `docs/specs/schedule-file.md`, `version` 1. A change of format is a new
-  version, and the system reads every version it has written.
+  `docs/specs/schedule-file.md`, `version` 2. A change of format is a new
+  version, and the system reads every version it has written: version 1,
+  which writes the week of a bi-weekly booking as a parity, odd or even, is
+  read as version 2.
 - A file is checked completely before anything is taken, overlaps included
   (ADR 0009); a refused file
   leaves the schedule as it was, and the reason is shown.

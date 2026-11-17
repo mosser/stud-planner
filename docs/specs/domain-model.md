@@ -1,7 +1,7 @@
 # Domain Model
 
 The concepts a schedule is made of, and how they relate. The Organizer
-changes them on the odd week, the even week and the overview, the browser keeps
+changes them on week A, week B and the overview, the browser keeps
 them between two sessions, and the schedule file carries them. A schedule
 holds no date: its weeks are abstract.
 
@@ -20,20 +20,19 @@ in the specification, in the interface and in the code.
 | Title | What a booking is called, in the Organizer's words, without leading or trailing spaces: a meeting's is not empty; a time block may have none, and is then shown as *Time block*. Two bookings may have the same title. |
 | Note | Free text the Organizer attaches to a meeting: a room, a link, the participants. The system never reads what it says. |
 | Cadence | How often a booking recurs: weekly or bi-weekly. |
-| Weekly | The cadence of a booking held in the odd week and in the even week. |
-| Bi-weekly | The cadence of a booking held in one week only, the odd or the even: its parity. |
-| Parity | Which of the two weeks a bi-weekly booking is held in: odd or even. |
-| Odd week, even week | The two abstract weeks the schedule is planned on. They have no date: which week of the calendar is odd is the Organizer's to know. |
-| Overview | The odd week and the even week merged, as one grid: what the two weeks hold, alternating, and the time they share. A booking added from it is held in both weeks. |
+| Weekly | The cadence of a booking held in week A and in week B. |
+| Bi-weekly | The cadence of a booking held in one week only: week A or week B, its week. |
+| Week A, week B | The two abstract weeks the schedule is planned on, which alternate: A, B, A, B. They have no date: which week of the calendar is week A is the Organizer's to know. |
+| Overview | Week A and week B merged, as one grid: what the two weeks hold, alternating, and the time they share. A booking added from it is held in both weeks. |
 | Weekday | Monday, Tuesday, Wednesday, Thursday or Friday. |
 | Day | The hours a booking can take on a weekday: from 08:00 to 18:00, configured in `config/calendar.json`. |
 | Quarter | Fifteen minutes. Starts and durations are whole quarters. |
 | Start | The time of day a booking begins: a quarter of the day, its end within the day. |
 | Duration | How long a booking lasts: one quarter at least, ending at the end of the day at most. |
-| Slot | A quarter of a weekday. On the overview, the slots an odd and an even booking share are cut, together, along their diagonal: the upper left half for the odd week, the lower right half for the even week. |
+| Slot | A quarter of a weekday. On the overview, the slots a booking of week A and one of week B share are cut, together, along their diagonal: the upper left half for week A, the lower right half for week B. |
 | Free, taken | A slot is taken in a week when a booking held that week covers it, and free otherwise. A weekly booking takes its slots in both weeks, a bi-weekly one in its week only. |
-| Overlap | Two bookings that would take the same slot in the same week: two meetings, a meeting in a time block, or two time blocks. The system refuses an overlap, whatever makes it: adding, moving, resizing, changing a cadence or a parity, or loading a file. |
-| Tab | One of the three grids the screen shows, one at a time: the overview, first, the odd week and the even week. |
+| Overlap | Two bookings that would take the same slot in the same week: two meetings, a meeting in a time block, or two time blocks. The system refuses an overlap, whatever makes it: adding, moving, resizing, changing a cadence or a week, or loading a file. |
+| Tab | One of the three grids the screen shows, one at a time: the overview, first, week A and week B. |
 | Switch | What a press adds, on every tab: Meeting or Time block. It stands under the grid. |
 | Keep | What the browser does of the schedule: it holds it between two sessions, best effort, and gives it back when the page opens. |
 | Schedule file | The schedule as a file of the Organizer's computer, saved and loaded: see `schedule-file.md`. |

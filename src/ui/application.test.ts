@@ -1,6 +1,6 @@
 // @vitest-environment happy-dom
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { Cadence, Parity } from '../domain/cadence.ts'
+import { Cadence, Week } from '../domain/cadence.ts'
 import { Duration } from '../domain/duration.ts'
 import { aMeeting, at } from '../domain/meeting.fixture.ts'
 import { Schedule } from '../domain/schedule.ts'
@@ -10,11 +10,11 @@ import { scheduleFileOf } from '../io/schedule-file.ts'
 import { type ApplicationContext, mountApplication } from './application.ts'
 import type { Tab } from './gestures.ts'
 
-const odd = Cadence.biWeekly(Parity.odd)
+const inWeekA = Cadence.biWeekly(Week.a)
 /** Monday 10:00 to 11:00, weekly. */
 const lab = aMeeting()
-/** Tuesday 10:00 to 11:00, odd week. */
-const ana = aMeeting({ title: 'Ana', weekday: Weekday.tuesday, cadence: odd })
+/** Tuesday 10:00 to 11:00, week A. */
+const ana = aMeeting({ title: 'Ana', weekday: Weekday.tuesday, cadence: inWeekA })
 
 /** Each day column 100 pixels wide, Monday first; each quarter 10 pixels high from 08:00. */
 function point(weekday: Weekday, time: string): { clientX: number; clientY: number } {
@@ -36,11 +36,11 @@ afterEach(() => {
   document.body.innerHTML = ''
 })
 
-/** The page mounted, on the odd week unless told otherwise, or as it opens. */
+/** The page mounted, on week A unless told otherwise, or as it opens. */
 function mounted(
   schedule: Schedule,
   changes: Partial<ApplicationContext> = {},
-  shown: Tab | 'as opened' = 'odd',
+  shown: Tab | 'as opened' = 'a',
 ) {
   const root = document.createElement('div')
   document.body.append(root)
@@ -101,18 +101,18 @@ describe('the screen', () => {
     expect(root.querySelector('.site-footer')?.textContent).toBe('stud-planner v1.2.3')
     expect(root.querySelector('[aria-selected="true"]')?.textContent).toBe('Overview')
     const order = [...root.querySelectorAll('[role="tab"]')].map((each) => each.textContent)
-    expect(order).toEqual(['Overview', 'Odd week', 'Even week'])
+    expect(order).toEqual(['Overview', 'Week A', 'Week B'])
     expect(titles(root)).toEqual(['Lab meeting', 'Ana'])
   })
 
   it('shows one tab at a time', () => {
     const { root, application } = mounted(new Schedule([lab, ana]))
-    ;(root.querySelector('[data-tab="even"]') as HTMLElement).click()
-    expect(application.tab).toBe('even')
+    ;(root.querySelector('[data-tab="b"]') as HTMLElement).click()
+    expect(application.tab).toBe('b')
     expect(titles(root)).toEqual(['Lab meeting'])
     ;(root.querySelector('[data-tab="overview"]') as HTMLElement).click()
     expect(root.querySelector('[role="tabpanel"]')?.getAttribute('aria-label')).toBe('Overview')
-    expect(root.querySelector<HTMLElement>('.booking.odd')?.style.gridRow).toBe('9 / span 4')
+    expect(root.querySelector<HTMLElement>('.booking.week-a')?.style.gridRow).toBe('9 / span 4')
   })
 })
 
@@ -129,7 +129,7 @@ describe('adding a meeting', () => {
       'Lab meeting Monday 10:00-11:00',
       'Ana Wednesday 09:00-10:30',
     ])
-    expect(application.schedule.meetings[1]?.cadence).toBe(odd)
+    expect(application.schedule.meetings[1]?.cadence).toBe(inWeekA)
     expect(keep).toHaveBeenCalledWith(application.schedule)
   })
 
@@ -143,13 +143,13 @@ describe('adding a meeting', () => {
 
   it('offers only the cadences held in the week of the tab', () => {
     const { root, application } = mounted(new Schedule())
-    ;(root.querySelector('[data-tab="even"]') as HTMLElement).click()
+    ;(root.querySelector('[data-tab="b"]') as HTMLElement).click()
     press(day(root, Weekday.tuesday), point(Weekday.tuesday, '08:00'))
     release(point(Weekday.tuesday, '08:00'))
     const choices = [...dialog().querySelectorAll('[name="cadence"] option')].map(
       (option) => option.textContent,
     )
-    expect(choices).toEqual(['Weekly', 'Bi-weekly, even week'])
+    expect(choices).toEqual(['Weekly', 'Bi-weekly, week B'])
     const cadence = dialog().querySelector('[name="cadence"]') as HTMLSelectElement
     cadence.value = '0'
     cadence.dispatchEvent(new Event('change', { bubbles: true }))
@@ -195,7 +195,7 @@ describe('adding a meeting', () => {
 
   it('shows the switch under the grid, on every tab', () => {
     const { root } = mounted(new Schedule())
-    for (const tab of ['odd', 'even', 'overview']) {
+    for (const tab of ['a', 'b', 'overview']) {
       ;(root.querySelector(`[data-tab="${tab}"]`) as HTMLElement).click()
       expect(root.querySelector('.grid + .adding')).not.toBeNull()
     }
@@ -216,11 +216,11 @@ describe('adding a meeting', () => {
     const [block] = application.schedule.timeBlocks
     expect([block?.title, block?.cadence, block?.end.toString()]).toEqual([
       'Teaching',
-      odd,
+      inWeekA,
       '10:00',
     ])
     expect(root.querySelector('.booking.time-block .booking-title')?.textContent).toBe('Teaching')
-    ;(root.querySelector('[data-tab="even"]') as HTMLElement).click()
+    ;(root.querySelector('[data-tab="b"]') as HTMLElement).click()
     expect(chosen()).toBe('Time block')
   })
 
@@ -244,7 +244,7 @@ describe('adding a meeting', () => {
 
   it('moves, and removes once confirmed, a time block', async () => {
     const block = new TimeBlock({
-      cadence: odd,
+      cadence: inWeekA,
       weekday: Weekday.friday,
       start: at('14:00'),
       duration: Duration.ofQuarters(4),
@@ -257,7 +257,7 @@ describe('adding a meeting', () => {
     ;(root.querySelector('[data-remove="0"]') as HTMLElement).click()
     await flush()
     expect(ask).toHaveBeenCalledWith(
-      'Remove a time block, bi-weekly, odd week, Friday 15:00 to 16:00?',
+      'Remove a time block, bi-weekly, week A, Friday 15:00 to 16:00?',
       'Remove',
     )
     expect(application.schedule.isEmpty).toBe(true)
@@ -282,7 +282,7 @@ describe('moving and resizing a meeting', () => {
     release(point(Weekday.tuesday, '10:30'))
     expect(describeMeetings(application.schedule)[0]).toBe('Lab meeting Monday 10:00-11:00')
     expect(root.querySelector('.refusal')?.textContent).toBe(
-      'Overlaps Ana, odd week, 10:00 to 11:00.',
+      'Overlaps Ana, week A, 10:00 to 11:00.',
     )
   })
 

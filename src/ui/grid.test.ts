@@ -1,6 +1,6 @@
 // @vitest-environment happy-dom
 import { describe, expect, it } from 'vitest'
-import { Cadence, Parity } from '../domain/cadence.ts'
+import { Cadence, Week } from '../domain/cadence.ts'
 import { Duration } from '../domain/duration.ts'
 import { aMeeting, aTimeBlock, at } from '../domain/meeting.fixture.ts'
 import { Schedule } from '../domain/schedule.ts'
@@ -8,11 +8,11 @@ import { Weekday } from '../domain/weekday.ts'
 import { accessibleNameOf, gridOf, piecesOf, slotAt } from './grid.ts'
 
 const lab = aMeeting({ weekday: Weekday.tuesday })
-const ana = aMeeting({ title: 'Ana', cadence: Cadence.biWeekly(Parity.odd) })
-const bo = aMeeting({ title: 'Bo <b>', cadence: Cadence.biWeekly(Parity.even), start: at('10:30') })
+const ana = aMeeting({ title: 'Ana', cadence: Cadence.biWeekly(Week.a) })
+const bo = aMeeting({ title: 'Bo <b>', cadence: Cadence.biWeekly(Week.b), start: at('10:30') })
 const schedule = new Schedule([lab, ana, bo])
 
-function rendered(tab: 'odd' | 'even' | 'overview'): HTMLElement {
+function rendered(tab: 'overview' | 'a' | 'b'): HTMLElement {
   const element = document.createElement('div')
   element.innerHTML = gridOf(schedule, tab).text
   return element
@@ -23,39 +23,39 @@ const titles = (element: Element) =>
 
 describe('the grid of a tab', () => {
   it('has a column per weekday', () => {
-    const columns = rendered('odd').querySelectorAll('.day')
+    const columns = rendered('a').querySelectorAll('.day')
     expect([...columns].map((column) => (column as HTMLElement).dataset.weekday)).toEqual(
       Weekday.all.map((weekday) => weekday.key),
     )
   })
 
-  it('shows on the odd week the weekly meetings and those held in the odd week', () => {
-    expect(titles(rendered('odd'))).toEqual(['Ana', 'Lab meeting'])
-    expect(titles(rendered('even'))).toEqual(['Bo <b>', 'Lab meeting'])
+  it('shows on week A the weekly meetings and those held in week A', () => {
+    expect(titles(rendered('a'))).toEqual(['Ana', 'Lab meeting'])
+    expect(titles(rendered('b'))).toEqual(['Bo <b>', 'Lab meeting'])
   })
 
   it('places a meeting on the rows of its quarters', () => {
-    const meeting = rendered('odd').querySelector<HTMLElement>('[data-booking="1"]')
+    const meeting = rendered('a').querySelector<HTMLElement>('[data-booking="1"]')
     expect(meeting?.style.gridRow).toBe('9 / span 4')
     expect(meeting?.getAttribute('aria-label')).toBe(accessibleNameOf(ana))
   })
 
-  it('cuts on the overview only the time an odd and an even meeting share', () => {
+  it('cuts on the overview only the time a meeting of week A and one of week B share', () => {
     const overview = rendered('overview')
     const rowsOfPieces = (rank: number) =>
       [...overview.querySelectorAll<HTMLElement>(`.piece[data-booking="${rank}"]`)].map(
         (piece) => `${piece.className.replace(/\s+/g, ' ').trim()} | ${piece.style.gridRow}`,
       )
     expect(rowsOfPieces(1)).toEqual([
-      'booking piece meeting odd alone first | 9 / span 2',
-      'booking piece meeting odd half last | 11 / span 2',
+      'booking piece meeting week-a alone first | 9 / span 2',
+      'booking piece meeting week-a half last | 11 / span 2',
     ])
     expect(rowsOfPieces(2)).toEqual([
-      'booking piece meeting even half first | 11 / span 2',
-      'booking piece meeting even alone last | 13 / span 2',
+      'booking piece meeting week-b half first | 11 / span 2',
+      'booking piece meeting week-b alone last | 13 / span 2',
     ])
-    expect(overview.querySelector('.booking-label.even.shared [data-remove="2"]')).not.toBeNull()
-    expect(overview.querySelector('.resize-zone.odd.shared [data-resize="1"]')).not.toBeNull()
+    expect(overview.querySelector('.booking-label.week-b.shared [data-remove="2"]')).not.toBeNull()
+    expect(overview.querySelector('.resize-zone.week-a.shared [data-resize="1"]')).not.toBeNull()
     expect(overview.querySelectorAll('[data-booking="1"][tabindex="0"]')).toHaveLength(1)
     expect(titles(overview)).toEqual(['Ana', 'Bo <b>', 'Lab meeting'])
   })
@@ -63,16 +63,16 @@ describe('the grid of a tab', () => {
   it('draws whole on the overview a bi-weekly meeting that shares no time', () => {
     const alone = new Schedule([
       ana,
-      aMeeting({ title: 'Bo', cadence: Cadence.biWeekly(Parity.even), start: at('11:00') }),
+      aMeeting({ title: 'Bo', cadence: Cadence.biWeekly(Week.b), start: at('11:00') }),
     ])
     const element = document.createElement('div')
     element.innerHTML = gridOf(alone, 'overview').text
     expect(element.querySelectorAll('.piece')).toHaveLength(0)
-    expect(element.querySelector<HTMLElement>('.booking.odd')?.style.gridRow).toBe('9 / span 4')
+    expect(element.querySelector<HTMLElement>('.booking.week-a')?.style.gridRow).toBe('9 / span 4')
   })
 
   it('marks every hour of the day', () => {
-    const hours = [...rendered('odd').querySelectorAll('.hour')].map((hour) => hour.textContent)
+    const hours = [...rendered('a').querySelectorAll('.hour')].map((hour) => hour.textContent)
     expect(hours[0]).toBe('08:00')
     expect(hours).toHaveLength(10)
   })
@@ -80,30 +80,30 @@ describe('the grid of a tab', () => {
 
 describe('a time block on the grid', () => {
   const block = aTimeBlock({
-    cadence: Cadence.biWeekly(Parity.odd),
+    cadence: Cadence.biWeekly(Week.a),
     weekday: Weekday.monday,
     start: at('09:00'),
   })
   const named = aTimeBlock({ title: 'Teaching', weekday: Weekday.friday })
   const withBlocks = new Schedule([bo], [block, named])
 
-  function drawn(tab: 'odd' | 'even' | 'overview'): HTMLElement {
+  function drawn(tab: 'overview' | 'a' | 'b'): HTMLElement {
     const element = document.createElement('div')
     element.innerHTML = gridOf(withBlocks, tab).text
     return element
   }
 
   it('is drawn as a time block, by its rank among the bookings, titled when it has a title', () => {
-    const odd = drawn('odd')
-    const untitled = odd.querySelector<HTMLElement>('.booking.time-block[data-booking="1"]')
+    const inWeekA = drawn('a')
+    const untitled = inWeekA.querySelector<HTMLElement>('.booking.time-block[data-booking="1"]')
     expect(untitled?.querySelector('.booking-title')?.textContent).toBe('Time block')
     expect(untitled?.getAttribute('aria-label')).toBe(
-      'Time block, bi-weekly, odd week, Monday 09:00 to 11:00',
+      'Time block, bi-weekly, week A, Monday 09:00 to 11:00',
     )
-    expect(odd.querySelector('[data-booking="2"]')?.getAttribute('aria-label')).toBe(
+    expect(inWeekA.querySelector('[data-booking="2"]')?.getAttribute('aria-label')).toBe(
       'Time block: Teaching, weekly, Friday 14:00 to 16:00',
     )
-    expect(drawn('even').querySelector('[data-booking="1"]')).toBeNull()
+    expect(drawn('b').querySelector('[data-booking="1"]')).toBeNull()
   })
 
   it('shares on the overview the time it has in common with a meeting of the other week', () => {
@@ -126,19 +126,19 @@ describe('the pieces of a meeting on the overview', () => {
   it('share each meeting of the other week in turn, in order', () => {
     const long = aMeeting({
       title: 'Long',
-      cadence: Cadence.biWeekly(Parity.odd),
+      cadence: Cadence.biWeekly(Week.a),
       start: at('09:00'),
       duration: Duration.ofQuarters(12),
     })
     const first = aMeeting({
       title: 'One',
-      cadence: Cadence.biWeekly(Parity.even),
+      cadence: Cadence.biWeekly(Week.b),
       start: at('10:30'),
       duration: Duration.ofQuarters(2),
     })
     const second = aMeeting({
       title: 'Two',
-      cadence: Cadence.biWeekly(Parity.even),
+      cadence: Cadence.biWeekly(Week.b),
       start: at('09:30'),
       duration: Duration.ofQuarters(2),
     })
@@ -160,7 +160,7 @@ describe('the pieces of a meeting on the overview', () => {
           ana,
           aMeeting({
             title: 'Bo',
-            cadence: Cadence.biWeekly(Parity.even),
+            cadence: Cadence.biWeekly(Week.b),
             weekday: Weekday.friday,
           }),
         ]),
@@ -169,14 +169,14 @@ describe('the pieces of a meeting on the overview', () => {
   })
 
   it('cover the whole meeting when it shares all its time', () => {
-    const twin = aMeeting({ title: 'Twin', cadence: Cadence.biWeekly(Parity.even) })
+    const twin = aMeeting({ title: 'Twin', cadence: Cadence.biWeekly(Week.b) })
     expect(written(ana, new Schedule([ana, twin]))).toEqual(['10:00+60 shared'])
   })
 })
 
 describe('the slot under a point', () => {
   function placed(): HTMLElement {
-    const element = rendered('odd')
+    const element = rendered('a')
     element.querySelectorAll<HTMLElement>('.day').forEach((column, rank) => {
       column.getBoundingClientRect = () =>
         ({ left: rank * 100, right: rank * 100 + 100, top: 0, height: 400 }) as DOMRect
@@ -194,7 +194,7 @@ describe('the slot under a point', () => {
   })
 
   it('is none on a grid not laid out', () => {
-    expect(slotAt(rendered('odd'), 10, 10)).toBeUndefined()
+    expect(slotAt(rendered('a'), 10, 10)).toBeUndefined()
     expect(slotAt(document.createElement('div'), 10, 10)).toBeUndefined()
   })
 })

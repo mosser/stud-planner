@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { Cadence, Parity } from '../domain/cadence.ts'
+import { Cadence, Week } from '../domain/cadence.ts'
 import { aMeeting, aTimeBlock, at } from '../domain/meeting.fixture.ts'
 import { Schedule } from '../domain/schedule.ts'
 import { Weekday } from '../domain/weekday.ts'
@@ -14,10 +14,10 @@ import {
 
 const schedule = new Schedule([
   aMeeting({ note: 'Room 201' }),
-  aMeeting({ title: 'Ana', cadence: Cadence.biWeekly(Parity.odd), weekday: Weekday.tuesday }),
+  aMeeting({ title: 'Ana', cadence: Cadence.biWeekly(Week.a), weekday: Weekday.tuesday }),
   aMeeting({
     title: 'Bo',
-    cadence: Cadence.biWeekly(Parity.even),
+    cadence: Cadence.biWeekly(Week.b),
     weekday: Weekday.tuesday,
     start: at('16:30'),
   }),
@@ -36,12 +36,12 @@ function reasonOf(read: ScheduleRead): string {
 }
 
 function fileWith(meetings: unknown[], fields: Record<string, unknown> = {}): unknown {
-  return { format: 'stud-planner/schedule', version: 1, meetings, ...fields }
+  return { format: 'stud-planner/schedule', version: 2, meetings, ...fields }
 }
 
 const aTimeBlockContent = {
   cadence: 'bi-weekly',
-  parity: 'odd',
+  week: 'A',
   weekday: 'wednesday',
   start: '14:00',
   duration: 120,
@@ -52,14 +52,14 @@ describe('the time blocks of the schedule file', () => {
     [aMeeting()],
     [
       aTimeBlock({ title: 'Teaching' }),
-      aTimeBlock({ cadence: Cadence.biWeekly(Parity.odd), weekday: Weekday.friday }),
+      aTimeBlock({ cadence: Cadence.biWeekly(Week.a), weekday: Weekday.friday }),
     ],
   )
 
   it('are written after the meetings, a title only when there is one', () => {
     expect(contentOf(withBlocks).timeBlocks).toEqual([
       { title: 'Teaching', cadence: 'weekly', weekday: 'wednesday', start: '14:00', duration: 120 },
-      { cadence: 'bi-weekly', parity: 'odd', weekday: 'friday', start: '14:00', duration: 120 },
+      { cadence: 'bi-weekly', week: 'A', weekday: 'friday', start: '14:00', duration: 120 },
     ])
   })
 
@@ -98,7 +98,47 @@ describe('the time blocks of the schedule file', () => {
     const inside = { ...aMeetingContent, weekday: 'wednesday', start: '15:00', cadence: 'weekly' }
     expect(
       reasonOf(scheduleFromContent(fileWith([inside], { timeBlocks: [aTimeBlockContent] }))),
-    ).toBe('meeting 1 and time block 1 overlap. Overlaps Lab meeting, odd week, 15:00 to 16:00.')
+    ).toBe('meeting 1 and time block 1 overlap. Overlaps Lab meeting, week A, 15:00 to 16:00.')
+  })
+})
+
+describe('a schedule file of version 1', () => {
+  const versionOne = {
+    format: 'stud-planner/schedule',
+    version: 1,
+    meetings: [
+      { ...aMeetingContent, title: 'Ana', cadence: 'bi-weekly', parity: 'odd' },
+      { ...aMeetingContent, title: 'Bo', cadence: 'bi-weekly', parity: 'even' },
+    ],
+  }
+
+  it('is read, its parity odd as week A and even as week B', () => {
+    const read = scheduleFromContent(versionOne)
+    expect(
+      read.isRefused ? read.reason : read.schedule.meetings.map((meeting) => meeting.cadence.week),
+    ).toEqual([Week.a, Week.b])
+  })
+
+  it('is read as it was written: with a parity, never a week', () => {
+    const withWeek = {
+      ...versionOne,
+      meetings: [{ ...aMeetingContent, cadence: 'bi-weekly', week: 'A' }],
+    }
+    expect(reasonOf(scheduleFromContent(withWeek))).toBe(
+      'meeting 1 has a field week, which a schedule file does not have.',
+    )
+    const withAWeek = {
+      ...versionOne,
+      meetings: [{ ...aMeetingContent, cadence: 'bi-weekly', parity: 'A' }],
+    }
+    expect(reasonOf(scheduleFromContent(withAWeek))).toBe(
+      'meeting 1 cannot have "A" as its parity.',
+    )
+  })
+
+  it('is written again as version 2', () => {
+    const read = scheduleFromContent(versionOne)
+    expect(!read.isRefused && contentOf(read.schedule).version).toBe(2)
   })
 })
 
@@ -107,16 +147,16 @@ describe('the schedule file', () => {
     expect(scheduleFileName).toBe('stud-planner-schedule.json')
   })
 
-  it('writes each meeting as the specification lists, a parity for a bi-weekly one only', () => {
+  it('writes each meeting as the specification lists, a week for a bi-weekly one only', () => {
     expect(contentOf(schedule)).toEqual({
       format: 'stud-planner/schedule',
-      version: 1,
+      version: 2,
       meetings: [
         { ...aMeetingContent, note: 'Room 201' },
         {
           title: 'Ana',
           cadence: 'bi-weekly',
-          parity: 'odd',
+          week: 'A',
           weekday: 'tuesday',
           start: '10:00',
           duration: 60,
@@ -124,7 +164,7 @@ describe('the schedule file', () => {
         {
           title: 'Bo',
           cadence: 'bi-weekly',
-          parity: 'even',
+          week: 'B',
           weekday: 'tuesday',
           start: '16:30',
           duration: 60,
@@ -156,13 +196,16 @@ describe('the schedule file', () => {
   })
 
   it('refuses a version it does not read', () => {
-    expect(reasonOf(scheduleFromContent(fileWith([], { version: 2 })))).toBe(
-      'it is a schedule file of version 2, and this system reads version 1.',
+    expect(reasonOf(scheduleFromContent(fileWith([], { version: 3 })))).toBe(
+      'it is a schedule file of version 3, and this system reads versions 1 and 2.',
+    )
+    expect(reasonOf(scheduleFromContent(fileWith([], { version: '2' })))).toBe(
+      'it is a schedule file of version "2", and this system reads versions 1 and 2.',
     )
   })
 
   it('refuses a field missing, a field it does not have, and a value not allowed', () => {
-    expect(reasonOf(scheduleFromContent({ format: 'stud-planner/schedule', version: 1 }))).toBe(
+    expect(reasonOf(scheduleFromContent({ format: 'stud-planner/schedule', version: 2 }))).toBe(
       'the schedule has no meetings.',
     )
     expect(reasonOf(scheduleFromContent(fileWith([], { owner: 'me' })))).toBe(
@@ -183,8 +226,8 @@ describe('the schedule file', () => {
 
   it.each([
     ['cadence', { cadence: 'monthly' }, '"monthly" as its cadence'],
-    ['parity of a weekly meeting', { parity: 'odd' }, '"odd" as its parity'],
-    ['parity', { cadence: 'bi-weekly', parity: 'third' }, '"third" as its parity'],
+    ['week of a weekly meeting', { week: 'A' }, '"A" as its week'],
+    ['week', { cadence: 'bi-weekly', week: 'C' }, '"C" as its week'],
     ['weekday', { weekday: 'sunday' }, '"sunday" as its weekday'],
     ['start', { start: '10:10' }, '"10:10" as its start'],
     ['duration', { duration: 20 }, '20 as its duration'],
@@ -197,10 +240,10 @@ describe('the schedule file', () => {
     )
   })
 
-  it('refuses a bi-weekly meeting without its parity', () => {
+  it('refuses a bi-weekly meeting without its week', () => {
     expect(
       reasonOf(scheduleFromContent(fileWith([{ ...aMeetingContent, cadence: 'bi-weekly' }]))),
-    ).toBe('meeting 1 has no parity.')
+    ).toBe('meeting 1 has no week.')
   })
 
   it('refuses a meeting that breaks a rule of a meeting', () => {

@@ -1,7 +1,7 @@
 # Plan the meetings
 
-The system has one screen. It shows one tab at a time, the overview, the odd
-week or the even week, each a grid with a weekday per column and a quarter of the
+The system has one screen. It shows one tab at a time, the overview, week A
+or week B, each a grid with a weekday per column and a quarter of the
 day per row. Above the grid stand the tabs, and Save and Load; under it, on
 every tab, the switch between Meeting and Time block. The overview is the first tab,
 and the one shown when the page opens; the switch is then on Meeting.
@@ -10,12 +10,12 @@ and the one shown when the page opens; the switch is then on Meeting.
 
 | Tab | Shows |
 |---|---|
-| Overview | Every booking, each filling its slots, except the time an odd and an even booking share on a weekday: that time is cut along its diagonal, the upper left half for the odd booking, the lower right half for the even one, and each booking is whole before and after it. A title starting in a shared time is written in its half's corner. |
-| Odd week | The weekly bookings and the bi-weekly bookings held in the odd week. |
-| Even week | The weekly bookings and the bi-weekly bookings held in the even week. |
+| Overview | Every booking, each filling its slots, except the time a booking of week A and one of week B share on a weekday: that time is cut along its diagonal, the upper left half for the booking of week A, the lower right half for that of week B, and each booking is whole before and after it. A title starting in a shared time is written in its half's corner. |
+| Week A | The weekly bookings and the bi-weekly bookings held in week A. |
+| Week B | The weekly bookings and the bi-weekly bookings held in week B. |
 
 Each tab is marked under its name with the colour of the week it shows, that
-of the odd week, of the even week, or both for the overview: the colours its
+of week A, of week B, or both for the overview: the colours its
 bi-weekly bookings are bordered with. A weekly booking looks alike on the three
 tabs, and unlike a bi-weekly one. A
 time block is grey, a meeting is tinted with the colour of its cadence; both
@@ -30,7 +30,7 @@ choice from tab to tab. Where it is held depends on the tab:
 
 | Tab | The booking added is held |
 |---|---|
-| Odd week, even week | In the week of the tab. |
+| Week A, week B | In the week of the tab. |
 | Overview | In both weeks: it is weekly. |
 
 | Rule | Behaviour |
@@ -45,20 +45,20 @@ Meetings and time blocks are moved, resized and removed alike.
 
 | Rule | Behaviour |
 |---|---|
-| Move | Dragging a booking to another slot changes its weekday and its start, never its duration, cadence or parity; it cannot end after the day. |
+| Move | Dragging a booking to another slot changes its weekday and its start, never its duration, cadence or week; it cannot end after the day. |
 | Resize | Dragging the lower edge of a booking changes its duration, one quarter at a time, within the day. |
 | A weekly booking | Moved or resized on any tab, it changes in both weeks. |
 | Refused | While a drag would make an overlap, the booking shows where it would go as refused; dropped there, it goes back where it was, nothing changes, and the screen names the booking overlapped: *Overlaps the time block Teaching, every week, 10:00 to 12:00.* |
 | Escape | During a drag, Escape puts the booking back where it was. |
-| Remove | The remove mark of a booking, Delete while it has the focus, or Remove in its dialog asks the Organizer to confirm, naming the booking, its cadence and its time: *Remove Lab meeting, weekly, Monday 10:00 to 11:00?*, *Remove a time block, bi-weekly, odd week, Friday 14:00 to 15:00?* Confirmed, the booking leaves the schedule; otherwise nothing changes. A weekly booking removed from one week's tab leaves both weeks. |
+| Remove | The remove mark of a booking, Delete while it has the focus, or Remove in its dialog asks the Organizer to confirm, naming the booking, its cadence and its time: *Remove Lab meeting, weekly, Monday 10:00 to 11:00?*, *Remove a time block, bi-weekly, week A, Friday 14:00 to 15:00?* Confirmed, the booking leaves the schedule; otherwise nothing changes. A weekly booking removed from one week's tab leaves both weeks. |
 
 ## The dialog of a booking
 
 A click on a booking, without a drag, opens its dialog: title, cadence,
-parity (bi-weekly), weekday, start and duration, a note for a meeting, with
+week (bi-weekly), weekday, start and duration, a note for a meeting, with
 Done and Remove. Every change a move or a resize makes can also be made here,
 with the keyboard. Done is refused while the booking would overlap another,
-and the dialog names it: *Overlaps Lab meeting, odd week, 10:00 to 11:00.* A
+and the dialog names it: *Overlaps Lab meeting, week A, 10:00 to 11:00.* A
 bi-weekly booking made weekly overlaps whatever takes its slots in the other
 week. A meeting needs a title; a time block does not.
 

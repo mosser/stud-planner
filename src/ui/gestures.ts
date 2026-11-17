@@ -1,5 +1,5 @@
 import type { Booking } from '../domain/booking.ts'
-import { Cadence, Parity } from '../domain/cadence.ts'
+import { Cadence, Week } from '../domain/cadence.ts'
 import { theDay } from '../domain/day.ts'
 import { Duration } from '../domain/duration.ts'
 import type { Schedule } from '../domain/schedule.ts'
@@ -7,17 +7,17 @@ import type { TimeOfDay } from '../domain/time-of-day.ts'
 import type { Weekday } from '../domain/weekday.ts'
 
 /** The three grids the screen shows, one at a time. */
-export type Tab = 'odd' | 'even' | 'overview'
+export type Tab = 'overview' | 'a' | 'b'
 
 /** The tabs, in the order the screen shows them. */
-export const tabs: readonly Tab[] = ['overview', 'odd', 'even']
+export const tabs: readonly Tab[] = ['overview', 'a', 'b']
 
 /** The week a tab shows, or absent for the overview, which shows both. */
-export function parityOf(tab: Tab): Parity | undefined {
+export function weekOf(tab: Tab): Week | undefined {
   if (tab === 'overview') {
     return undefined
   }
-  return tab === 'odd' ? Parity.odd : Parity.even
+  return tab === 'a' ? Week.a : Week.b
 }
 
 /** A slot pointed at: a weekday and the rank of a quarter of the day, the first being 0. */
@@ -45,8 +45,8 @@ function isFree(schedule: Schedule, cadence: Cadence, weekday: Weekday, quarter:
  * on the overview, weekly. Absent from a slot taken in a week the cadence is held in.
  */
 export function cadenceOffered(schedule: Schedule, tab: Tab, slot: Slot): Cadence | undefined {
-  const parity = parityOf(tab)
-  const cadence = parity === undefined ? Cadence.weekly : Cadence.biWeekly(parity)
+  const week = weekOf(tab)
+  const cadence = week === undefined ? Cadence.weekly : Cadence.biWeekly(week)
   return isFree(schedule, cadence, slot.weekday, slot.quarter) ? cadence : undefined
 }
 
@@ -55,11 +55,11 @@ export function cadenceOffered(schedule: Schedule, tab: Tab, slot: Slot): Cadenc
  * or bi-weekly in it. From the overview, it is held in both: weekly.
  */
 export function cadencesAddedFrom(tab: Tab): readonly Cadence[] {
-  const parity = parityOf(tab)
-  if (parity === undefined) {
+  const week = weekOf(tab)
+  if (week === undefined) {
     return [Cadence.weekly]
   }
-  return Cadence.all.filter((cadence) => cadence.isHeldIn(parity))
+  return Cadence.all.filter((cadence) => cadence.isHeldIn(week))
 }
 
 /**

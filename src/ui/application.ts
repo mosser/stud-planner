@@ -26,7 +26,7 @@ import {
   type Tab,
   tabs,
 } from './gestures.ts'
-import { cadenceClass, gridOf, kindClass, rowsOf, slotAt } from './grid.ts'
+import { cadenceClass, gridOf, kindClass, rowsOf, slotAt, weekClass } from './grid.ts'
 import { html } from './html.ts'
 
 /** What the page needs from its surroundings to be mounted. */
@@ -49,7 +49,7 @@ export interface Application {
   readonly tab: Tab
 }
 
-const tabNames: Record<Tab, string> = { odd: 'Odd week', even: 'Even week', overview: 'Overview' }
+const tabNames: Record<Tab, string> = { overview: 'Overview', a: 'Week A', b: 'Week B' }
 const kindNames: Record<Kind, string> = { meeting: 'Meeting', 'time-block': 'Time block' }
 const kinds: readonly Kind[] = ['meeting', 'time-block']
 
@@ -271,7 +271,7 @@ export function mountApplication(root: HTMLElement, context: ApplicationContext)
         show(
           span.weekday.key,
           rowsOf(span),
-          `${current.adds} ${current.cadence.parity?.key ?? 'weekly'}`,
+          `${current.adds} ${current.cadence.week === undefined ? 'weekly' : weekClass(current.cadence.week)}`,
         )
         return
       }

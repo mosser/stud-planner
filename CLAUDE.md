@@ -6,10 +6,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 `stud-planner` is a scheduler for recurring meetings with students. The
 Organizer places weekly and bi-weekly bookings, meetings and the time blocks
-they are not available for meetings, on two abstract weeks, odd and even, by
+they are not available for meetings, on two abstract weeks, A and B, by
 pressing and dragging on them, and sees them one tab at a time or in the
-overview, where only the time an odd and an even booking share is cut along
-its diagonal, odd upper left, even lower right. A slot is never booked twice.
+overview, where only the time a booking of week A and one of week B share is
+cut along its diagonal, week A upper left, week B lower right. A slot is never booked twice.
 The schedule is kept in the browser and saved to, or loaded from, a schedule
 file.
 
@@ -50,7 +50,7 @@ Layout of the code:
 
 ```
 src/domain/   Schedule (no overlap), Booking with Meeting and TimeBlock,
-              Cadence and Parity, Weekday, TimeOfDay, Duration, Day
+              Cadence and Week, Weekday, TimeOfDay, Duration, Day
               (config/calendar.json), findings.ts (every sentence shown);
               *.fixture.ts are test helpers
 src/io/       schedule-file.ts (the JSON file), schedule-store.ts (IndexedDB),
@@ -126,7 +126,7 @@ first.
 - Colour literals are the `--mac-*` tokens of the palette block of
   `src/style.css`, and nothing else; the interface uses `--color-*` roles and
   `color-mix()` tints of them. Maroon dominates the chrome. The cadences are
-  data: weekly green, odd blue (filled light sky), even gold. One theme, light;
+  data: weekly green, week A blue (filled light sky), week B gold. One theme, light;
   the tab shown and the kind a press adds are light maroon, not solid.
 - Gold is never text. Every text and background pairing is one tabled in the
   ADR, or measured at 4.5:1 at least.
@@ -163,20 +163,21 @@ first.
 
 ### ADR 0008: two abstract weeks
 
-- The schedule is planned on an odd week and an even week, without dates; the
+- The schedule is planned on week A and week B, without dates; the
   system never reads today's date. A booking is weekly (both weeks) or
-  bi-weekly (its parity's week); there is no monthly cadence.
+  bi-weekly (in week A or in week B); there is no monthly cadence. Never say
+  odd and even: they read as the parity of a calendar week.
 - Three tabs, one at a time: overview (first, shown when the page opens; only
-  the time an odd and an even booking share is cut along its diagonal, odd
-  upper left, even lower right, by `piecesOf` in `grid.ts`), then odd week and
-  even week. No occurrence: a booking is changed as a whole.
+  the time a booking of week A and one of week B share is cut along its
+  diagonal, week A upper left, week B lower right, by `piecesOf` in
+  `grid.ts`), then week A and week B. No occurrence: a booking is changed as a whole.
 - A booking added from a week's tab is held in that week (weekly or bi-weekly
   in it, `cadencesAddedFrom`); one added from the overview is weekly.
 
 ### ADR 0009: a slot is booked once
 
 - No two bookings overlap, meetings and time blocks alike: an invariant of
-  `Schedule`, whose constructor throws. Adding, moving, resizing, changing a cadence or a parity, and
+  `Schedule`, whose constructor throws. Adding, moving, resizing, changing a cadence or a week, and
   loading a file are refused when they would make one; a refused drop changes
   nothing. Ending as another starts is not an overlap.
 

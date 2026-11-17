@@ -1,12 +1,12 @@
 import type { Booking } from '../domain/booking.ts'
-import type { Parity } from '../domain/cadence.ts'
+import type { Week } from '../domain/cadence.ts'
 import { theDay } from '../domain/day.ts'
 import { Duration } from '../domain/duration.ts'
 import { cadenceWritten, labelOf, timeOf } from '../domain/findings.ts'
 import type { Schedule } from '../domain/schedule.ts'
 import type { TimeOfDay } from '../domain/time-of-day.ts'
 import { Weekday } from '../domain/weekday.ts'
-import { parityOf, type Slot, type Tab } from './gestures.ts'
+import { type Slot, type Tab, weekOf } from './gestures.ts'
 import { html, type Markup } from './html.ts'
 
 /**
@@ -21,9 +21,15 @@ export function accessibleNameOf(booking: Booking): string {
   return `${name}, ${cadenceWritten(booking.cadence)}, ${booking.weekday.name} ${timeOf(booking)}`
 }
 
-/** The class a booking's cadence is drawn with: weekly, odd or even. */
+/** The class a week is drawn with: week-a or week-b. */
+export function weekClass(week: Week): string {
+  return `week-${week.key.toLowerCase()}`
+}
+
+/** The class a booking's cadence is drawn with: weekly, week-a or week-b. */
 export function cadenceClass(booking: Booking): string {
-  return booking.cadence.parity?.key ?? 'weekly'
+  const { week } = booking.cadence
+  return week === undefined ? 'weekly' : weekClass(week)
 }
 
 /** The class a booking's kind is drawn with: meeting or time-block. */
@@ -81,14 +87,14 @@ function earlier(one: TimeOfDay, other: TimeOfDay): TimeOfDay {
  * A weekly booking shares none.
  */
 export function piecesOf(booking: Booking, schedule: Schedule): readonly Piece[] {
-  const parity = booking.cadence.parity
+  const week = booking.cadence.week
   const shared = schedule.bookings
     .filter(
       (other) =>
-        parity !== undefined &&
+        week !== undefined &&
         other.weekday === booking.weekday &&
-        other.cadence.parity !== undefined &&
-        other.cadence.parity !== parity &&
+        other.cadence.week !== undefined &&
+        other.cadence.week !== week &&
         other.start.isBefore(booking.end) &&
         booking.start.isBefore(other.end),
     )
@@ -127,40 +133,40 @@ function sharedClass(piece: Piece): string {
 
 /**
  * A bi-weekly booking on the overview that shares time with a booking of the other week: the time
- * shared cut along its diagonal, the upper left half for odd, the lower right half for even, the
+ * shared cut along its diagonal, the upper left half for week A, the lower right half for week B, the
  * rest whole; its title and remove mark over its first piece, its lower edge over its last.
  */
-function piecedBooking(booking: Booking, rank: number, parity: Parity, pieces: readonly Piece[]) {
+function piecedBooking(booking: Booking, rank: number, week: Week, pieces: readonly Piece[]) {
   const first = pieces[0] as Piece
   const last = pieces[pieces.length - 1] as Piece
   const kind = kindClass(booking)
   const drawn = pieces.map((piece, index) => {
     const focus =
       index === 0 ? html`role="button" tabindex="0" aria-label="${accessibleNameOf(booking)}"` : ''
-    return html`<div class="booking piece ${kind} ${parity.key} ${pieceClasses(piece, index, pieces.length)}"
+    return html`<div class="booking piece ${kind} ${weekClass(week)} ${pieceClasses(piece, index, pieces.length)}"
       style="grid-row: ${rowsOf(piece)}" data-booking="${rank}" ${focus}></div>`
   })
   return html`${drawn}
-    <div class="booking-label ${parity.key} ${sharedClass(first)}" style="grid-row: ${rowsOf(first)}">
+    <div class="booking-label ${weekClass(week)} ${sharedClass(first)}" style="grid-row: ${rowsOf(first)}">
       <span class="booking-title">${labelOf(booking)}</span>${removeMark(booking, rank)}
     </div>
-    <div class="resize-zone ${parity.key} ${sharedClass(last)}" style="grid-row: ${rowsOf(last)}">
+    <div class="resize-zone ${weekClass(week)} ${sharedClass(last)}" style="grid-row: ${rowsOf(last)}">
       <span class="resize" data-resize="${rank}" aria-hidden="true"></span>
     </div>`
 }
 
 function bookingOnTab(booking: Booking, rank: number, tab: Tab, schedule: Schedule): Markup {
-  const parity = booking.cadence.parity
+  const week = booking.cadence.week
   const pieces = piecesOf(booking, schedule)
-  if (tab === 'overview' && parity !== undefined && pieces.some((piece) => piece.isShared)) {
-    return piecedBooking(booking, rank, parity, pieces)
+  if (tab === 'overview' && week !== undefined && pieces.some((piece) => piece.isShared)) {
+    return piecedBooking(booking, rank, week, pieces)
   }
   return wholeBooking(booking, rank)
 }
 
 function isShownOn(booking: Booking, tab: Tab): boolean {
-  const parity = parityOf(tab)
-  return parity === undefined || booking.isHeldIn(parity)
+  const week = weekOf(tab)
+  return week === undefined || booking.isHeldIn(week)
 }
 
 function hourLabels(): Markup {

@@ -6,7 +6,7 @@
 
 ## Context
 
-The rules of a schedule (a start and a duration within the day, a parity only
+The rules of a schedule (a start and a duration within the day, a week only
 for a bi-weekly meeting, no two bookings in the same slot of the same week) are what the system is for. They must hold whatever screen, drag or
 file changes a meeting, and be read against `docs/specs/` by someone who
 knows the rules and not TypeScript.
@@ -22,7 +22,7 @@ Options considered:
 ## Decision
 
 - `Schedule`, its bookings (`Meeting`, `TimeBlock`, ADR 0011) and their
-  values (`Cadence`, `Parity`, `Weekday`, `TimeOfDay`, `Duration`) are
+  values (`Cadence`, `Week`, `Weekday`, `TimeOfDay`, `Duration`) are
   immutable classes in `src/domain/` whose constructor throws on a broken
   invariant. A change returns an `after…` copy:
   `meeting.afterMovingTo(weekday, start)`, `schedule.afterAdding(booking)`.

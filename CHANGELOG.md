@@ -9,10 +9,11 @@ project adheres to [Semantic Versioning](https://semver.org/).
 ### Added
 
 - A schedule of recurring meetings, weekly or bi-weekly, planned on two abstract weeks,
-  odd and even, without dates, Monday to Friday from 08:00 to 18:00, by the quarter.
+  week A and week B, which alternate, without dates, Monday to Friday from 08:00 to 18:00, by the quarter.
 - Three tabs, shown one at a time, each marked with the colour of its week: **Overview**,
-  shown first, which merges the two weeks, cutting the time an odd and an even booking share
-  along its diagonal, odd upper left, even lower right; then **Odd week** and **Even week**.
+  shown first, which merges the two weeks, cutting the time a booking of week A and one of
+  week B share along its diagonal, week A upper left, week B lower right; then **Week A** and
+  **Week B**.
 - Adding a meeting by pressing a free slot and dragging down: held in the week of the tab,
   weekly or bi-weekly, or, from the overview, in both weeks; moving it by dragging,
   resizing it by its lower edge, and changing it in its dialog.
@@ -25,6 +26,6 @@ project adheres to [Semantic Versioning](https://semver.org/).
 - A slot is never booked twice: a change or a file that would make two meetings overlap is
   refused, and the meeting overlapped is named.
 - The McMaster University colour palette, in a light theme: weekly meetings in
-  green, odd weeks in blue, even weeks in gold.
+  green, week A in blue, week B in gold.
 - The schedule is kept by the browser between two sessions, and is saved to, or loaded
   from, `stud-planner-schedule.json`.

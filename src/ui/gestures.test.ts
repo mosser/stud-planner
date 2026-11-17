@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { Cadence, Parity } from '../domain/cadence.ts'
+import { Cadence, Week } from '../domain/cadence.ts'
 import { aMeeting } from '../domain/meeting.fixture.ts'
 import { Schedule } from '../domain/schedule.ts'
 import { Weekday } from '../domain/weekday.ts'
@@ -8,16 +8,16 @@ import {
   bookingResized,
   cadenceOffered,
   cadencesAddedFrom,
-  parityOf,
   type Span,
   spanDragged,
   spanPressed,
+  weekOf,
 } from './gestures.ts'
 
-const odd = Cadence.biWeekly(Parity.odd)
-const even = Cadence.biWeekly(Parity.even)
-/** Monday from 10:00 to 11:00, odd week: quarters 8 to 11 of the day. */
-const ana = aMeeting({ title: 'Ana', cadence: odd })
+const inWeekA = Cadence.biWeekly(Week.a)
+const inWeekB = Cadence.biWeekly(Week.b)
+/** Monday from 10:00 to 11:00, week A: quarters 8 to 11 of the day. */
+const ana = aMeeting({ title: 'Ana', cadence: inWeekA })
 const schedule = new Schedule([ana])
 const monday = (quarter: number) => ({ weekday: Weekday.monday, quarter })
 
@@ -26,17 +26,17 @@ function written(span: Span): string {
 }
 
 describe('the tabs', () => {
-  it('show the odd week, the even week, or both on the overview', () => {
-    expect(parityOf('odd')).toBe(Parity.odd)
-    expect(parityOf('even')).toBe(Parity.even)
-    expect(parityOf('overview')).toBeUndefined()
+  it('show week A, week B, or both on the overview', () => {
+    expect(weekOf('a')).toBe(Week.a)
+    expect(weekOf('b')).toBe(Week.b)
+    expect(weekOf('overview')).toBeUndefined()
   })
 })
 
 describe('the cadence offered from a free slot', () => {
   it('is bi-weekly in the week of the tab', () => {
-    expect(cadenceOffered(schedule, 'odd', monday(0))).toBe(odd)
-    expect(cadenceOffered(schedule, 'even', monday(8))).toBe(even)
+    expect(cadenceOffered(schedule, 'a', monday(0))).toBe(inWeekA)
+    expect(cadenceOffered(schedule, 'b', monday(8))).toBe(inWeekB)
   })
 
   it('is weekly on the overview, from a slot free in both weeks', () => {
@@ -45,7 +45,7 @@ describe('the cadence offered from a free slot', () => {
   })
 
   it('is none from a slot taken in the week of the tab', () => {
-    expect(cadenceOffered(schedule, 'odd', monday(8))).toBeUndefined()
+    expect(cadenceOffered(schedule, 'a', monday(8))).toBeUndefined()
   })
 })
 
@@ -55,30 +55,30 @@ describe('a booking added from a tab', () => {
   })
 
   it('is held in the week of the tab: bi-weekly in it, or weekly', () => {
-    expect(cadencesAddedFrom('odd')).toEqual([Cadence.weekly, odd])
-    expect(cadencesAddedFrom('even')).toEqual([Cadence.weekly, even])
+    expect(cadencesAddedFrom('a')).toEqual([Cadence.weekly, inWeekA])
+    expect(cadencesAddedFrom('b')).toEqual([Cadence.weekly, inWeekB])
   })
 })
 
 describe('adding by dragging', () => {
   it('marks from the slot pressed to the quarter reached, down or up', () => {
-    expect(written(spanDragged(schedule, odd, monday(0), 3))).toBe('Monday 08:00 60')
-    expect(written(spanDragged(schedule, odd, monday(3), 0))).toBe('Monday 08:00 60')
-    expect(written(spanDragged(schedule, odd, monday(2), 2))).toBe('Monday 08:30 15')
+    expect(written(spanDragged(schedule, inWeekA, monday(0), 3))).toBe('Monday 08:00 60')
+    expect(written(spanDragged(schedule, inWeekA, monday(3), 0))).toBe('Monday 08:00 60')
+    expect(written(spanDragged(schedule, inWeekA, monday(2), 2))).toBe('Monday 08:30 15')
   })
 
   it('stops before the first taken slot', () => {
-    expect(written(spanDragged(schedule, odd, monday(4), 20))).toBe('Monday 09:00 60')
-    expect(written(spanDragged(schedule, even, monday(4), 20))).toBe('Monday 09:00 255')
+    expect(written(spanDragged(schedule, inWeekA, monday(4), 20))).toBe('Monday 09:00 60')
+    expect(written(spanDragged(schedule, inWeekB, monday(4), 20))).toBe('Monday 09:00 255')
   })
 
   it('marks an hour from a press without a drag, or less when a taken slot comes first', () => {
-    expect(written(spanPressed(schedule, odd, monday(0)))).toBe('Monday 08:00 60')
-    expect(written(spanPressed(schedule, odd, monday(6)))).toBe('Monday 09:30 30')
+    expect(written(spanPressed(schedule, inWeekA, monday(0)))).toBe('Monday 08:00 60')
+    expect(written(spanPressed(schedule, inWeekA, monday(6)))).toBe('Monday 09:30 30')
   })
 
   it('marks no further than the end of the day', () => {
-    expect(written(spanPressed(schedule, odd, monday(38)))).toBe('Monday 17:30 30')
+    expect(written(spanPressed(schedule, inWeekA, monday(38)))).toBe('Monday 17:30 30')
   })
 })
 

@@ -8,8 +8,8 @@
 
 The application is used at McMaster University, next to its siblings
 `macreport` and `streaming-hat`, which use McMaster's palette. It needs colours
-for its chrome and three colours of data: weekly, odd-week and even-week
-meetings, which must stay apart on the overview, where an odd and an even meeting
+for its chrome and three colours of data: weekly, week-A and week-B
+bookings, which must stay apart on the overview, where a booking of week A and one of week B
 share their slots.
 
 McMaster publishes its palette and usage rules at
@@ -60,9 +60,9 @@ the browser's preference.
 | Surface, text | White, black |
 | Secondary text, rules | Grey, Dundurn Grey |
 | Weekly | King's Forest Green |
-| Odd week | Bayfront Blue |
-| Even week | Gold |
-| Mark under a tab's name, 4 px: overview, odd week, even week | Half blue and half gold, blue, gold |
+| Week A | Bayfront Blue |
+| Week B | Gold |
+| Mark under a tab's name, 4 px: overview, week A, week B | Half blue and half gold, blue, gold |
 | Time block | Grey, 25 % on white |
 | Refused, errors | Maroon |
 
@@ -72,10 +72,10 @@ its text with a light tone of it:
 | Cadence | Fill | Half on the overview |
 |---|---|---|
 | Weekly | Green, 22 % on white | — |
-| Odd week | Albion Falls Blue, 65 % on white | Albion Falls Blue |
-| Even week | Gold, 22 % on white | Gold, 40 % on white |
+| Week A | Albion Falls Blue, 65 % on white | Albion Falls Blue |
+| Week B | Gold, 22 % on white | Gold, 40 % on white |
 
-The odd week is filled with Albion Falls Blue rather than a tint of the
+Week A is filled with Albion Falls Blue rather than a tint of the
 Bayfront Blue of its border: a tint of Bayfront Blue is a blue grey that
 cannot be told from the grey of a time block. A time block is filled with its
 grey, whatever its cadence.
@@ -122,7 +122,7 @@ grey, whatever its cadence.
 **Negative / accepted trade-offs**
 
 - Gold, the clearest colour against Albion Falls Blue on the overview, cannot carry
-  text; the title of an even booking is written in black over it.
+  text; the title of a booking of week B is written in black over it.
 - A reader who sets the browser to a dark theme still gets a light page.
 - The application's look is tied to McMaster; if it must be neutral, this ADR
   is amended.

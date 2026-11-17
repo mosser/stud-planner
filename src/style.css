@@ -21,10 +21,10 @@
   --color-secondary-text: var(--mac-grey);
   --color-rule: var(--mac-accent-light-grey);
   --color-faint-rule: color-mix(in srgb, var(--mac-accent-light-grey) 45%, var(--mac-white));
-  /* The cadences are data: accents for weekly and odd, gold for even, never as text. */
+  /* The cadences are data: accents for weekly and week A, gold for week B, never as text. */
   --color-weekly: var(--mac-accent-green);
-  --color-odd: var(--mac-accent-blue);
-  --color-even: var(--mac-gold);
+  --color-week-a: var(--mac-accent-blue);
+  --color-week-b: var(--mac-gold);
   --color-refused: var(--mac-maroon);
   --color-error: var(--mac-maroon);
   /* Time blocks: grey over the surface, their cadence's colour as a border. */
@@ -34,14 +34,14 @@
   --color-chosen-tint: color-mix(in srgb, var(--mac-maroon) 12%, var(--mac-white));
   /*
    * The fill of a booking, by cadence, and of its half on the overview, black text on them. The
-   * odd week is filled with Albion Falls Blue, lighter than the Bayfront Blue of its border, so
+   * week A is filled with Albion Falls Blue, lighter than the Bayfront Blue of its border, so
    * that it is not taken for the grey of a time block.
    */
   --fill-weekly: color-mix(in srgb, var(--mac-accent-green) 22%, var(--mac-white));
-  --fill-odd: color-mix(in srgb, var(--mac-accent-sky) 65%, var(--mac-white));
-  --fill-even: color-mix(in srgb, var(--mac-gold) 22%, var(--mac-white));
-  --half-fill-odd: var(--mac-accent-sky);
-  --half-fill-even: color-mix(in srgb, var(--mac-gold) 40%, var(--mac-white));
+  --fill-week-a: color-mix(in srgb, var(--mac-accent-sky) 65%, var(--mac-white));
+  --fill-week-b: color-mix(in srgb, var(--mac-gold) 22%, var(--mac-white));
+  --half-fill-week-a: var(--mac-accent-sky);
+  --half-fill-week-b: color-mix(in srgb, var(--mac-gold) 40%, var(--mac-white));
   --quarter-height: 0.85rem;
   color-scheme: light;
   font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
@@ -141,16 +141,16 @@ button.primary {
   background-size: 100% 4px;
 }
 
-.tabs button[data-tab="odd"] {
-  --mark: linear-gradient(var(--color-odd), var(--color-odd));
+.tabs button[data-tab="a"] {
+  --mark: linear-gradient(var(--color-week-a), var(--color-week-a));
 }
 
-.tabs button[data-tab="even"] {
-  --mark: linear-gradient(var(--color-even), var(--color-even));
+.tabs button[data-tab="b"] {
+  --mark: linear-gradient(var(--color-week-b), var(--color-week-b));
 }
 
 .tabs button[data-tab="overview"] {
-  --mark: linear-gradient(to right, var(--color-odd) 50%, var(--color-even) 50%);
+  --mark: linear-gradient(to right, var(--color-week-a) 50%, var(--color-week-b) 50%);
 }
 
 .adding {
@@ -239,18 +239,18 @@ button:disabled {
   background: var(--fill);
 }
 
-.booking.odd,
-.preview.odd {
-  --cadence: var(--color-odd);
-  --fill: var(--fill-odd);
-  --half-fill: var(--half-fill-odd);
+.booking.week-a,
+.preview.week-a {
+  --cadence: var(--color-week-a);
+  --fill: var(--fill-week-a);
+  --half-fill: var(--half-fill-week-a);
 }
 
-.booking.even,
-.preview.even {
-  --cadence: var(--color-even);
-  --fill: var(--fill-even);
-  --half-fill: var(--half-fill-even);
+.booking.week-b,
+.preview.week-b {
+  --cadence: var(--color-week-b);
+  --fill: var(--fill-week-b);
+  --half-fill: var(--half-fill-week-b);
 }
 
 .booking {
@@ -341,8 +341,8 @@ button:disabled {
 
 /*
  * The overview: a bi-weekly meeting is drawn in pieces when it shares time with a meeting of the
- * other week; the time shared is cut along its diagonal, the upper left for odd, the lower right
- * for even, and the rest is whole.
+ * other week; the time shared is cut along its diagonal, the upper left for week A, the lower
+ * right for week B, and the rest is whole.
  */
 .booking.piece {
   border-radius: 0;
@@ -363,11 +363,11 @@ button:disabled {
   background: var(--half-fill);
 }
 
-.booking.half.odd {
+.booking.half.week-a {
   clip-path: polygon(0 0, 100% 0, 0 100%);
 }
 
-.booking.half.even {
+.booking.half.week-b {
   clip-path: polygon(100% 0, 100% 100%, 0 100%);
 }
 
@@ -394,7 +394,7 @@ button:disabled {
   max-width: 60%;
 }
 
-.booking-label.even.shared {
+.booking-label.week-b.shared {
   align-items: flex-end;
   justify-content: flex-end;
 }
@@ -404,15 +404,15 @@ button:disabled {
   pointer-events: auto;
 }
 
-.booking-label.even.shared .remove {
+.booking-label.week-b.shared .remove {
   top: auto;
   right: auto;
   bottom: 0;
   left: 0;
 }
 
-/* The lower edge of an odd half is its lower left corner: the handle stays within it. */
-.resize-zone.odd.shared .resize {
+/* The lower edge of a half of week A is its lower left corner: the handle stays within it. */
+.resize-zone.week-a.shared .resize {
   right: 70%;
 }
 

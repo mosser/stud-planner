@@ -1,5 +1,5 @@
 import type { Booking, Timing } from '../domain/booking.ts'
-import { Cadence, Parity } from '../domain/cadence.ts'
+import { Cadence, Week } from '../domain/cadence.ts'
 import { Duration } from '../domain/duration.ts'
 import {
   bookingBroken,
@@ -24,17 +24,38 @@ import { Weekday } from '../domain/weekday.ts'
 export const scheduleFileName = 'stud-planner-schedule.json'
 
 const format = 'stud-planner/schedule'
-const version = 1
+/** The version written; every version ever written is read (ADR 0007). */
+const version = 2
 const scheduleFields = ['format', 'version', 'meetings', 'timeBlocks']
-const timingFields = ['cadence', 'parity', 'weekday', 'start', 'duration']
-const meetingFields = ['title', ...timingFields, 'note']
-const timeBlockFields = ['title', ...timingFields]
+/**
+ * How a version of the schedule file writes the week of a bi-weekly booking: version 2 as `week`,
+ * A or B; version 1 as `parity`, odd for week A and even for week B.
+ */
+interface WeekWritten {
+  readonly field: string
+  readonly weeks: Readonly<Record<string, Week>>
+}
+
+const weekWritten: Readonly<Record<number, WeekWritten>> = {
+  1: { field: 'parity', weeks: { odd: Week.a, even: Week.b } },
+  2: { field: 'week', weeks: { A: Week.a, B: Week.b } },
+}
+
+/** What a part of a file is read with: its version's way of writing the week. */
+interface Reading {
+  readonly part: string
+  readonly written: WeekWritten
+}
+
+function timingFields(written: WeekWritten): string[] {
+  return ['cadence', written.field, 'weekday', 'start', 'duration']
+}
 const theSchedule = 'the schedule'
 
 /** When a booking takes its slots, as the schedule file holds it. */
 interface TimingContent {
   readonly cadence: string
-  readonly parity?: string
+  readonly week?: string
   readonly weekday: string
   readonly start: string
   readonly duration: number
@@ -67,7 +88,7 @@ export type ScheduleRead =
 function contentOfTiming(booking: Booking): TimingContent {
   return {
     cadence: booking.cadence.key,
-    ...(booking.cadence.parity === undefined ? {} : { parity: booking.cadence.parity.key }),
+    ...(booking.cadence.week === undefined ? {} : { week: booking.cadence.week.key }),
     weekday: booking.weekday.key,
     start: booking.start.toString(),
     duration: booking.duration.minutes,
@@ -152,25 +173,28 @@ function duration(value: unknown): Duration | undefined {
   }
 }
 
-function cadenceOf(part: string, record: Record<string, unknown>): Cadence {
+function cadenceOf({ part, written }: Reading, record: Record<string, unknown>): Cadence {
   const key = fieldRead(part, record, 'cadence', (value) =>
     value === 'weekly' || value === 'bi-weekly' ? value : undefined,
   )
   if (key === 'weekly') {
-    if ('parity' in record) {
-      throw new Refusal(valueNotAllowed(part, 'parity', record.parity))
+    if (written.field in record) {
+      throw new Refusal(valueNotAllowed(part, written.field, record[written.field]))
     }
     return Cadence.weekly
   }
-  const parity = fieldRead(part, record, 'parity', (value) =>
-    typeof value === 'string' ? Parity.withKey(value) : undefined,
+  const week = fieldRead(part, record, written.field, (value) =>
+    typeof value === 'string' && Object.hasOwn(written.weeks, value)
+      ? written.weeks[value]
+      : undefined,
   )
-  return Cadence.biWeekly(parity)
+  return Cadence.biWeekly(week)
 }
 
-function timingOf(part: string, record: Record<string, unknown>): Timing {
+function timingOf(reading: Reading, record: Record<string, unknown>): Timing {
+  const { part } = reading
   return {
-    cadence: cadenceOf(part, record),
+    cadence: cadenceOf(reading, record),
     weekday: fieldRead(part, record, 'weekday', weekday),
     start: fieldRead(part, record, 'start', time),
     duration: fieldRead(part, record, 'duration', duration),
@@ -193,23 +217,25 @@ function recordOf(list: string, value: unknown): Record<string, unknown> {
   return value
 }
 
-function meetingOf(part: string, value: unknown): Meeting {
+function meetingOf(reading: Reading, value: unknown): Meeting {
+  const { part } = reading
   const record = recordOf('meetings', value)
-  checkFields(part, record, meetingFields)
+  checkFields(part, record, ['title', ...timingFields(reading.written), 'note'])
   const description = {
     title: fieldRead(part, record, 'title', text),
-    ...timingOf(part, record),
+    ...timingOf(reading, record),
     note: 'note' in record ? fieldRead(part, record, 'note', text) : undefined,
   }
   return built(part, () => new Meeting(description))
 }
 
-function timeBlockOf(part: string, value: unknown): TimeBlock {
+function timeBlockOf(reading: Reading, value: unknown): TimeBlock {
+  const { part } = reading
   const record = recordOf('timeBlocks', value)
-  checkFields(part, record, timeBlockFields)
+  checkFields(part, record, ['title', ...timingFields(reading.written)])
   const description = {
     title: 'title' in record ? fieldRead(part, record, 'title', text) : undefined,
-    ...timingOf(part, record),
+    ...timingOf(reading, record),
   }
   return built(part, () => new TimeBlock(description))
 }
@@ -225,14 +251,18 @@ function scheduleOf(content: unknown): Schedule {
     throw new Refusal(notAScheduleFile())
   }
   checkFields(theSchedule, content, scheduleFields)
-  if (required(theSchedule, content, 'version') !== version) {
+  const given = required(theSchedule, content, 'version')
+  const written = typeof given === 'number' ? weekWritten[given] : undefined
+  if (written === undefined) {
     throw new Refusal(unknownVersion(content.version))
   }
   const meetings = listOf(content, 'meetings').map((value, index) =>
-    meetingOf(meetingOfTheFile(index + 1), value),
+    meetingOf({ part: meetingOfTheFile(index + 1), written }, value),
   )
   const timeBlocks = 'timeBlocks' in content ? listOf(content, 'timeBlocks') : []
-  const blocks = timeBlocks.map((value, index) => timeBlockOf(timeBlockOfTheFile(index + 1), value))
+  const blocks = timeBlocks.map((value, index) =>
+    timeBlockOf({ part: timeBlockOfTheFile(index + 1), written }, value),
+  )
   const partOf = new Map<Booking, string>([
     ...meetings.map((meeting, index) => [meeting, meetingOfTheFile(index + 1)] as const),
     ...blocks.map((block, index) => [block, timeBlockOfTheFile(index + 1)] as const),

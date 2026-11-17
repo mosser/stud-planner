@@ -1,5 +1,5 @@
 import type { Booking } from './booking.ts'
-import type { Cadence, Parity } from './cadence.ts'
+import type { Cadence, Week } from './cadence.ts'
 import { overlap } from './findings.ts'
 import { Meeting } from './meeting.ts'
 import { TimeBlock } from './time-block.ts'
@@ -66,9 +66,9 @@ export class Schedule {
     return this.bookings.find((booking) => booking !== replaced && booking.overlaps(candidate))
   }
 
-  /** The meetings held in the week of that parity. */
-  meetingsHeldIn(parity: Parity): readonly Meeting[] {
-    return this.meetings.filter((meeting) => meeting.isHeldIn(parity))
+  /** The meetings held in the week of that week. */
+  meetingsHeldIn(week: Week): readonly Meeting[] {
+    return this.meetings.filter((meeting) => meeting.isHeldIn(week))
   }
 
   /**
@@ -78,8 +78,7 @@ export class Schedule {
   isFree(weekday: Weekday, time: TimeOfDay, cadence: Cadence, setAside?: Booking): boolean {
     return !this.bookings.some(
       (booking) =>
-        booking !== setAside &&
-        cadence.weeks.some((parity) => booking.takes(weekday, time, parity)),
+        booking !== setAside && cadence.weeks.some((week) => booking.takes(weekday, time, week)),
     )
   }
 

@@ -1,11 +1,11 @@
 import { describe, expect, it } from 'vitest'
-import { Cadence, Parity } from './cadence.ts'
+import { Cadence, Week } from './cadence.ts'
 import { Duration } from './duration.ts'
 import { aMeeting, aTimeBlock, at } from './meeting.fixture.ts'
 import { OverlapError, Schedule } from './schedule.ts'
 import { Weekday } from './weekday.ts'
 
-const odd = Cadence.biWeekly(Parity.odd)
+const inWeekA = Cadence.biWeekly(Week.a)
 
 describe('a time block', () => {
   it('has a title only when the Organizer gives one', () => {
@@ -36,10 +36,10 @@ describe('a time block', () => {
   })
 
   it('overlaps a meeting as a meeting does, in the weeks both are held', () => {
-    const block = aTimeBlock({ cadence: odd })
+    const block = aTimeBlock({ cadence: inWeekA })
     expect(block.overlaps(aMeeting({ weekday: Weekday.wednesday, start: at('15:30') }))).toBe(true)
-    const even = aMeeting({ weekday: Weekday.wednesday, cadence: Cadence.biWeekly(Parity.even) })
-    expect(block.overlaps(even.afterMovingTo(Weekday.wednesday, at('14:00')))).toBe(false)
+    const inWeekB = aMeeting({ weekday: Weekday.wednesday, cadence: Cadence.biWeekly(Week.b) })
+    expect(block.overlaps(inWeekB.afterMovingTo(Weekday.wednesday, at('14:00')))).toBe(false)
   })
 })
 
@@ -86,7 +86,7 @@ describe('a schedule with time blocks', () => {
 
   it('counts a time block in what is free', () => {
     const schedule = new Schedule([], [block])
-    expect(schedule.isFree(Weekday.wednesday, at('15:45'), odd)).toBe(false)
-    expect(schedule.isFree(Weekday.wednesday, at('16:00'), odd)).toBe(true)
+    expect(schedule.isFree(Weekday.wednesday, at('15:45'), inWeekA)).toBe(false)
+    expect(schedule.isFree(Weekday.wednesday, at('16:00'), inWeekA)).toBe(true)
   })
 })

@@ -31,12 +31,12 @@ function aBooking(isTimeBlock: boolean): string {
   return isTimeBlock ? 'A time block' : 'A meeting'
 }
 
-/** A cadence as the interface writes it: weekly; bi-weekly, odd week. */
+/** A cadence as the interface writes it: weekly; bi-weekly, week A. */
 export function cadenceWritten(cadence: Cadence): string {
-  return cadence.parity === undefined ? 'weekly' : `bi-weekly, ${cadence.parity.week}`
+  return cadence.week === undefined ? 'weekly' : `bi-weekly, ${cadence.week.name}`
 }
 
-/** A cadence as a choice of the meeting dialog: Weekly; Bi-weekly, odd week. */
+/** A cadence as a choice of the meeting dialog: Weekly; Bi-weekly, week A. */
 export function cadenceChoice(cadence: Cadence): string {
   const written = cadenceWritten(cadence)
   return written.charAt(0).toUpperCase() + written.slice(1)
@@ -69,11 +69,11 @@ export function endsAfterTheDay(isTimeBlock: boolean, dayEnd: TimeOfDay): string
 
 /**
  * Why a booking cannot take its slots: the booking it would overlap, in the weeks both are held,
- * and when: Overlaps Lab meeting, odd week, 10:00 to 11:00.
+ * and when: Overlaps Lab meeting, week A, 10:00 to 11:00.
  */
 export function overlap(booking: Booking, other: Booking): string {
   const weeks = booking.weeksSharedWith(other)
-  const when = weeks.length === 1 ? weeks[0]?.week : 'every week'
+  const when = weeks.length === 1 ? weeks[0]?.name : 'every week'
   return `Overlaps ${nameOf(other)}, ${when}, ${timeOf(other)}.`
 }
 
@@ -126,7 +126,7 @@ export function notAScheduleFile(): string {
 
 /** Why a file is refused: it is a schedule file of a version this system does not read. */
 export function unknownVersion(version: unknown): string {
-  return `it is a schedule file of version ${JSON.stringify(version)}, and this system reads version 1.`
+  return `it is a schedule file of version ${JSON.stringify(version)}, and this system reads versions 1 and 2.`
 }
 
 /** Why a file is refused: a part of it has a field missing. */

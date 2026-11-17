@@ -1,11 +1,11 @@
 import { describe, expect, it } from 'vitest'
-import { Cadence, Parity } from './cadence.ts'
+import { Cadence, Week } from './cadence.ts'
 import { aMeeting, at } from './meeting.fixture.ts'
 import { OverlapError, Schedule } from './schedule.ts'
 import { Weekday } from './weekday.ts'
 
-const odd = Cadence.biWeekly(Parity.odd)
-const even = Cadence.biWeekly(Parity.even)
+const inWeekA = Cadence.biWeekly(Week.a)
+const inWeekB = Cadence.biWeekly(Week.b)
 
 describe('a schedule', () => {
   it('starts with no meeting', () => {
@@ -14,24 +14,24 @@ describe('a schedule', () => {
 
   it('never holds two meetings that overlap', () => {
     const lab = aMeeting()
-    const ana = aMeeting({ title: 'Ana', start: at('10:30'), cadence: odd })
+    const ana = aMeeting({ title: 'Ana', start: at('10:30'), cadence: inWeekA })
     expect(() => new Schedule([lab, ana])).toThrow(OverlapError)
-    expect(() => new Schedule([lab, ana])).toThrow(
-      'Overlaps Lab meeting, odd week, 10:00 to 11:00.',
-    )
+    expect(() => new Schedule([lab, ana])).toThrow('Overlaps Lab meeting, week A, 10:00 to 11:00.')
   })
 
   it('holds a bi-weekly meeting in each week at the same slot', () => {
-    const ana = aMeeting({ title: 'Ana', cadence: odd })
-    const bo = aMeeting({ title: 'Bo', cadence: even })
+    const ana = aMeeting({ title: 'Ana', cadence: inWeekA })
+    const bo = aMeeting({ title: 'Bo', cadence: inWeekB })
     expect(new Schedule([ana, bo]).meetings).toEqual([ana, bo])
   })
 
   it('refuses a meeting added that overlaps another, and keeps itself', () => {
-    const schedule = new Schedule([aMeeting({ cadence: odd })])
+    const schedule = new Schedule([aMeeting({ cadence: inWeekA })])
     expect(() => schedule.afterAdding(aMeeting({ title: 'Bo' }))).toThrow(OverlapError)
     expect(schedule.meetings).toHaveLength(1)
-    expect(schedule.afterAdding(aMeeting({ title: 'Bo', cadence: even })).meetings).toHaveLength(2)
+    expect(schedule.afterAdding(aMeeting({ title: 'Bo', cadence: inWeekB })).meetings).toHaveLength(
+      2,
+    )
   })
 
   it('says which meeting a candidate would overlap, the one it replaces aside', () => {
@@ -63,19 +63,19 @@ describe('a schedule', () => {
 
   it('lists the meetings held in a week', () => {
     const lab = aMeeting()
-    const ana = aMeeting({ title: 'Ana', weekday: Weekday.tuesday, cadence: odd })
+    const ana = aMeeting({ title: 'Ana', weekday: Weekday.tuesday, cadence: inWeekA })
     const schedule = new Schedule([lab, ana])
-    expect(schedule.meetingsHeldIn(Parity.odd)).toEqual([lab, ana])
-    expect(schedule.meetingsHeldIn(Parity.even)).toEqual([lab])
+    expect(schedule.meetingsHeldIn(Week.a)).toEqual([lab, ana])
+    expect(schedule.meetingsHeldIn(Week.b)).toEqual([lab])
   })
 
   it('says whether a quarter is free in every week of a cadence', () => {
-    const ana = aMeeting({ title: 'Ana', cadence: odd })
+    const ana = aMeeting({ title: 'Ana', cadence: inWeekA })
     const schedule = new Schedule([ana])
-    expect(schedule.isFree(Weekday.monday, at('10:00'), even)).toBe(true)
-    expect(schedule.isFree(Weekday.monday, at('10:00'), odd)).toBe(false)
+    expect(schedule.isFree(Weekday.monday, at('10:00'), inWeekB)).toBe(true)
+    expect(schedule.isFree(Weekday.monday, at('10:00'), inWeekA)).toBe(false)
     expect(schedule.isFree(Weekday.monday, at('10:00'), Cadence.weekly)).toBe(false)
-    expect(schedule.isFree(Weekday.monday, at('10:00'), odd, ana)).toBe(true)
+    expect(schedule.isFree(Weekday.monday, at('10:00'), inWeekA, ana)).toBe(true)
     expect(schedule.isFree(Weekday.monday, at('11:00'), Cadence.weekly)).toBe(true)
   })
 })

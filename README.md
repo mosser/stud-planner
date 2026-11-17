@@ -1,7 +1,7 @@
 # stud-planner
 
-A scheduler for recurring meetings, weekly and bi-weekly, laid out on an odd
-week and an even week. Browser-only, delivered as one self-contained HTML
+A scheduler for recurring meetings, weekly and bi-weekly, laid out on two
+weeks that alternate, week A and week B. Browser-only, delivered as one self-contained HTML
 file. Nothing it does crosses a network.
 
 - **Use it:** <https://mosser.github.io/stud-planner/>, or download

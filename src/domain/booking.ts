@@ -1,4 +1,4 @@
-import type { Cadence, Parity } from './cadence.ts'
+import type { Cadence, Week } from './cadence.ts'
 import { theDay } from './day.ts'
 import type { Duration } from './duration.ts'
 import { endsAfterTheDay, startsBeforeTheDay } from './findings.ts'
@@ -18,7 +18,7 @@ export interface Timing {
  * overlap (ADR 0009).
  */
 export abstract class Booking implements Timing {
-  /** Weekly, or bi-weekly in the odd or the even week. */
+  /** Weekly, or bi-weekly in week A or in week B. */
   readonly cadence: Cadence
   readonly weekday: Weekday
   /** When it begins, within the day. */
@@ -55,16 +55,16 @@ export abstract class Booking implements Timing {
     return this.start.afterQuarters(this.duration.quarters)
   }
 
-  /** Whether the booking is held in the week of that parity. */
-  isHeldIn(parity: Parity): boolean {
-    return this.cadence.isHeldIn(parity)
+  /** Whether the booking is held in the week of that week. */
+  isHeldIn(week: Week): boolean {
+    return this.cadence.isHeldIn(week)
   }
 
   /** Whether the booking takes the quarter starting at that time, on that weekday, in that week. */
-  takes(weekday: Weekday, time: TimeOfDay, parity: Parity): boolean {
+  takes(weekday: Weekday, time: TimeOfDay, week: Week): boolean {
     return (
       this.weekday === weekday &&
-      this.isHeldIn(parity) &&
+      this.isHeldIn(week) &&
       !time.isBefore(this.start) &&
       time.isBefore(this.end)
     )
@@ -84,7 +84,7 @@ export abstract class Booking implements Timing {
   }
 
   /** The weeks in which both bookings are held. */
-  weeksSharedWith(other: Booking): readonly Parity[] {
+  weeksSharedWith(other: Booking): readonly Week[] {
     return this.cadence.weeksSharedWith(other.cadence)
   }
 

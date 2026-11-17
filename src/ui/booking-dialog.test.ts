@@ -1,6 +1,6 @@
 // @vitest-environment happy-dom
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { Cadence, Parity } from '../domain/cadence.ts'
+import { Cadence, Week } from '../domain/cadence.ts'
 import { Duration } from '../domain/duration.ts'
 import { aMeeting, aTimeBlock, at } from '../domain/meeting.fixture.ts'
 import { Schedule } from '../domain/schedule.ts'
@@ -14,7 +14,7 @@ const proposal = {
   weekday: Weekday.tuesday,
   start: at('09:00'),
   duration: Duration.ofQuarters(4),
-  cadence: Cadence.biWeekly(Parity.odd),
+  cadence: Cadence.biWeekly(Week.a),
 }
 
 function field<T extends HTMLElement>(dialog: HTMLElement, name: string): T {
@@ -56,7 +56,7 @@ describe('the meeting dialog of a new meeting', () => {
       return select.options[select.selectedIndex]?.textContent
     }
     expect(['cadence', 'weekday', 'start', 'duration'].map(selected)).toEqual([
-      'Bi-weekly, odd week',
+      'Bi-weekly, week A',
       'Tuesday',
       '09:00',
       '1 h',
@@ -90,7 +90,7 @@ describe('the meeting dialog of a new meeting', () => {
     choose(dialog, 'weekday', 'Monday')
     choose(dialog, 'start', '10:30')
     expect(done(dialog).disabled).toBe(true)
-    expect(finding(dialog)).toBe('Overlaps Lab meeting, odd week, 10:00 to 11:00.')
+    expect(finding(dialog)).toBe('Overlaps Lab meeting, week A, 10:00 to 11:00.')
     dialog.querySelector('form')?.requestSubmit()
     expect(dialog.isConnected).toBe(true)
   })
@@ -181,7 +181,7 @@ describe('the dialog of a time block', () => {
     })
     choose(dialog, 'weekday', 'Monday')
     choose(dialog, 'start', '10:30')
-    expect(finding(dialog)).toBe('Overlaps Lab meeting, odd week, 10:00 to 11:00.')
+    expect(finding(dialog)).toBe('Overlaps Lab meeting, week A, 10:00 to 11:00.')
     expect(done(dialog).disabled).toBe(true)
   })
 
