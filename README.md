@@ -1,6 +1,8 @@
 # stud-planner
 
-A browser-only application, delivered as one self-contained HTML file. Nothing
+A scheduler for recurring meetings, weekly, bi-weekly and monthly, laid out on
+an odd week, an even week and a monthly week. Browser-only, delivered as one
+self-contained HTML file. Nothing
 it does crosses a network.
 
 - **Use it:** <https://mosser.github.io/stud-planner/>, or download

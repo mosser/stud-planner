@@ -45,6 +45,22 @@ grep -nE "from '(vitest|node:[^']*)'|from '[^']*\.test(\.ts)?'" $business && fai
 grep -rn 'TODO' src scripts --exclude=check-adr.sh && fail "TODO in the code"
 grep -nE 'biome-ignore[^:]*$' $(find src -name '*.ts') && fail "biome-ignore without a reason"
 
+# ADR 0004: drags on Pointer Events, no drag-and-drop API.
+grep -nE 'draggable|ondragstart|dragstart' $business && fail "the HTML drag-and-drop API is used: drags are written on Pointer Events"
+
+# ADR 0005: the domain imports nothing from io or ui, and uses no browser API.
+if [ -d src/domain ]; then
+  grep -nE "from '\.\./(io|ui)/|\b(window|document|navigator|indexedDB|globalThis)\.|new Date\(\)|Date\.now\(" $(find src/domain -name '*.ts' ! -name '*.test.ts') && fail "src/domain/ depends on io, ui, the browser or today's date"
+fi
+
+# ADR 0006: no storage but IndexedDB, and IndexedDB only in the schedule store.
+grep -nE 'localStorage|sessionStorage|document\.cookie|caches\.' $business && fail "browser storage other than IndexedDB"
+grep -ln 'indexedDB' $business | grep -v '^src/io/schedule-store.ts$' && fail "IndexedDB used outside src/io/schedule-store.ts"
+
+# ADR 0007: load and save, never upload or download.
+grep -rniE 'upload|download' src docs/specs | grep -v '^src/io/save.ts:' && fail "\"upload\" or \"download\" in src/ or docs/specs/"
+grep -niE 'upload|download' src/io/save.ts 2>/dev/null | grep -viE 'download =|`download`|\bdownload attribute' && fail "src/io/save.ts may only set the download attribute"
+
 if [ "$failures" -gt 0 ]; then
   echo "$failures ADR check(s) failed" >&2
   exit 1
