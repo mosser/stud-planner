@@ -24,7 +24,7 @@ in the specification, in the interface and in the code.
 | Bi-weekly | The cadence of a booking held in one week only, the odd or the even: its parity. |
 | Parity | Which of the two weeks a bi-weekly booking is held in: odd or even. |
 | Odd week, even week | The two abstract weeks the schedule is planned on. They have no date: which week of the calendar is odd is the Organizer's to know. |
-| Overview | The odd week and the even week merged, as one grid: what the two weeks hold, alternating, and the time they share. A press on it adds a time block held in both weeks; no meeting is added from it. |
+| Overview | The odd week and the even week merged, as one grid: what the two weeks hold, alternating, and the time they share. A booking added from it is held in both weeks. |
 | Weekday | Monday, Tuesday, Wednesday, Thursday or Friday. |
 | Day | The hours a booking can take on a weekday: from 08:00 to 18:00, configured in `config/calendar.json`. |
 | Quarter | Fifteen minutes. Starts and durations are whole quarters. |
@@ -34,7 +34,7 @@ in the specification, in the interface and in the code.
 | Free, taken | A slot is taken in a week when a booking held that week covers it, and free otherwise. A weekly booking takes its slots in both weeks, a bi-weekly one in its week only. |
 | Overlap | Two bookings that would take the same slot in the same week: two meetings, a meeting in a time block, or two time blocks. The system refuses an overlap, whatever makes it: adding, moving, resizing, changing a cadence or a parity, or loading a file. |
 | Tab | One of the three grids the screen shows, one at a time: the odd week, the even week, the overview. |
-| Switch | What a press adds on a week's tab: Meeting or Time block. |
+| Switch | What a press adds, on every tab: Meeting or Time block. It stands under the grid. |
 | Keep | What the browser does of the schedule: it holds it between two sessions, best effort, and gives it back when the page opens. |
 | Schedule file | The schedule as a file of the Organizer's computer, saved and loaded: see `schedule-file.md`. |
 | Save | The system hands the schedule file to the browser, which writes it on the Organizer's computer. Nothing is sent over a network. |

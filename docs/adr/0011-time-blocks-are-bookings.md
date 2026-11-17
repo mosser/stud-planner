@@ -36,9 +36,10 @@ Options considered:
   of a time block, nor the reverse.
 - The schedule file holds the time blocks in a list of their own,
   `timeBlocks`, which a file may leave out (`docs/specs/schedule-file.md`).
-- On a week's tab, a switch says whether a press adds a meeting or a time
-  block; on the overview, a press adds a time block held in both weeks
-  (`docs/specs/plan-the-meetings.md`).
+- A switch under the grid, on every tab, says whether a press adds a meeting
+  or a time block (`docs/specs/plan-the-meetings.md`). It stands apart from
+  the tabs above the grid, which say where a booking is held, not what it
+  is.
 
 ## Consequences
 

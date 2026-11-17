@@ -146,27 +146,48 @@ describe('adding a meeting', () => {
     expect(application.schedule.meetings[0]?.cadence).toBe(Cadence.weekly)
   })
 
-  it('adds a weekly time block from the overview, and nothing from a slot taken in a week', () => {
+  it('adds a weekly meeting from the overview, held in both weeks', () => {
     const { root, application } = mounted(new Schedule([ana]))
     ;(root.querySelector('[data-tab="overview"]') as HTMLElement).click()
-    expect(root.querySelector('[data-adding]')).toBeNull()
+    expect(root.querySelector('[aria-checked="true"]')?.textContent).toBe('Meeting')
     press(day(root, Weekday.tuesday), point(Weekday.tuesday, '10:00'))
     release(point(Weekday.tuesday, '10:00'))
     expect(dialog()).toBeNull()
     press(day(root, Weekday.monday), point(Weekday.monday, '08:00'))
-    release(point(Weekday.monday, '08:00'))
-    expect(dialog().querySelector('h2')?.textContent).toBe('New time block')
+    moveTo(point(Weekday.monday, '09:15'))
+    release(point(Weekday.monday, '09:15'))
+    expect(dialog().querySelector('h2')?.textContent).toBe('New meeting')
     const choices = [...dialog().querySelectorAll('[name="cadence"] option')].map(
       (option) => option.textContent,
     )
     expect(choices).toEqual(['Weekly'])
+    typeTitle('Seminar')
+    expect(describeMeetings(application.schedule)[1]).toBe('Seminar Monday 08:00-09:30')
+    expect(application.schedule.meetings[1]?.cadence).toBe(Cadence.weekly)
+  })
+
+  it('adds a weekly time block from the overview once the switch says so', () => {
+    const { root, application } = mounted(new Schedule())
+    ;(root.querySelector('[data-tab="overview"]') as HTMLElement).click()
+    ;(root.querySelector('[data-adding="time-block"]') as HTMLElement).click()
+    press(day(root, Weekday.friday), point(Weekday.friday, '08:00'))
+    release(point(Weekday.friday, '08:00'))
+    expect(dialog().querySelector('h2')?.textContent).toBe('New time block')
     dialog().querySelector('form')?.requestSubmit()
     const [block] = application.schedule.timeBlocks
-    expect([block?.title, block?.cadence, block?.start.toString()]).toEqual([
+    expect([block?.title, block?.cadence, block?.end.toString()]).toEqual([
       undefined,
       Cadence.weekly,
-      '08:00',
+      '09:00',
     ])
+  })
+
+  it('shows the switch under the grid, on every tab', () => {
+    const { root } = mounted(new Schedule())
+    for (const tab of ['odd', 'even', 'overview']) {
+      ;(root.querySelector(`[data-tab="${tab}"]`) as HTMLElement).click()
+      expect(root.querySelector('.grid + .adding')).not.toBeNull()
+    }
   })
 
   it('adds a time block from a week once the switch says so', () => {

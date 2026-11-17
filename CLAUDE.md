@@ -170,8 +170,7 @@ first.
   upper left, even lower right, by `piecesOf` in `grid.ts`). No occurrence: a
   booking is changed as a whole.
 - A booking added from a week's tab is held in that week (weekly or bi-weekly
-  in it, `cadencesAddedFrom`); a press on the overview adds a weekly time
-  block, never a meeting.
+  in it, `cadencesAddedFrom`); one added from the overview is weekly.
 
 ### ADR 0009: a slot is booked once
 
@@ -187,7 +186,8 @@ first.
   note) extend it. The grid, the gestures and the dialog work on bookings,
   ranked among `schedule.bookings` (`data-booking`). A meeting never replaces
   a time block, nor the reverse.
-- On a week's tab, the Meeting | Time block switch says what a press adds.
+- The Meeting | Time block switch, under the grid on every tab, says what a
+  press adds.
   The schedule file holds `timeBlocks`, which a file may leave out.
 
 ## Writing

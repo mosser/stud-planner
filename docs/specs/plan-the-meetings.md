@@ -2,9 +2,9 @@
 
 The system has one screen. It shows one tab at a time, the odd week, the even
 week or the overview, each a grid with a weekday per column and a quarter of the
-day per row. Above the grid stand the tabs, on a week's tab the switch between
-Meeting and Time block, and Save and Load. The tab shown is the odd week when
-the page opens, and the switch is on Meeting.
+day per row. Above the grid stand the tabs, and Save and Load; under it, on
+every tab, the switch between Meeting and Time block. The tab shown is the odd
+week when the page opens, and the switch is on Meeting.
 
 ## The tabs
 
@@ -20,13 +20,14 @@ their cadence. A time block without a title is shown as *Time block*.
 
 ## Adding a meeting or a time block
 
-A booking is added on the grid, by pressing a slot. What a press adds depends
-on the tab:
+A booking is added on the grid, by pressing a slot. A press adds what the
+switch says, a meeting or a time block, on every tab; the switch keeps its
+choice from tab to tab. Where it is held depends on the tab:
 
-| Tab | A press adds |
+| Tab | The booking added is held |
 |---|---|
-| Odd week, even week | What the switch says, Meeting or Time block, held in the week of the tab. The switch keeps its choice from tab to tab. |
-| Overview | A time block, held in both weeks. No meeting is added from the overview. |
+| Odd week, even week | In the week of the tab. |
+| Overview | In both weeks: it is weekly. |
 
 | Rule | Behaviour |
 |---|---|

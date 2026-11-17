@@ -82,7 +82,7 @@ export function mountApplication(root: HTMLElement, context: ApplicationContext)
   const ask = context.ask ?? ((question, confirm) => askToConfirm(page, question, confirm))
   let schedule = context.restored.schedule
   let tab: Tab = 'odd'
-  /** What a press adds on a week's tab; on the overview, a press adds a time block. */
+  /** What a press on a free slot adds, on every tab: a meeting or a time block. */
   let adding: Kind = 'meeting'
   let isKept = context.store.isKept
   const isSetAside = context.restored.wasSetAside
@@ -98,20 +98,14 @@ export function mountApplication(root: HTMLElement, context: ApplicationContext)
     return html`${kept}${aside}${refused}`
   }
 
-  /** What a press on a free slot adds on the tab shown. */
-  function addedOnTab(): Kind {
-    return tab === 'overview' ? 'time-block' : adding
-  }
-
+  /** The switch under the grid: what a press on a free slot adds. */
   function addingSwitch() {
-    if (tab === 'overview') {
-      return ''
-    }
-    return html`<div class="adding" role="radiogroup" aria-label="Added by a press">${kinds.map(
-      (kind) =>
-        html`<button type="button" role="radio" data-adding="${kind}"
-          aria-checked="${kind === adding ? 'true' : 'false'}">${kindNames[kind]}</button>`,
-    )}</div>`
+    return html`<div class="adding" role="radiogroup" aria-labelledby="adding-label">
+      <span id="adding-label">Add</span>${kinds.map(
+        (kind) =>
+          html`<button type="button" role="radio" data-adding="${kind}"
+            aria-checked="${kind === adding ? 'true' : 'false'}">${kindNames[kind]}</button>`,
+      )}</div>`
   }
 
   function render(): void {
@@ -125,7 +119,6 @@ export function mountApplication(root: HTMLElement, context: ApplicationContext)
               html`<button type="button" role="tab" data-tab="${each}"
                 aria-selected="${each === tab ? 'true' : 'false'}">${tabNames[each]}</button>`,
           )}</div>
-          ${addingSwitch()}
           <div class="actions">
             <button type="button" data-action="save">Save</button>
             <button type="button" data-action="load">Load</button>
@@ -133,6 +126,7 @@ export function mountApplication(root: HTMLElement, context: ApplicationContext)
           </div>
         </div>
         <div class="grid" role="tabpanel" aria-label="${tabNames[tab]}">${gridOf(schedule, tab)}</div>
+        ${addingSwitch()}
       </main>
       <footer class="site-footer">stud-planner v${context.version}</footer>
     `.text
@@ -396,7 +390,7 @@ export function mountApplication(root: HTMLElement, context: ApplicationContext)
       const cadence = cadenceOffered(schedule, tab, slot)
       if (cadence !== undefined) {
         const span = spanDragged(schedule, cadence, slot, slot.quarter)
-        begin({ kind: 'add', pressed: slot, adds: addedOnTab(), cadence, span, hasMoved: false })
+        begin({ kind: 'add', pressed: slot, adds: adding, cadence, span, hasMoved: false })
       }
     })
   }

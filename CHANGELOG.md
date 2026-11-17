@@ -13,13 +13,13 @@ project adheres to [Semantic Versioning](https://semver.org/).
 - Three tabs, shown one at a time: **Odd week**, **Even week**, and **Overview**, which merges
   them: the time an odd and an even meeting share is cut along its diagonal, odd upper
   left, even lower right.
-- Adding a meeting by pressing a free slot and dragging down, on the odd or the even
-  week: the meeting is held in that week, weekly or bi-weekly;
-  moving it by dragging, resizing it by its lower edge, and changing it in its dialog.
+- Adding a meeting by pressing a free slot and dragging down: held in the week of the tab,
+  weekly or bi-weekly, or, from the overview, in both weeks; moving it by dragging,
+  resizing it by its lower edge, and changing it in its dialog.
 - Time blocks: the recurring time the Organizer is not available for meetings, with an
-  optional title, drawn striped. On the odd or the even week, a **Meeting | Time block**
-  switch says what a press adds; on the overview, a press adds a time block held in both
-  weeks. No meeting can be booked in a time block.
+  optional title, drawn striped. A **Meeting | Time block** switch under the grid says what
+  a press adds, on every tab; one added from the overview is held in both weeks. No meeting
+  can be booked in a time block.
 - Removing a meeting or a time block from its remove mark, the Delete key or its dialog,
   once confirmed.
 - A slot is never booked twice: a change or a file that would make two meetings overlap is
