@@ -1,0 +1,64 @@
+:root {
+  /* palette:start (the only colour literals of the system; branding not decided yet) */
+  --palette-ink: #1f2328;
+  --palette-paper: #ffffff;
+  --palette-night: #0d1117;
+  --palette-mist: #d0d7de;
+  --palette-slate: #57606a;
+  --palette-primary: #24527a;
+  /* palette:end */
+
+  --color-primary: var(--palette-primary);
+  --color-on-primary: var(--palette-paper);
+  --color-surface: var(--palette-paper);
+  --color-text: var(--palette-ink);
+  --color-secondary-text: var(--palette-slate);
+  --color-rule: var(--palette-mist);
+  color-scheme: light dark;
+  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-surface: var(--palette-night);
+    --color-text: var(--palette-paper);
+    --color-secondary-text: var(--palette-mist);
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--color-surface);
+  color: var(--color-text);
+  line-height: 1.5;
+}
+
+.masthead {
+  padding: 0.75rem 1.5rem;
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+}
+
+.masthead h1 {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.screen {
+  max-width: 60rem;
+  margin: 0 auto;
+  padding: 1.5rem;
+}
+
+.site-footer {
+  padding: 1rem 1.5rem;
+  border-top: 1px solid var(--color-rule);
+  color: var(--color-secondary-text);
+  font-size: 0.875rem;
+  text-align: center;
+}

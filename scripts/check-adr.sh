@@ -1,0 +1,52 @@
+#!/usr/bin/env bash
+# The ADR rules a grep or a Node one-liner can verify. Run after a build.
+set -uo pipefail
+cd "$(dirname "$0")/.."
+
+failures=0
+fail() { echo "ADR check failed: $*" >&2; failures=$((failures + 1)); }
+
+business=$(find src -name '*.ts' ! -name '*.test.ts')
+version=$(node -p "require('./package.json').version")
+
+# ADR 0001: one file, named after the version; no network API; TypeScript only; pinned build.
+built=$(ls dist 2>/dev/null)
+[ "$built" = "stud-planner-v${version}.html" ] || fail "dist/ must hold exactly stud-planner-v${version}.html, holds: ${built:-nothing}"
+grep -nE '\bimport\(|\bfetch\(|XMLHttpRequest|WebSocket|sendBeacon' $business && fail "network API or dynamic import() in src/"
+find src -type f ! -name '*.ts' ! -name 'style.css' ! -path 'src/assets/*' | grep . && fail "src/ holds a file that is not TypeScript, style.css or an asset"
+grep -q '"strict": true' tsconfig.base.json || fail "tsconfig.base.json must keep strict"
+grep -q 'viteSingleFile()' vite.config.ts || fail "vite.config.ts must use viteSingleFile()"
+grep -q "base: './'" vite.config.ts || fail "vite.config.ts must set base: './'"
+node -e "
+const p = require('./package.json')
+const all = { ...p.dependencies, ...p.devDependencies }
+const loose = Object.entries(all).filter(([, v]) => !/^\d+\.\d+\.\d+$/.test(v))
+if (loose.length) { console.error(loose); process.exit(1) }
+" || fail "package.json must declare exact versions only"
+[ -f package-lock.json ] || fail "package-lock.json must be committed"
+for lock in pnpm-lock.yaml yarn.lock bun.lock bun.lockb; do [ -e "$lock" ] && fail "$lock must not exist"; done
+grep -q '^save-exact=true$' .npmrc || fail ".npmrc must set save-exact=true"
+grep -q '^engine-strict=true$' .npmrc || fail ".npmrc must set engine-strict=true"
+[ -f .nvmrc ] || fail ".nvmrc must exist"
+
+# Colour literals only in the palette block of style.css.
+grep -nEi '#[0-9a-f]{3,8}\b|rgba?\( *[0-9]|hsla?\( *[0-9]' $business && fail "colour literal outside src/style.css"
+awk '/palette:start/{inside=1} /palette:end/{inside=0} !inside && /#[0-9A-Fa-f]{3,8}\b|rgba?\(/' src/style.css | grep . && fail "colour literal outside the palette block of src/style.css"
+
+# ADR 0002: actions pinned to a commit SHA; release notes from the CHANGELOG; Pages after the release.
+grep -nE '^\s*-?\s*uses:' .github/workflows/*.yml | grep -vE 'uses: [^@ ]+@[0-9a-f]{40} # v[0-9]' && fail "an action is not pinned to a full commit SHA with its version in a comment"
+grep -q 'scripts/release-notes.sh' .github/workflows/release.yml || fail "release.yml must take the release notes from CHANGELOG.md"
+grep -q -- '--generate-notes' .github/workflows/release.yml && fail "release.yml must not generate the release notes"
+grep -qE '^\s+needs: release$' .github/workflows/release.yml || fail "release.yml must deploy GitHub Pages after the release"
+grep -q '^## \[Unreleased\]$' CHANGELOG.md || fail "CHANGELOG.md must keep an [Unreleased] section"
+
+# ADR 0003: business code imports no test, vitest or node: module; no TODO; no silent ignore.
+grep -nE "from '(vitest|node:[^']*)'|from '[^']*\.test(\.ts)?'" $business && fail "business code imports a test, vitest or node: module"
+grep -rn 'TODO' src scripts --exclude=check-adr.sh && fail "TODO in the code"
+grep -nE 'biome-ignore[^:]*$' $(find src -name '*.ts') && fail "biome-ignore without a reason"
+
+if [ "$failures" -gt 0 ]; then
+  echo "$failures ADR check(s) failed" >&2
+  exit 1
+fi
+echo "ADR checks passed"
