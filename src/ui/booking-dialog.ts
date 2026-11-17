@@ -22,6 +22,8 @@ export interface BookingDialogOptions {
   readonly booking?: Booking | undefined
   /** Where a new booking goes, and the cadence offered. */
   readonly proposal: Timing
+  /** Whether the booking is only shown, the schedule being locked: nothing can be changed. */
+  readonly isReadOnly?: boolean | undefined
   /** The cadences the booking may have; every cadence when absent. */
   readonly cadences?: readonly Cadence[] | undefined
   /** Called with the booking as Done leaves it: never one that overlaps another. */
@@ -68,26 +70,34 @@ function noteField(given: BookingDialogOptions): Markup | string {
   return html`<label>Note <textarea name="note" rows="2">${note ?? ''}</textarea></label>`
 }
 
-function markupOf(given: BookingDialogOptions): Markup {
-  const { booking } = given
+/** The actions of the dialog: Close alone when read only; Remove, Cancel and Done otherwise. */
+function actionsOf(given: BookingDialogOptions): Markup {
+  if (given.isReadOnly === true) {
+    return html`<button type="button" class="primary" data-action="cancel">Close</button>`
+  }
   const remove =
-    booking === undefined
+    given.booking === undefined
       ? ''
       : html`<button type="button" class="danger" data-action="remove">Remove</button>`
+  return html`${remove}
+    <button type="button" data-action="cancel">Cancel</button>
+    <button type="submit" class="primary" data-action="done">Done</button>`
+}
+
+function markupOf(given: BookingDialogOptions): Markup {
+  const { booking } = given
   return html`<form method="dialog">
     <h2>${headingOf(given)}</h2>
+    <fieldset ${given.isReadOnly === true ? 'disabled' : ''}>
     <label>Title <input name="title" value="${booking?.title ?? ''}" autocomplete="off"></label>
     <label>Cadence <select name="cadence">${options(cadencesOf(given), cadenceChoice)}</select></label>
     <label>Weekday <select name="weekday">${options(Weekday.all, (weekday) => weekday.name)}</select></label>
     <label>Start <select name="start">${options(theDay.quarters, String)}</select></label>
     <label>Duration <select name="duration">${options(durations, durationWritten)}</select></label>
     ${noteField(given)}
+    </fieldset>
     <p class="finding" role="alert"></p>
-    <div class="dialog-actions">
-      ${remove}
-      <button type="button" data-action="cancel">Cancel</button>
-      <button type="submit" class="primary" data-action="done">Done</button>
-    </div>
+    <div class="dialog-actions">${actionsOf(given)}</div>
   </form>`
 }
 
@@ -175,11 +185,13 @@ export function openBookingDialog(page: Document, given: BookingDialogOptions): 
   const dialog = dialogOn(page, `booking-dialog ${given.kind}`, markupOf(given).text)
   const form = dialog.querySelector('form') as HTMLFormElement
   const finding = dialog.querySelector('.finding') as HTMLElement
-  const done = dialog.querySelector('[data-action="done"]') as HTMLButtonElement
+  const done = dialog.querySelector<HTMLButtonElement>('[data-action="done"]')
   const update = (): Outcome => {
     const outcome = outcomeOf(form, given)
     finding.textContent = outcome.finding ?? ''
-    done.disabled = outcome.booking === undefined
+    if (done !== null) {
+      done.disabled = outcome.booking === undefined
+    }
     return outcome
   }
   choose(form, given)
@@ -188,7 +200,7 @@ export function openBookingDialog(page: Document, given: BookingDialogOptions): 
   form.addEventListener('submit', (event) => {
     event.preventDefault()
     const { booking } = update()
-    if (booking !== undefined) {
+    if (booking !== undefined && given.isReadOnly !== true) {
       closeDialog(dialog)
       given.onDone(booking)
     }
@@ -211,8 +223,11 @@ export function openBookingDialog(page: Document, given: BookingDialogOptions): 
       closeDialog(dialog)
     }
   })
-  update()
+  if (given.isReadOnly !== true) {
+    update()
+  }
   showDialog(dialog)
-  form.querySelector<HTMLInputElement>('input[name="title"]')?.focus()
+  const first = given.isReadOnly === true ? '[data-action="cancel"]' : 'input[name="title"]'
+  form.querySelector<HTMLElement>(first)?.focus()
   return dialog
 }

@@ -65,6 +65,12 @@ grep -ln 'indexedDB' $business | grep -v '^src/io/schedule-store.ts$' && fail "I
 grep -rniE 'upload|download' src docs/specs | grep -vE '^src/io/save(\.test)?\.ts:' && fail "\"upload\" or \"download\" in src/ or docs/specs/"
 grep -niE 'upload|download' src/io/save.ts 2>/dev/null | grep -viE 'download =|`download`|\bdownload attribute' && fail "src/io/save.ts may only set the download attribute"
 
+# ADR 0012: shared schedules inlined from schedules/, by one module, checked by the build.
+[ -d schedules ] || fail "schedules/ must exist"
+grep -ln 'import\.meta\.glob' $business | grep -v '^src/io/shared-schedules.ts$' && fail "import.meta.glob used outside src/io/shared-schedules.ts"
+grep -q "import.meta.glob('../../schedules/\*.json', { eager: true" src/io/shared-schedules.ts || fail "src/io/shared-schedules.ts must inline schedules/*.json, eager"
+grep -q 'checkSharedSchedules()' vite.config.ts || fail "vite.config.ts must check the files of schedules/"
+
 if [ "$failures" -gt 0 ]; then
   echo "$failures ADR check(s) failed" >&2
   exit 1

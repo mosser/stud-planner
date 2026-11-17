@@ -1,7 +1,8 @@
 # Schedule file
 
 The schedule as a file: JSON, UTF-8, one object. The browser keeps the same
-content (ADR 0006). The system writes version 2, and reads versions 1 and 2.
+content (ADR 0006), and the shared schedules of `schedules/` are such files
+(ADR 0012). The system writes version 2, and reads versions 1 and 2.
 
 ## The schedule
 

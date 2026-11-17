@@ -1,6 +1,7 @@
 import './style.css'
 import { save } from './io/save.ts'
 import { openTheBrowserScheduleStore } from './io/schedule-store.ts'
+import { sharedSchedules } from './io/shared-schedules.ts'
 import { mountApplication } from './ui/application.ts'
 
 const root = document.getElementById('app')
@@ -13,4 +14,5 @@ mountApplication(root, {
   restored: await store.restore(),
   store,
   save: (fileText, fileName) => save(fileText, fileName, document),
+  sharedSchedules,
 })

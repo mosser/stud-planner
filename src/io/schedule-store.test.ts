@@ -56,6 +56,16 @@ describe('the kept schedule', () => {
     expect(await readDirectly(factory, 'schedule')).toEqual(contentOf(schedule))
   })
 
+  it('comes back locked when it was locked, and unlocked otherwise', async () => {
+    const factory = new IDBFactory()
+    const store = await openScheduleStore(factory)
+    expect((await store.restore()).isLocked).toBe(false)
+    expect(await store.keepLock(true)).toBe(true)
+    expect((await (await openScheduleStore(factory)).restore()).isLocked).toBe(true)
+    await store.keepLock(false)
+    expect((await (await openScheduleStore(factory)).restore()).isLocked).toBe(false)
+  })
+
   it('is set aside, not deleted, when it cannot be read', async () => {
     const factory = new IDBFactory()
     await writeDirectly(factory, { format: 'something else' })
@@ -70,7 +80,9 @@ describe('the kept schedule', () => {
     const store = await openScheduleStore(undefined)
     expect(store.isKept).toBe(false)
     expect(await store.keep(schedule)).toBe(false)
+    expect(await store.keepLock(true)).toBe(false)
     expect((await store.restore()).schedule.isEmpty).toBe(true)
+    expect((await store.restore()).isLocked).toBe(false)
   })
 
   it("is opened on the browser's own IndexedDB", async () => {

@@ -11,6 +11,13 @@ file. Nothing it does crosses a network.
 - **Build it:** Node 26, then `npm ci` and `npm run verify`; the page is in
   `dist/`.
 
+## Sharing a schedule
+
+Save the schedule, put the file in [`schedules/`](schedules/) under the name it
+should be listed by (`schedules/Fall 2026.json`), commit it, and cut a release:
+the page lists it at the top right, under *Shared schedules*. Everything in
+`schedules/` is public with the page.
+
 Architecture decisions are in [`docs/adr/`](docs/adr/), the specification in
 [`docs/specs/`](docs/specs/).
 

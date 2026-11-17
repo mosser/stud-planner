@@ -21,11 +21,11 @@ from `file://` and is served by GitHub Pages at
 
 It follows the conventions of its siblings `macreport` and `streaming-hat`.
 
-**Current state:** the specification (`docs/specs/`) and ADRs 0001 to 0011
+**Current state:** the specification (`docs/specs/`) and ADRs 0001 to 0012
 are implemented: the three tabs, meetings and time blocks added, moved,
 resized and removed by dragging, the dialog of a booking, overlaps refused,
-the schedule kept in IndexedDB, and saved to or loaded from its file. Not
-released yet.
+the lock, the shared schedules of `schedules/`, the schedule kept in
+IndexedDB, and saved to or loaded from its file. Not released yet.
 
 ## Where things live
 
@@ -53,8 +53,10 @@ src/domain/   Schedule (no overlap), Booking with Meeting and TimeBlock,
               Cadence and Week, Weekday, TimeOfDay, Duration, Day
               (config/calendar.json), findings.ts (every sentence shown);
               *.fixture.ts are test helpers
-src/io/       schedule-file.ts (the JSON file), schedule-store.ts (IndexedDB),
-              save.ts (hands a file to the browser)
+src/io/       schedule-file.ts (the JSON file), schedule-store.ts (IndexedDB:
+              the schedule and its lock), save.ts (hands a file to the
+              browser), shared-schedule.ts (reads them) and
+              shared-schedules.ts (inlines schedules/*.json)
 src/ui/       application.ts (state, toolbar, tabs, drags), gestures.ts (what a
               press or a drag makes, pure), grid.ts (a tab's grid, slotAt),
               booking-dialog.ts, confirmation.ts, dialog.ts, html.ts
@@ -62,6 +64,8 @@ src/main.ts   entry point, mounted from index.html
 src/style.css palette tokens and all styling
 config/       calendar.json: the hours of the day; inlined at build time and
               checked by the build
+schedules/    the shared schedules, schedule files named as they are listed;
+              inlined at build time and checked by the build (ADR 0012)
 scripts/      check-adr.sh: the scriptable ADR checks; release.sh and
               release-notes.sh: cutting a release (ADR 0002)
 ```
@@ -191,6 +195,16 @@ first.
 - The Meeting | Time block switch, under the grid on every tab, says what a
   press adds.
   The schedule file holds `timeBlocks`, which a file may leave out.
+
+### ADR 0012: shared schedules
+
+- A shared schedule is a file of `schedules/`, named after its file; only
+  `src/io/shared-schedules.ts` takes them, with an eager `import.meta.glob`,
+  so that nothing is fetched. `checkSharedSchedules()` in `vite.config.ts`
+  refuses a build with a file the system does not read.
+- Choosing one in the masthead replaces the schedule, once confirmed, and
+  locks it. The lock blocks every change; it is kept with the schedule
+  (`keepLock`). Load still replaces a locked schedule.
 
 ## Writing
 

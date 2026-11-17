@@ -12,6 +12,7 @@ import {
 import type { Schedule } from '../domain/schedule.ts'
 import { readScheduleFile, scheduleFileName, scheduleFileOf } from '../io/schedule-file.ts'
 import type { Restored, ScheduleStore } from '../io/schedule-store.ts'
+import type { SharedSchedule } from '../io/shared-schedule.ts'
 import { type Kind, openBookingDialog } from './booking-dialog.ts'
 import { askToConfirm } from './confirmation.ts'
 import {
@@ -35,8 +36,10 @@ export interface ApplicationContext {
   readonly version: string
   /** The schedule the browser gave back when the page opened. */
   readonly restored: Restored
-  /** Where every change of the schedule is kept (ADR 0006). */
-  readonly store: Pick<ScheduleStore, 'isKept' | 'keep'>
+  /** Where every change of the schedule, and of its lock, is kept (ADR 0006). */
+  readonly store: Pick<ScheduleStore, 'isKept' | 'keep' | 'keepLock'>
+  /** The schedules of `schedules/`, built into the page (ADR 0012). */
+  readonly sharedSchedules: readonly SharedSchedule[]
   /** Hands the text of a file to the browser, to be saved under its name (ADR 0007). */
   readonly save: (fileText: string, fileName: string) => void
   /** Asks the Organizer to confirm; by default, in a dialog of the page. */
@@ -47,6 +50,7 @@ export interface ApplicationContext {
 export interface Application {
   readonly schedule: Schedule
   readonly tab: Tab
+  readonly isLocked: boolean
 }
 
 const tabNames: Record<Tab, string> = { overview: 'Overview', a: 'Week A', b: 'Week B' }
@@ -85,6 +89,8 @@ export function mountApplication(root: HTMLElement, context: ApplicationContext)
   /** What a press on a free slot adds, on every tab: a meeting or a time block. */
   let adding: Kind = 'meeting'
   let isKept = context.store.isKept
+  /** Whether the schedule is locked against every change. */
+  let isLocked = context.restored.isLocked
   const isSetAside = context.restored.wasSetAside
   let refusal: string | undefined
 
@@ -98,19 +104,40 @@ export function mountApplication(root: HTMLElement, context: ApplicationContext)
     return html`${kept}${aside}${refused}`
   }
 
-  /** The switch under the grid: what a press on a free slot adds. */
+  /** The switch under the grid: what a press on a free slot adds; nothing, while locked. */
   function addingSwitch() {
     return html`<div class="adding" role="radiogroup" aria-labelledby="adding-label">
       <span id="adding-label">Add</span>${kinds.map(
         (kind) =>
-          html`<button type="button" role="radio" data-adding="${kind}"
+          html`<button type="button" role="radio" data-adding="${kind}" ${isLocked ? 'disabled' : ''}
             aria-checked="${kind === adding ? 'true' : 'false'}">${kindNames[kind]}</button>`,
       )}</div>`
   }
 
+  /** The list of the shared schedules, at the right of the masthead, when there is one. */
+  function sharedChooser() {
+    if (context.sharedSchedules.length === 0) {
+      return ''
+    }
+    return html`<select data-shared aria-label="Shared schedules">
+      <option value="">Shared schedules</option>
+      ${context.sharedSchedules.map(
+        (shared, rank) => html`<option value="${rank}">${shared.name}</option>`,
+      )}
+    </select>`
+  }
+
+  function lockButton() {
+    return html`<button type="button" data-action="lock" aria-pressed="${isLocked ? 'true' : 'false'}"
+      >${isLocked ? 'Locked' : 'Lock'}</button>`
+  }
+
   function render(): void {
     root.innerHTML = html`
-      <header class="masthead"><h1>Stud Planner</h1></header>
+      <header class="masthead">
+        <h1>Stud Planner</h1>
+        <div class="masthead-actions">${sharedChooser()}${lockButton()}</div>
+      </header>
       <main class="screen">
         ${notices()}
         <div class="toolbar">
@@ -125,7 +152,7 @@ export function mountApplication(root: HTMLElement, context: ApplicationContext)
             <input type="file" accept=".json,application/json" data-file hidden>
           </div>
         </div>
-        <div class="grid" role="tabpanel" aria-label="${tabNames[tab]}">${gridOf(schedule, tab)}</div>
+        <div class="grid ${isLocked ? 'locked' : ''}" role="tabpanel" aria-label="${tabNames[tab]}">${gridOf(schedule, tab, isLocked)}</div>
         ${addingSwitch()}
       </main>
       <footer class="site-footer">stud-planner v${context.version}</footer>
@@ -165,21 +192,32 @@ export function mountApplication(root: HTMLElement, context: ApplicationContext)
     })
   }
 
+  /** Opens the dialog of a booking of the schedule; read only while the schedule is locked. */
   function openExisting(booking: Booking): void {
     openBookingDialog(page, {
       schedule,
       kind: booking.isTimeBlock ? 'time-block' : 'meeting',
       booking,
       proposal: booking.timing,
+      isReadOnly: isLocked,
       onDone: (changed) => change(schedule.afterReplacing(booking, changed)),
       onRemove: (removed) => void remove(removed),
     })
   }
 
   async function remove(booking: Booking): Promise<void> {
+    if (isLocked) {
+      return
+    }
     if (await ask(removalQuestion(booking), 'Remove')) {
       change(schedule.afterRemoving(booking))
     }
+  }
+
+  /** Whether the schedule may be replaced by another, named so: at once when it is empty. */
+  async function mayReplace(name: string): Promise<boolean> {
+    const question = replacementQuestion(schedule.meetings.length, schedule.timeBlocks.length, name)
+    return schedule.isEmpty || ask(question, 'Replace')
   }
 
   async function load(file: File): Promise<void> {
@@ -188,14 +226,24 @@ export function mountApplication(root: HTMLElement, context: ApplicationContext)
       refuse(fileRefused(file.name, read.reason))
       return
     }
-    const question = replacementQuestion(
-      schedule.meetings.length,
-      schedule.timeBlocks.length,
-      file.name,
-    )
-    if (schedule.isEmpty || (await ask(question, 'Replace'))) {
+    if (await mayReplace(file.name)) {
       change(read.schedule)
     }
+  }
+
+  function lock(locked: boolean): void {
+    isLocked = locked
+    void context.store.keepLock(locked)
+  }
+
+  /** Takes a shared schedule, once confirmed, and locks it against changes made by accident. */
+  async function takeShared(shared: SharedSchedule): Promise<void> {
+    if (await mayReplace(shared.name)) {
+      lock(true)
+      change(shared.schedule)
+      return
+    }
+    render()
   }
 
   root.addEventListener('click', (event) => {
@@ -206,23 +254,42 @@ export function mountApplication(root: HTMLElement, context: ApplicationContext)
       render()
       return
     }
+    if (isLocked) {
+      const shown = bookingOfRank(target.closest<HTMLElement>('[data-booking]')?.dataset.booking)
+      if (shown !== undefined) {
+        openExisting(shown)
+        return
+      }
+    }
     const removed = bookingOfRank(target.closest<HTMLElement>('[data-remove]')?.dataset.remove)
     if (removed !== undefined) {
       void remove(removed)
       return
     }
     const kind = target.closest<HTMLElement>('[data-adding]')?.dataset.adding
-    if (kind !== undefined && kinds.includes(kind as Kind)) {
+    if (kind !== undefined && kinds.includes(kind as Kind) && !isLocked) {
       adding = kind as Kind
       render()
       return
     }
     const action = target.closest<HTMLElement>('[data-action]')?.dataset.action
+    if (action === 'lock') {
+      lock(!isLocked)
+      render()
+    }
     if (action === 'save') context.save(scheduleFileOf(schedule), scheduleFileName)
     if (action === 'load') root.querySelector<HTMLInputElement>('[data-file]')?.click()
   })
 
   root.addEventListener('change', (event) => {
+    const chooser = event.target as HTMLSelectElement
+    if (chooser.matches('[data-shared]')) {
+      const shared = context.sharedSchedules[Number(chooser.value)]
+      if (chooser.value !== '' && shared !== undefined) {
+        void takeShared(shared)
+      }
+      return
+    }
     const input = event.target as HTMLInputElement
     const file = input.matches('[data-file]') ? input.files?.[0] : undefined
     if (file !== undefined) {
@@ -241,7 +308,7 @@ export function mountApplication(root: HTMLElement, context: ApplicationContext)
       event.preventDefault()
       openExisting(booking)
     }
-    if (event.key === 'Delete' || event.key === 'Backspace') {
+    if ((event.key === 'Delete' || event.key === 'Backspace') && !isLocked) {
       event.preventDefault()
       void remove(booking)
     }
@@ -366,7 +433,7 @@ export function mountApplication(root: HTMLElement, context: ApplicationContext)
     root.addEventListener('pointerdown', (event) => {
       const target = event.target as Element
       const slot = slotAt(grid(), event.clientX, event.clientY)
-      if (event.button !== 0 || slot === undefined || target.closest('.day') === null) {
+      if (isLocked || event.button !== 0 || slot === undefined || target.closest('.day') === null) {
         return
       }
       if (target.closest('[data-remove]') !== null) {
@@ -402,6 +469,9 @@ export function mountApplication(root: HTMLElement, context: ApplicationContext)
     },
     get tab() {
       return tab
+    },
+    get isLocked() {
+      return isLocked
     },
   }
 }

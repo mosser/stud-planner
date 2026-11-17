@@ -3,7 +3,8 @@
 The system has one screen. It shows one tab at a time, the overview, week A
 or week B, each a grid with a weekday per column and a quarter of the
 day per row. Above the grid stand the tabs, and Save and Load; under it, on
-every tab, the switch between Meeting and Time block. The overview is the first tab,
+every tab, the switch between Meeting and Time block. At the right of the
+masthead stand the shared schedules, when there is one, and the lock. The overview is the first tab,
 and the one shown when the page opens; the switch is then on Meeting.
 
 ## The tabs
@@ -61,6 +62,28 @@ with the keyboard. Done is refused while the booking would overlap another,
 and the dialog names it: *Overlaps Lab meeting, week A, 10:00 to 11:00.* A
 bi-weekly booking made weekly overlaps whatever takes its slots in the other
 week. A meeting needs a title; a time block does not.
+
+## The lock
+
+| Rule | Behaviour |
+|---|---|
+| Lock | The lock button locks the schedule against every change, and unlocks it. It reads *Lock*, and *Locked* while it is pressed. |
+| Locked | Nothing is added, moved, resized, changed or removed: a press on the grid does nothing, bookings have no remove mark and no lower edge to drag, the switch is disabled, and Delete does nothing. A click on a booking, or Enter, shows its dialog read only, with Close alone. |
+| Kept | Whether the schedule is locked is kept with it: the page opens as it was left. |
+| Replacing | Load and the shared schedules still replace a locked schedule, once confirmed. |
+
+## Shared schedules
+
+A shared schedule is a schedule file of the folder `schedules/` of the
+repository, built into the page: the Organizer saves a schedule, puts the file
+there under the name it is to be known by, and releases the system. The build
+refuses a file of `schedules/` that is not a schedule file the system reads.
+
+| Rule | Behaviour |
+|---|---|
+| The list | At the right of the masthead, a list headed *Shared schedules* names them, by the name of their file without `.json`, A to Z. There is no list when there is no shared schedule. |
+| Choosing one | Replaces the schedule, once confirmed when it holds a booking: *Replace the 2 meetings and 1 time block of the schedule with those of Fall 2026?* The schedule is then locked. Declined, nothing changes. |
+| After | The schedule taken is the Organizer's like any other: kept, saved, and changed once unlocked. The list shows its heading again. |
 
 ## Keeping, saving and loading
 

@@ -203,6 +203,27 @@ describe('the dialog of a time block', () => {
   })
 })
 
+describe('the dialog of a booking shown read only', () => {
+  it('shows its fields disabled, and closes without a change', () => {
+    const onDone = vi.fn()
+    const dialog = openBookingDialog(document, {
+      schedule,
+      kind: 'meeting',
+      booking: lab,
+      proposal: lab.timing,
+      isReadOnly: true,
+      onDone,
+    })
+    expect(dialog.querySelector('fieldset')?.disabled).toBe(true)
+    expect(dialog.querySelector('[data-action="done"]')).toBeNull()
+    expect(dialog.querySelector('[data-action="remove"]')).toBeNull()
+    dialog.querySelector('form')?.requestSubmit()
+    expect(onDone).not.toHaveBeenCalled()
+    ;(dialog.querySelector('[data-action="cancel"]') as HTMLElement).click()
+    expect(dialog.isConnected).toBe(false)
+  })
+})
+
 describe('a confirmation', () => {
   it('asks the question, and gives whether the Organizer confirms', async () => {
     const confirmed = askToConfirm(document, 'Remove Lab?', 'Remove')

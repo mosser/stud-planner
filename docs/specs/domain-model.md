@@ -34,7 +34,9 @@ in the specification, in the interface and in the code.
 | Overlap | Two bookings that would take the same slot in the same week: two meetings, a meeting in a time block, or two time blocks. The system refuses an overlap, whatever makes it: adding, moving, resizing, changing a cadence or a week, or loading a file. |
 | Tab | One of the three grids the screen shows, one at a time: the overview, first, week A and week B. |
 | Switch | What a press adds, on every tab: Meeting or Time block. It stands under the grid. |
-| Keep | What the browser does of the schedule: it holds it between two sessions, best effort, and gives it back when the page opens. |
+| Lock | What keeps the schedule from every change, made by accident or not, until it is unlocked. The browser keeps it with the schedule. |
+| Shared schedule | A schedule file of the folder `schedules/` of the repository, built into the page, named after its file. Choosing it replaces the schedule, and locks it. |
+| Keep | What the browser does of the schedule, and of its lock: it holds them between two sessions, best effort, and gives them back when the page opens. |
 | Schedule file | The schedule as a file of the Organizer's computer, saved and loaded: see `schedule-file.md`. |
 | Save | The system hands the schedule file to the browser, which writes it on the Organizer's computer. Nothing is sent over a network. |
 | Load | The Organizer hands a schedule file to the system, which reads it in the browser and takes it as the schedule. |

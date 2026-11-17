@@ -1,8 +1,9 @@
-import { readFileSync } from 'node:fs'
+import { readdirSync, readFileSync } from 'node:fs'
 import type { Plugin } from 'vite'
 import { viteSingleFile } from 'vite-plugin-singlefile'
 import { defineConfig } from 'vitest/config'
 import { Day } from './src/domain/day.ts'
+import { sharedSchedulesFrom } from './src/io/shared-schedule.ts'
 
 const { version } = JSON.parse(readFileSync('./package.json', 'utf8')) as { version: string }
 
@@ -30,10 +31,31 @@ function checkCalendar(): Plugin {
   }
 }
 
+/**
+ * Refuses to build unless every file of `schedules/` is a schedule file the system reads
+ * (ADR 0012), rather than writing a page that would fail as it opens.
+ */
+function checkSharedSchedules(): Plugin {
+  return {
+    name: 'stud-planner:check-shared-schedules',
+    buildStart() {
+      const files = readdirSync('./schedules').filter((file) => file.endsWith('.json'))
+      sharedSchedulesFrom(
+        Object.fromEntries(
+          files.map((file) => [
+            `schedules/${file}`,
+            JSON.parse(readFileSync(`./schedules/${file}`, 'utf8')),
+          ]),
+        ),
+      )
+    },
+  }
+}
+
 export default defineConfig({
   base: './',
   define: { __VERSION__: JSON.stringify(version) },
-  plugins: [checkCalendar(), viteSingleFile(), nameAfterVersion()],
+  plugins: [checkCalendar(), checkSharedSchedules(), viteSingleFile(), nameAfterVersion()],
   build: { assetsInlineLimit: Number.MAX_SAFE_INTEGER },
   test: {
     include: ['src/**/*.test.ts'],

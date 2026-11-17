@@ -46,19 +46,28 @@ export function rowsOf(placed: { readonly start: TimeOfDay; readonly duration: D
   return `${theDay.quarterAt(placed.start) + 1} / span ${placed.duration.quarters}`
 }
 
-function removeMark(booking: Booking, rank: number): Markup {
+/** The remove mark of a booking; none while the schedule is locked. */
+function removeMark(booking: Booking, rank: number, isLocked: boolean): Markup | string {
+  if (isLocked) {
+    return ''
+  }
   return html`<button type="button" class="remove" data-remove="${rank}"
     aria-label="Remove ${labelOf(booking)}" title="Remove">×</button>`
 }
 
 /** A booking drawn whole: on a week's tab, or on the overview when it shares no time. */
-function wholeBooking(booking: Booking, rank: number): Markup {
+/** The handle of a booking's lower edge; none while the schedule is locked. */
+function resizeHandle(rank: number, isLocked: boolean): Markup | string {
+  return isLocked ? '' : html`<span class="resize" data-resize="${rank}" aria-hidden="true"></span>`
+}
+
+function wholeBooking(booking: Booking, rank: number, isLocked: boolean): Markup {
   return html`<div class="booking ${classesOf(booking)}" style="grid-row: ${rowsOf(booking)}"
     data-booking="${rank}" role="button" tabindex="0" aria-label="${accessibleNameOf(booking)}">
     <span class="booking-title">${labelOf(booking)}</span>
     <span class="booking-time">${timeOf(booking)}</span>
-    ${removeMark(booking, rank)}
-    <span class="resize" data-resize="${rank}" aria-hidden="true"></span>
+    ${removeMark(booking, rank, isLocked)}
+    ${resizeHandle(rank, isLocked)}
   </div>`
 }
 
@@ -136,7 +145,13 @@ function sharedClass(piece: Piece): string {
  * shared cut along its diagonal, the upper left half for week A, the lower right half for week B, the
  * rest whole; its title and remove mark over its first piece, its lower edge over its last.
  */
-function piecedBooking(booking: Booking, rank: number, week: Week, pieces: readonly Piece[]) {
+function piecedBooking(
+  booking: Booking,
+  rank: number,
+  week: Week,
+  pieces: readonly Piece[],
+  isLocked: boolean,
+) {
   const first = pieces[0] as Piece
   const last = pieces[pieces.length - 1] as Piece
   const kind = kindClass(booking)
@@ -148,20 +163,26 @@ function piecedBooking(booking: Booking, rank: number, week: Week, pieces: reado
   })
   return html`${drawn}
     <div class="booking-label ${weekClass(week)} ${sharedClass(first)}" style="grid-row: ${rowsOf(first)}">
-      <span class="booking-title">${labelOf(booking)}</span>${removeMark(booking, rank)}
+      <span class="booking-title">${labelOf(booking)}</span>${removeMark(booking, rank, isLocked)}
     </div>
     <div class="resize-zone ${weekClass(week)} ${sharedClass(last)}" style="grid-row: ${rowsOf(last)}">
-      <span class="resize" data-resize="${rank}" aria-hidden="true"></span>
+      ${resizeHandle(rank, isLocked)}
     </div>`
 }
 
-function bookingOnTab(booking: Booking, rank: number, tab: Tab, schedule: Schedule): Markup {
+function bookingOnTab(
+  booking: Booking,
+  rank: number,
+  tab: Tab,
+  schedule: Schedule,
+  isLocked: boolean,
+): Markup {
   const week = booking.cadence.week
   const pieces = piecesOf(booking, schedule)
   if (tab === 'overview' && week !== undefined && pieces.some((piece) => piece.isShared)) {
-    return piecedBooking(booking, rank, week, pieces)
+    return piecedBooking(booking, rank, week, pieces, isLocked)
   }
-  return wholeBooking(booking, rank)
+  return wholeBooking(booking, rank, isLocked)
 }
 
 function isShownOn(booking: Booking, tab: Tab): boolean {
@@ -179,9 +200,9 @@ function hourLabels(): Markup {
 
 /**
  * The grid of a tab: a weekday per column, a quarter of the day per row, and its bookings, each
- * by its rank among the bookings of the schedule.
+ * by its rank among the bookings of the schedule; without remove marks or handles while locked.
  */
-export function gridOf(schedule: Schedule, tab: Tab): Markup {
+export function gridOf(schedule: Schedule, tab: Tab, isLocked = false): Markup {
   const shown = schedule.bookings
     .map((booking, rank) => ({ booking, rank }))
     .filter(({ booking }) => isShownOn(booking, tab))
@@ -189,7 +210,7 @@ export function gridOf(schedule: Schedule, tab: Tab): Markup {
     (weekday) =>
       html`<div class="day" data-weekday="${weekday.key}">${shown
         .filter(({ booking }) => booking.weekday === weekday)
-        .map(({ booking, rank }) => bookingOnTab(booking, rank, tab, schedule))}</div>`,
+        .map(({ booking, rank }) => bookingOnTab(booking, rank, tab, schedule, isLocked))}</div>`,
   )
   return html`<div class="week" data-shows="${tab}" style="--quarters: ${theDay.quarterCount}">
     <div class="corner"></div>

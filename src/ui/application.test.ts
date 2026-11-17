@@ -45,12 +45,14 @@ function mounted(
   const root = document.createElement('div')
   document.body.append(root)
   const keep = vi.fn(async () => true)
+  const keepLock = vi.fn(async () => true)
   const ask = vi.fn(async () => true)
   const save = vi.fn()
   const context = {
     version: '1.2.3',
-    restored: { schedule, wasSetAside: false },
-    store: { isKept: true, keep },
+    restored: { schedule, wasSetAside: false, isLocked: false },
+    store: { isKept: true, keep, keepLock },
+    sharedSchedules: [],
     save,
     ask,
     ...changes,
@@ -59,7 +61,7 @@ function mounted(
   if (shown !== 'as opened') {
     ;(root.querySelector(`[data-tab="${shown}"]`) as HTMLElement).click()
   }
-  return { root, application, keep, ask: context.ask, save }
+  return { root, application, keep, keepLock, ask: context.ask, save }
 }
 
 function press(target: Element, at_: { clientX: number; clientY: number }): void {
@@ -414,13 +416,15 @@ describe('saving and loading', () => {
 
 describe('keeping the schedule', () => {
   it('says closing the page loses the schedule when the browser does not keep it', () => {
-    const { root } = mounted(new Schedule(), { store: { isKept: false, keep: async () => false } })
+    const { root } = mounted(new Schedule(), {
+      store: { isKept: false, keep: async () => false, keepLock: async () => false },
+    })
     expect(root.querySelector('[data-notice="not-kept"]')).not.toBeNull()
   })
 
   it('says so once a change could not be kept', async () => {
     const { root } = mounted(new Schedule([lab]), {
-      store: { isKept: true, keep: async () => false },
+      store: { isKept: true, keep: async () => false, keepLock: async () => false },
       ask: async () => true,
     })
     ;(root.querySelector('[data-remove="0"]') as HTMLElement).click()
@@ -429,8 +433,120 @@ describe('keeping the schedule', () => {
 
   it('says a kept schedule that could not be read is set aside', () => {
     const { root } = mounted(new Schedule(), {
-      restored: { schedule: new Schedule(), wasSetAside: true },
+      restored: { schedule: new Schedule(), wasSetAside: true, isLocked: false },
     })
     expect(root.querySelector('[data-notice="set-aside"]')).not.toBeNull()
+  })
+})
+
+describe('the lock', () => {
+  const lockButton = (root: HTMLElement) =>
+    root.querySelector('[data-action="lock"]') as HTMLButtonElement
+
+  it('locks and unlocks the schedule, and keeps whether it is locked', () => {
+    const { root, application, keepLock } = mounted(new Schedule([lab]))
+    expect(lockButton(root).getAttribute('aria-pressed')).toBe('false')
+    lockButton(root).click()
+    expect(application.isLocked).toBe(true)
+    expect(lockButton(root).textContent).toBe('Locked')
+    expect(keepLock).toHaveBeenLastCalledWith(true)
+    lockButton(root).click()
+    expect(application.isLocked).toBe(false)
+    expect(keepLock).toHaveBeenLastCalledWith(false)
+  })
+
+  it('opens locked when the schedule was left locked', () => {
+    const { application, root } = mounted(new Schedule([lab]), {
+      restored: { schedule: new Schedule([lab]), wasSetAside: false, isLocked: true },
+    })
+    expect(application.isLocked).toBe(true)
+    expect(root.querySelector('.grid.locked')).not.toBeNull()
+  })
+
+  it('blocks adding, moving, resizing and removing', async () => {
+    const { root, application, ask } = mounted(new Schedule([lab]))
+    lockButton(root).click()
+    expect(root.querySelector('[data-remove]')).toBeNull()
+    expect(root.querySelector('[data-resize]')).toBeNull()
+    expect((root.querySelector('[data-adding="time-block"]') as HTMLButtonElement).disabled).toBe(
+      true,
+    )
+    press(day(root, Weekday.friday), point(Weekday.friday, '08:00'))
+    release(point(Weekday.friday, '08:00'))
+    expect(dialog()).toBeNull()
+    press(bookingElement(root, 0), point(Weekday.monday, '10:00'))
+    moveTo(point(Weekday.tuesday, '14:00'))
+    release(point(Weekday.tuesday, '14:00'))
+    bookingElement(root, 0).dispatchEvent(
+      new KeyboardEvent('keydown', { key: 'Delete', bubbles: true }),
+    )
+    await flush()
+    expect(ask).not.toHaveBeenCalled()
+    expect(application.schedule.meetings).toEqual([lab])
+  })
+
+  it('shows a booking clicked, read only', () => {
+    const { root } = mounted(new Schedule([lab]))
+    lockButton(root).click()
+    bookingElement(root, 0).click()
+    expect(dialog().querySelector('fieldset')?.disabled).toBe(true)
+    const actions = [...dialog().querySelectorAll('.dialog-actions button')].map(
+      (button) => button.textContent,
+    )
+    expect(actions).toEqual(['Close'])
+  })
+})
+
+describe('the shared schedules', () => {
+  const fall = { name: 'Fall 2026', schedule: new Schedule([ana]) }
+  const winter = { name: 'Winter 2027', schedule: new Schedule([lab, ana]) }
+  const chooser = (root: HTMLElement) => root.querySelector('[data-shared]') as HTMLSelectElement
+
+  function choose(root: HTMLElement, rank: string): void {
+    chooser(root).value = rank
+    chooser(root).dispatchEvent(new Event('change', { bubbles: true }))
+  }
+
+  it('are not offered when there is none', () => {
+    const { root } = mounted(new Schedule())
+    expect(root.querySelector('[data-shared]')).toBeNull()
+  })
+
+  it('are listed by name in the masthead', () => {
+    const { root } = mounted(new Schedule(), { sharedSchedules: [fall, winter] })
+    const names = [...chooser(root).options].map((option) => option.textContent)
+    expect(names).toEqual(['Shared schedules', 'Fall 2026', 'Winter 2027'])
+    expect(chooser(root).closest('.masthead')).not.toBeNull()
+  })
+
+  it('replace an empty schedule at once, locked', async () => {
+    const { root, application, ask } = mounted(new Schedule(), { sharedSchedules: [fall, winter] })
+    choose(root, '1')
+    await vi.waitFor(() => expect(application.schedule).toBe(winter.schedule))
+    expect(application.isLocked).toBe(true)
+    expect(ask).not.toHaveBeenCalled()
+  })
+
+  it('replace a schedule once confirmed, and nothing otherwise', async () => {
+    const ask = vi.fn(async () => false)
+    const { root, application } = mounted(new Schedule([lab]), {
+      sharedSchedules: [fall, winter],
+      ask,
+    })
+    choose(root, '0')
+    await flush()
+    expect(ask).toHaveBeenCalledWith(
+      'Replace the 1 meeting of the schedule with those of Fall 2026?',
+      'Replace',
+    )
+    expect(application.schedule.meetings).toEqual([lab])
+    expect(application.isLocked).toBe(false)
+    expect(chooser(root).value).toBe('')
+  })
+
+  it('ignore the line that names the list', () => {
+    const { root, application } = mounted(new Schedule([lab]), { sharedSchedules: [fall] })
+    choose(root, '')
+    expect(application.schedule.meetings).toEqual([lab])
   })
 })

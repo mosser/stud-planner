@@ -6,6 +6,8 @@ export interface Restored {
   readonly schedule: Schedule
   /** Whether a kept schedule could not be read, and was set aside. */
   readonly wasSetAside: boolean
+  /** Whether the schedule was locked against changes when the page was left. */
+  readonly isLocked: boolean
 }
 
 /**
@@ -19,6 +21,8 @@ export interface ScheduleStore {
   restore(): Promise<Restored>
   /** Keeps the schedule, at once; gives whether the browser kept it. */
   keep(schedule: Schedule): Promise<boolean>
+  /** Keeps whether the schedule is locked, at once; gives whether the browser kept it. */
+  keepLock(isLocked: boolean): Promise<boolean>
 }
 
 const databaseName = 'stud-planner'
@@ -26,6 +30,7 @@ const databaseVersion = 1
 const storeName = 'schedule'
 const scheduleKey = 'schedule'
 const setAsideKey = 'set-aside'
+const lockKey = 'locked'
 
 function opened(factory: IDBFactory): Promise<IDBDatabase> {
   return new Promise((resolve, reject) => {
@@ -63,8 +68,9 @@ function failure(error: DOMException | null): Error {
 /** A store that keeps nothing: the browser refuses, or gives no IndexedDB. */
 const nothingKept: ScheduleStore = {
   isKept: false,
-  restore: async () => ({ schedule: new Schedule(), wasSetAside: false }),
+  restore: async () => ({ schedule: new Schedule(), wasSetAside: false, isLocked: false }),
   keep: async () => false,
+  keepLock: async () => false,
 }
 
 class IndexedScheduleStore implements ScheduleStore {
@@ -80,18 +86,23 @@ class IndexedScheduleStore implements ScheduleStore {
   async restore(): Promise<Restored> {
     try {
       const transaction = this.database.transaction(storeName, 'readonly')
-      const record: unknown = await result(transaction.objectStore(storeName).get(scheduleKey))
+      const store = transaction.objectStore(storeName)
+      const [record, locked] = await Promise.all([
+        result(store.get(scheduleKey)) as Promise<unknown>,
+        result(store.get(lockKey)) as Promise<unknown>,
+      ])
+      const isLocked = locked === true
       if (record === undefined) {
-        return { schedule: new Schedule(), wasSetAside: false }
+        return { schedule: new Schedule(), wasSetAside: false, isLocked }
       }
       const read = scheduleFromContent(record)
       if (!read.isRefused) {
-        return { schedule: read.schedule, wasSetAside: false }
+        return { schedule: read.schedule, wasSetAside: false, isLocked }
       }
       await this.setAside(record)
-      return { schedule: new Schedule(), wasSetAside: true }
+      return { schedule: new Schedule(), wasSetAside: true, isLocked }
     } catch {
-      return { schedule: new Schedule(), wasSetAside: false }
+      return { schedule: new Schedule(), wasSetAside: false, isLocked: false }
     }
   }
 
@@ -106,15 +117,24 @@ class IndexedScheduleStore implements ScheduleStore {
 
   /** Keeps the schedule; writes are kept one after the other, in the order asked. */
   keep(schedule: Schedule): Promise<boolean> {
-    const next = this.queue.then(() => this.write(schedule))
+    return this.inTurn(contentOf(schedule), scheduleKey)
+  }
+
+  /** Keeps whether the schedule is locked, in turn with the writes of the schedule. */
+  keepLock(isLocked: boolean): Promise<boolean> {
+    return this.inTurn(isLocked, lockKey)
+  }
+
+  private inTurn(value: unknown, key: string): Promise<boolean> {
+    const next = this.queue.then(() => this.write(value, key))
     this.queue = next
     return next
   }
 
-  private async write(schedule: Schedule): Promise<boolean> {
+  private async write(value: unknown, key: string): Promise<boolean> {
     try {
       const transaction = this.database.transaction(storeName, 'readwrite')
-      transaction.objectStore(storeName).put(contentOf(schedule), scheduleKey)
+      transaction.objectStore(storeName).put(value, key)
       await completed(transaction)
       return true
     } catch {

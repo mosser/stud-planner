@@ -66,9 +66,44 @@ textarea {
 }
 
 .masthead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
   padding: 0.75rem 1.5rem;
   background: var(--color-primary);
   color: var(--color-on-primary);
+}
+
+/* The shared schedules and the lock, at the right of the masthead, white on maroon. */
+.masthead-actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-left: auto;
+}
+
+.masthead-actions select,
+.masthead-actions button {
+  padding: 0.3rem 0.75rem;
+  border: 1px solid var(--color-on-primary);
+  border-radius: 0.375rem;
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+  font: inherit;
+  cursor: pointer;
+}
+
+.masthead-actions button[aria-pressed="true"] {
+  background: var(--color-on-primary);
+  color: var(--color-primary);
+}
+
+.grid.locked .day {
+  cursor: default;
+}
+
+.grid.locked .booking {
+  cursor: pointer;
 }
 
 .masthead h1 {
@@ -428,6 +463,15 @@ dialog {
 
 dialog::backdrop {
   background: color-mix(in srgb, var(--mac-black) 40%, transparent);
+}
+
+dialog fieldset {
+  display: grid;
+  gap: 0.6rem;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
 }
 
 dialog form {

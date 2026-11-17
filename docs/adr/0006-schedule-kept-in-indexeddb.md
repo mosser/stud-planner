@@ -26,9 +26,10 @@ Options considered:
 - **The schedule is kept in IndexedDB**, in a database named `stud-planner`,
   as the content of its schedule file (`docs/specs/schedule-file.md`): one
   mapping serves the store and the file.
-- **Every change is kept at once.** There is no action to keep.
-- **At opening**, the kept schedule comes back; without one, the schedule
-  has no meeting.
+- **Every change is kept at once**, of the schedule and of its lock, which
+  is kept beside it as `locked`. There is no action to keep.
+- **At opening**, the kept schedule comes back, locked when it was left
+  locked; without one, the schedule has no booking and is not locked.
 - **Best effort.** Every access is guarded: when IndexedDB is unavailable,
   refused or fails, the system works without it and the screen says that
   closing the page will lose the schedule. A kept schedule the system cannot
