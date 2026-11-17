@@ -11,7 +11,7 @@ tab shown is the odd week when the page opens.
 |---|---|
 | Odd week | The weekly meetings and the bi-weekly meetings held in the odd week. |
 | Even week | The weekly meetings and the bi-weekly meetings held in the even week. |
-| Month | Every meeting. A weekly meeting fills its slots; a bi-weekly meeting fills the half of each of its slots that is its week's: the upper left for odd, the lower right for even. Its title is written in its first slot. |
+| Month | Every meeting. A weekly meeting fills its slots. A bi-weekly meeting fills the half of its slots that is its week's, cut along their diagonal: the upper left for odd, the lower right for even, so that an odd and an even meeting at the same time share their slots. Its title is written in its corner, upper left for odd, lower right for even. |
 
 A weekly meeting looks alike on the three tabs, and unlike a bi-weekly one.
 

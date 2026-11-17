@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest'
 import { aMeeting } from '../domain/meeting.fixture.ts'
 import { Schedule } from '../domain/schedule.ts'
 import { contentOf } from './schedule-file.ts'
-import { openScheduleStore } from './schedule-store.ts'
+import { openScheduleStore, openTheBrowserScheduleStore } from './schedule-store.ts'
 
 const schedule = new Schedule([aMeeting({ note: 'Room 201' })])
 
@@ -71,6 +71,11 @@ describe('the kept schedule', () => {
     expect(store.isKept).toBe(false)
     expect(await store.keep(schedule)).toBe(false)
     expect((await store.restore()).schedule.isEmpty).toBe(true)
+  })
+
+  it("is opened on the browser's own IndexedDB", async () => {
+    const store = await openTheBrowserScheduleStore()
+    expect(store.isKept).toBe(globalThis.indexedDB !== undefined)
   })
 
   it('is not kept when the browser refuses IndexedDB', async () => {

@@ -137,3 +137,8 @@ export async function openScheduleStore(factory: IDBFactory | undefined): Promis
     return nothingKept
   }
 }
+
+/** Opens the store of the schedule in this browser's IndexedDB (ADR 0006). */
+export function openTheBrowserScheduleStore(): Promise<ScheduleStore> {
+  return openScheduleStore(globalThis.indexedDB)
+}

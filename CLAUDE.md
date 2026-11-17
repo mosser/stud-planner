@@ -7,8 +7,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 `stud-planner` is a meeting scheduler for recurring meetings. The Organizer
 places weekly and bi-weekly meetings on two abstract weeks, odd and even, by
 pressing and dragging on them, and sees them one tab at a time or merged as
-the month, each slot cut diagonally in an odd and an even half. A slot is
-never booked twice. The schedule is kept in the browser
+the month, where a bi-weekly meeting is cut along its diagonal, odd upper
+left, even lower right. A slot is never booked twice. The schedule is kept in the browser
 and saved to, or loaded from, a schedule file.
 
 It is a client-side web application in TypeScript, front-end only,
@@ -19,10 +19,10 @@ from `file://` and is served by GitHub Pages at
 
 It follows the conventions of its siblings `macreport` and `streaming-hat`.
 
-**Current state:** specified, not implemented. The specification
-(`docs/specs/`) and ADRs 0001 to 0009 describe the system; the code is the
-toolchain, the release pipeline and an empty page shell (masthead, screen,
-footer with the version). There is no domain code yet.
+**Current state:** the specification (`docs/specs/`) and ADRs 0001 to 0009
+are implemented: the three tabs, adding, moving, resizing and removing by
+dragging, the meeting dialog, overlaps refused, the schedule kept in
+IndexedDB, and saved to or loaded from its file. Not released yet.
 
 ## Where things live
 
@@ -45,16 +45,18 @@ footer with the version). There is no domain code yet.
 Layout of the code:
 
 ```
-src/domain/   Schedule, Meeting and their values, overlaps, findings.ts: pure,
-              no DOM, no date (not created yet)
-src/io/       schedule-store.ts (IndexedDB), schedule-file.ts (the JSON file),
-              save.ts (hands a file to the browser) (not created yet)
-src/ui/       html.ts (the escaping template), application.ts (the page shell),
-              the tabs, their grids and drags, and the meeting dialog
+src/domain/   Schedule (no overlap), Meeting, Cadence and Parity, Weekday,
+              TimeOfDay, Duration, Day (config/calendar.json), findings.ts
+              (every sentence shown); *.fixture.ts are test helpers
+src/io/       schedule-file.ts (the JSON file), schedule-store.ts (IndexedDB),
+              save.ts (hands a file to the browser)
+src/ui/       application.ts (state, toolbar, tabs, drags), gestures.ts (what a
+              press or a drag makes, pure), grid.ts (a tab's grid, slotAt),
+              meeting-dialog.ts, confirmation.ts, dialog.ts, html.ts
 src/main.ts   entry point, mounted from index.html
 src/style.css palette tokens and all styling
-config/       calendar.json: the hours of the day; inlined at build time
-              (not created yet)
+config/       calendar.json: the hours of the day; inlined at build time and
+              checked by the build
 scripts/      check-adr.sh: the scriptable ADR checks; release.sh and
               release-notes.sh: cutting a release (ADR 0002)
 ```
@@ -149,9 +151,9 @@ first.
 - The schedule is planned on an odd week and an even week, without dates; the
   system never reads today's date. A meeting is weekly (both weeks) or
   bi-weekly (its parity's week); there is no monthly cadence.
-- Three tabs, one at a time: odd week, even week, month (both merged, each
-  slot cut diagonally: odd upper left, even lower right). No occurrence: a
-  meeting is changed as a whole.
+- Three tabs, one at a time: odd week, even week, month (both merged; a
+  bi-weekly meeting cut along its own diagonal, odd upper left, even lower
+  right). No occurrence: a meeting is changed as a whole.
 
 ### ADR 0009: a slot is booked once
 

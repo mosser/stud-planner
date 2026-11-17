@@ -6,6 +6,11 @@
   --palette-mist: #d0d7de;
   --palette-slate: #57606a;
   --palette-primary: #24527a;
+  --palette-green: #2f7d4f;
+  --palette-blue: #2a64a8;
+  --palette-orange: #b5621b;
+  --palette-red: #b42318;
+  --palette-pink: #ff8f85;
   /* palette:end */
 
   --color-primary: var(--palette-primary);
@@ -14,6 +19,14 @@
   --color-text: var(--palette-ink);
   --color-secondary-text: var(--palette-slate);
   --color-rule: var(--palette-mist);
+  --color-faint-rule: color-mix(in srgb, var(--palette-mist) 45%, var(--palette-paper));
+  --color-weekly: var(--palette-green);
+  --color-odd: var(--palette-blue);
+  --color-even: var(--palette-orange);
+  --color-refused: var(--palette-red);
+  --color-error: var(--palette-red);
+  --tint: 22%;
+  --quarter-height: 0.85rem;
   color-scheme: light dark;
   font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
 }
@@ -23,6 +36,10 @@
     --color-surface: var(--palette-night);
     --color-text: var(--palette-paper);
     --color-secondary-text: var(--palette-mist);
+    --color-rule: var(--palette-slate);
+    --color-faint-rule: color-mix(in srgb, var(--palette-slate) 45%, var(--palette-night));
+    --color-error: var(--palette-pink);
+    --tint: 40%;
   }
 }
 
@@ -35,6 +52,13 @@ body {
   background: var(--color-surface);
   color: var(--color-text);
   line-height: 1.5;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
 }
 
 .masthead {
@@ -50,9 +74,317 @@ body {
 }
 
 .screen {
-  max-width: 60rem;
+  max-width: 72rem;
   margin: 0 auto;
-  padding: 1.5rem;
+  padding: 1rem 1.5rem 1.5rem;
+}
+
+.notice {
+  margin: 0 0 0.75rem;
+  padding: 0.5rem 0.75rem;
+  border-left: 4px solid var(--color-secondary-text);
+  background: var(--color-faint-rule);
+}
+
+.notice.refusal {
+  border-left-color: var(--color-error);
+}
+
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.tabs,
+.actions {
+  display: flex;
+  gap: 0.25rem;
+}
+
+.toolbar button,
+.dialog-actions button {
+  padding: 0.35rem 0.85rem;
+  border: 1px solid var(--color-rule);
+  border-radius: 0.375rem;
+  background: var(--color-surface);
+  color: var(--color-text);
+  cursor: pointer;
+}
+
+.tabs button[aria-selected="true"],
+button.primary {
+  border-color: var(--color-primary);
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+}
+
+button.danger {
+  margin-right: auto;
+  border-color: var(--color-error);
+  color: var(--color-error);
+}
+
+button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* The grid of a tab: the hours, then a column per weekday, a row per quarter. */
+.week {
+  display: grid;
+  grid-template-columns: 3.5rem repeat(5, minmax(0, 1fr));
+  user-select: none;
+}
+
+.weekday {
+  padding: 0.25rem;
+  border-bottom: 1px solid var(--color-rule);
+  font-weight: 600;
+  text-align: center;
+}
+
+.hours,
+.day {
+  display: grid;
+  grid-template-rows: repeat(var(--quarters), var(--quarter-height));
+}
+
+.hour {
+  padding-right: 0.5rem;
+  border-top: 1px solid var(--color-rule);
+  color: var(--color-secondary-text);
+  font-size: 0.75rem;
+  text-align: right;
+}
+
+.day {
+  position: relative;
+  border-left: 1px solid var(--color-rule);
+  background-image:
+    linear-gradient(var(--color-rule) 1px, transparent 1px),
+    linear-gradient(var(--color-faint-rule) 1px, transparent 1px);
+  background-size:
+    100% calc(var(--quarter-height) * 4),
+    100% var(--quarter-height);
+  cursor: cell;
+  touch-action: none;
+}
+
+.day > * {
+  grid-column: 1;
+}
+
+.meeting,
+.preview {
+  --cadence: var(--color-weekly);
+  margin: 0 2px;
+  border-left: 4px solid var(--cadence);
+  background: color-mix(in srgb, var(--cadence) var(--tint), var(--color-surface));
+}
+
+.meeting.odd,
+.preview.odd,
+.half-label.odd {
+  --cadence: var(--color-odd);
+}
+
+.meeting.even,
+.preview.even,
+.half-label.even {
+  --cadence: var(--color-even);
+}
+
+.meeting {
+  position: relative;
+  overflow: hidden;
+  padding: 0 0.3rem;
+  border-radius: 0.25rem;
+  font-size: 0.75rem;
+  line-height: 1.2;
+  cursor: grab;
+}
+
+.meeting:focus-visible {
+  outline: 2px solid var(--color-text);
+  outline-offset: 1px;
+}
+
+.meeting.dragging {
+  opacity: 0.4;
+}
+
+.meeting-title {
+  display: block;
+  overflow: hidden;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.meeting-time {
+  color: var(--color-secondary-text);
+}
+
+.preview {
+  z-index: 2;
+  border: 2px dashed var(--cadence);
+  border-radius: 0.25rem;
+  pointer-events: none;
+}
+
+.preview.refused {
+  --cadence: var(--color-refused);
+}
+
+.remove {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 1.1rem;
+  height: 1.1rem;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--color-text);
+  line-height: 1;
+  cursor: pointer;
+  opacity: 0;
+}
+
+.meeting:hover .remove,
+.meeting:focus-within .remove,
+.half-label:hover .remove,
+.remove:focus-visible {
+  opacity: 1;
+}
+
+@media (hover: none) {
+  .remove {
+    opacity: 1;
+  }
+}
+
+.resize {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  height: 0.35rem;
+  cursor: ns-resize;
+}
+
+/* The month: each slot cut diagonally, the upper left for odd, the lower right for even. */
+.meeting.half {
+  margin: 0 2px;
+  border: 0;
+  border-radius: 0.25rem;
+  background: color-mix(in srgb, var(--cadence) calc(var(--tint) * 2), var(--color-surface));
+}
+
+.meeting.half.odd {
+  clip-path: polygon(0 0, 100% 0, 0 100%);
+}
+
+.meeting.half.even {
+  clip-path: polygon(100% 0, 100% 100%, 0 100%);
+}
+
+.half-label {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  margin: 0 2px;
+  padding: 0 0.3rem;
+  font-size: 0.75rem;
+  line-height: 1.2;
+  pointer-events: none;
+}
+
+.half-label .meeting-title {
+  max-width: 60%;
+}
+
+.half-label.even {
+  align-items: flex-end;
+  justify-content: flex-end;
+}
+
+.half-label .remove,
+.half-label .resize {
+  pointer-events: auto;
+}
+
+/* The lower edge of an odd half is its lower left corner: the handle stays within it. */
+.half-label.odd .resize {
+  right: 70%;
+}
+
+.half-label.even .remove {
+  top: auto;
+  right: auto;
+  bottom: 0;
+  left: 0;
+}
+
+/* Dialogs. */
+dialog {
+  width: min(28rem, calc(100vw - 2rem));
+  padding: 0;
+  border: 1px solid var(--color-rule);
+  border-radius: 0.5rem;
+  background: var(--color-surface);
+  color: var(--color-text);
+}
+
+dialog::backdrop {
+  background: color-mix(in srgb, var(--palette-ink) 40%, transparent);
+}
+
+dialog form {
+  display: grid;
+  gap: 0.6rem;
+  padding: 1.25rem;
+}
+
+dialog h2 {
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+dialog label {
+  display: grid;
+  gap: 0.2rem;
+  font-size: 0.875rem;
+}
+
+dialog input,
+dialog select,
+dialog textarea {
+  padding: 0.3rem 0.4rem;
+  border: 1px solid var(--color-rule);
+  border-radius: 0.25rem;
+  background: var(--color-surface);
+  color: var(--color-text);
+}
+
+.question {
+  margin: 0;
+}
+
+.finding {
+  min-height: 1.5em;
+  margin: 0;
+  color: var(--color-error);
+  font-size: 0.875rem;
+}
+
+.dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
 }
 
 .site-footer {
@@ -61,4 +393,18 @@ body {
   color: var(--color-secondary-text);
   font-size: 0.875rem;
   text-align: center;
+}
+
+@media (max-width: 40rem) {
+  .screen {
+    padding: 0.75rem;
+  }
+
+  .week {
+    grid-template-columns: 2.75rem repeat(5, minmax(0, 1fr));
+  }
+
+  .weekday {
+    font-size: 0.75rem;
+  }
 }
