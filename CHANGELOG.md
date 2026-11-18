@@ -10,7 +10,8 @@ project adheres to [Semantic Versioning](https://semver.org/).
 
 - **Supervision Planner**, with its icon in the masthead and the browser's tab.
 - A schedule of recurring meetings, weekly or bi-weekly, planned on two abstract weeks,
-  week A and week B, which alternate, without dates, Monday to Friday from 08:00 to 18:00, by the quarter.
+  week A and week B, which alternate, without dates, Monday to Friday from 08:00 to 18:00,
+  by the quarter.
 - Three tabs, shown one at a time, each marked with the colour of its week: **Overview**,
   shown first, which shows the two weeks side by side in each day, week A on the left and
   week B on the right, outlining the half of a week that has nothing where the other has a
@@ -44,7 +45,8 @@ project adheres to [Semantic Versioning](https://semver.org/).
   participant's.
 - **On campus or remote**: each weekday's header says where you are that day, in week A and
   in week B, with a click.
-- Meetings back to back stand apart; meetings of half an hour or less stay readable: title and time on one line, participants
-  under them; every booking tells all of itself on hover.
+- Meetings back to back stand apart; meetings of half an hour or less stay readable: title
+  and time on one line, participants under them; every booking tells all of itself on hover.
 - The schedule is kept by the browser between two sessions, and is downloaded as, or
-  uploaded from, `stud-planner-schedule.json`: the way to share it.
+  uploaded from, `stud-planner-schedule.json`, with the icons above the grid: the way to
+  share it.
