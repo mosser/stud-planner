@@ -55,10 +55,13 @@ export interface Drawing {
 }
 
 /**
- * Whether a booking is dimmed: a participant or a category is singled out, and it is not one of
- * their meetings.
+ * Whether a booking is dimmed: a participant or a category is singled out, and it is a meeting
+ * that is not one of theirs. A time block is never dimmed: it is the Organizer's own time.
  */
 function isDimmed(booking: Booking, drawing: Drawing): boolean {
+  if (booking.isTimeBlock) {
+    return false
+  }
   const { participant, category } = drawing
   if (participant !== undefined) {
     return !(booking instanceof Meeting && booking.hasParticipant(participant))
@@ -121,11 +124,24 @@ function resizeHandle(rank: number, isLocked: boolean): Markup | string {
   return isLocked ? '' : html`<span class="resize" data-resize="${rank}" aria-hidden="true"></span>`
 }
 
+/** How many participants a meeting names on the grid before it counts the others. */
+const namesWritten = 2
+
+/**
+ * The participants of a meeting, as the grid writes them: two names at most, then how many
+ * others, as in Ana, Bo +10. Its description, on hover and to a screen reader, names them all.
+ */
+export function participantsWritten(names: readonly string[]): string {
+  const written = names.slice(0, namesWritten).join(', ')
+  const others = names.length - namesWritten
+  return others > 0 ? `${written} +${others}` : written
+}
+
 function participantsLine(booking: Booking): Markup | string {
   const people = participantsOf(booking)
   return people.length === 0
     ? ''
-    : html`<span class="booking-participants">${people.join(', ')}</span>`
+    : html`<span class="booking-participants">${participantsWritten(people)}</span>`
 }
 
 /**

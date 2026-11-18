@@ -88,8 +88,8 @@ itself on hover: its title, cadence, weekday, time and participants.
 | Add | A name typed and added makes a participant; a name another participant has, whatever its case, is refused and the reason shown. |
 | Rename | A name changed in the list renames the participant, in every meeting they take part in. |
 | Remove | The remove mark of a participant takes them out of the schedule and of every meeting; when they take part in some, the Organizer confirms first: *Remove Ana from the participants, and from 2 meetings?* |
-| On a meeting | The dialog of a meeting ticks its participants among those of the schedule. The grid writes them under the meeting's time; a screen reader hears them: *Lab meeting, weekly, Monday 10:00 to 11:00, with Ana and Bo.* |
-| Singled out | A list under the grid, beside the switch, labelled *Filter by*, offers *Everyone*, the categories and the participants: one chosen singles out their meetings, every other booking faded. |
+| On a meeting | The dialog of a meeting shows its participants as chips, each removed by its mark. A name typed is picked among the participants of the schedule, offered as one types, by Enter or Add; a name no participant has makes a new one, marked *(new)*, added to the schedule with the meeting. The grid writes two of them at most, then how many others: *Ana, Bo +10*; on hover and to a screen reader, the meeting names them all: *Lab meeting, weekly, Monday 10:00 to 11:00, with Ana and Bo.* |
+| Singled out | A list under the grid, beside the switch, labelled *Filter by*, offers *Everyone*, the categories and the participants: one chosen singles out their meetings, every other booking faded. Time blocks are never faded: they are the Organizer's own time. |
 | Locked | The participants are shown, and none is added, renamed or removed. |
 
 ## The dialog of a booking

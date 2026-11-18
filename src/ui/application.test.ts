@@ -555,6 +555,22 @@ describe('the participants on the page', () => {
     expect(filter.querySelectorAll('optgroup[label="Categories"] option')).toHaveLength(4)
   })
 
+  it('are added from the dialog of a meeting, with the meeting', () => {
+    const { root, application } = mounted(new Schedule())
+    press(day(root, Weekday.monday), point(Weekday.monday, '08:00'))
+    release(point(Weekday.monday, '08:00'))
+    const field = dialog().querySelector('input[name="participant-search"]') as HTMLInputElement
+    field.value = 'Zoé'
+    field.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }))
+    typeTitle('Thesis')
+    expect(application.schedule.participants.map((participant) => participant.name)).toEqual([
+      'Zoé',
+    ])
+    expect(application.schedule.meetings[0]?.participants).toEqual(
+      application.schedule.participants,
+    )
+  })
+
   it('are shown read only while the schedule is locked', () => {
     const { root } = mounted(new Schedule([], [], [zoe]))
     ;(root.querySelector('[data-action="lock"]') as HTMLElement).click()

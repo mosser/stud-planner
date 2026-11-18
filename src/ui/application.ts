@@ -240,7 +240,7 @@ export function mountApplication(root: HTMLElement, context: ApplicationContext)
       schedule,
       kind: adds,
       proposal: { ...span, cadence },
-      onDone: (booking) => change(schedule.afterAdding(booking)),
+      onDone: (booking, newcomers) => change(withNewcomers(newcomers).afterAdding(booking)),
     })
   }
 
@@ -252,9 +252,18 @@ export function mountApplication(root: HTMLElement, context: ApplicationContext)
       booking,
       proposal: booking.timing,
       isReadOnly: isLocked,
-      onDone: (changed) => change(schedule.afterReplacing(booking, changed)),
+      onDone: (changed, newcomers) =>
+        change(withNewcomers(newcomers).afterReplacing(booking, changed)),
       onRemove: (removed) => void remove(removed),
     })
+  }
+
+  /** The schedule with the participants a meeting's dialog has named for the first time. */
+  function withNewcomers(newcomers: readonly Participant[]): Schedule {
+    return newcomers.reduce(
+      (growing, newcomer) => growing.afterAddingParticipant(newcomer),
+      schedule,
+    )
   }
 
   async function remove(booking: Booking): Promise<void> {

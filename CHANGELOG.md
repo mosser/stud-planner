@@ -32,9 +32,10 @@ project adheres to [Semantic Versioning](https://semver.org/).
   moved, resized, changed or removed, and a booking clicked is shown read only. The browser
   remembers it.
 - **Participants**: the people of the schedule, students and co-supervisors, each named
-  once, added, renamed and removed in their own dialog. A meeting is ticked with its
-  participants, who are written on it; the list under the grid singles out one participant's
-  meetings.
+  once, added, renamed and removed in their own dialog. A meeting's dialog picks them by name,
+  as chips, and adds a name no one has yet; the grid writes two names and how many others,
+  and the list under the grid singles out one participant's meetings. Time blocks stay
+  visible whatever is singled out.
 - **Categories**: every meeting is Master, PhD, Project or Lab, tagged on the grid, and the
   list under the grid singles out a category's meetings as it does a participant's.
 - **On campus or remote**: each weekday's header says where you are that day, in week A and

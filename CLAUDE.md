@@ -214,9 +214,11 @@ first.
   `Schedule`; a `Meeting` refers to some of them, by reference. Renaming and
   removing go through `Schedule` and carry into every meeting. Time blocks
   have none. No overlap means no participant in two meetings at once.
-- The schedule file is version 3: `participants` by name, in the schedule and
-  on a meeting. The grid writes them, singles one out (`dimmed`), and draws
-  a booking of half an hour or less compact (`lengthClass`).
+- A meeting's dialog picks participants as chips (`setUpPicker`), and a new
+  name becomes a participant added with the meeting (`onDone`'s newcomers).
+  The grid writes two names and a count (`participantsWritten`), singles out
+  a participant's or a category's meetings (`dimmed`, never a time block),
+  and draws a booking of half an hour or less compact (`lengthClass`).
 
 ### ADR 0014: categories and days
 

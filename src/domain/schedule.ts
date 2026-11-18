@@ -123,11 +123,12 @@ export class Schedule {
   }
 
   /**
-   * The schedule with a participant of that name added. Throws a RangeError for a name without a
-   * letter, or one another participant has.
+   * The schedule with a participant added, or one of that name. Throws a RangeError for a name
+   * without a letter, or one another participant has.
    */
-  afterAddingParticipant(name: string): Schedule {
-    const participants = [...this.participants, new Participant(name)]
+  afterAddingParticipant(named: string | Participant): Schedule {
+    const participant = named instanceof Participant ? named : new Participant(named)
+    const participants = [...this.participants, participant]
     return new Schedule(this.meetings, this.timeBlocks, participants, this.presences)
   }
 

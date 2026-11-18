@@ -6,7 +6,14 @@ import { aMeeting, aTimeBlock, at } from '../domain/meeting.fixture.ts'
 import { Participant } from '../domain/participant.ts'
 import { Schedule } from '../domain/schedule.ts'
 import { Weekday } from '../domain/weekday.ts'
-import { accessibleNameOf, gridOf, lengthClass, piecesOf, slotAt } from './grid.ts'
+import {
+  accessibleNameOf,
+  gridOf,
+  lengthClass,
+  participantsWritten,
+  piecesOf,
+  slotAt,
+} from './grid.ts'
 
 const lab = aMeeting({ weekday: Weekday.tuesday })
 const ana = aMeeting({ title: 'Ana', cadence: Cadence.biWeekly(Week.a) })
@@ -152,12 +159,18 @@ describe('the participants on the grid', () => {
     expect(drawn().querySelector('[data-booking="1"] .booking-participants')).toBeNull()
   })
 
-  it('single out the meetings of one of them, every other booking dimmed', () => {
+  it('single out the meetings of one of them, every other meeting dimmed, no time block', () => {
     const dimmed = [...drawn(bo).querySelectorAll('.dimmed')].map(
       (each) => (each as HTMLElement).dataset.booking,
     )
-    expect(dimmed.toSorted()).toEqual(['1', '2'])
+    expect(dimmed).toEqual(['1'])
     expect(drawn().querySelectorAll('.dimmed')).toHaveLength(0)
+  })
+
+  it('are written two at most, then counted', () => {
+    expect(participantsWritten(['Ana'])).toBe('Ana')
+    expect(participantsWritten(['Ana', 'Bo'])).toBe('Ana, Bo')
+    expect(participantsWritten(['Ana', 'Bo', 'Chloé', 'Dan'])).toBe('Ana, Bo +2')
   })
 })
 

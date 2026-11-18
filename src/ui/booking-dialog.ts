@@ -11,7 +11,7 @@ import {
   overlap,
 } from '../domain/findings.ts'
 import { Meeting } from '../domain/meeting.ts'
-import type { Participant } from '../domain/participant.ts'
+import { Participant } from '../domain/participant.ts'
 import type { Schedule } from '../domain/schedule.ts'
 import { TimeBlock } from '../domain/time-block.ts'
 import { Weekday } from '../domain/weekday.ts'
@@ -33,7 +33,7 @@ export interface BookingDialogOptions {
   /** Whether the booking is only shown, the schedule being locked: nothing can be changed. */
   readonly isReadOnly?: boolean | undefined
   /** Called with the booking as Done leaves it: never one that overlaps another. */
-  readonly onDone: (booking: Booking) => void
+  readonly onDone: (booking: Booking, newcomers: readonly Participant[]) => void
   /** Called when the Organizer asks to remove the booking changed. */
   readonly onRemove?: (booking: Booking) => void
 }
@@ -82,30 +82,127 @@ function categoryField(given: BookingDialogOptions): Markup | string {
   </select></label>`
 }
 
-/** The participants of the schedule, each to tick, for a meeting; none for a time block. */
-function participantsField(given: BookingDialogOptions): Markup | string {
-  const { participants } = given.schedule
-  if (given.kind !== 'meeting' || participants.length === 0) {
+/** The participants each dialog has chosen for its meeting, as they are picked and unpicked. */
+const pickedOf = new WeakMap<HTMLFormElement, Participant[]>()
+
+/** A number for each dialog opened, so that its list of names is its own. */
+let dialogsOpened = 0
+
+/**
+ * The participants of a meeting: each chosen shown as a chip, removed by its mark, and a field
+ * where a name typed is picked among the participants of the schedule, or added as a new one.
+ * None for a time block.
+ */
+function participantsField(given: BookingDialogOptions, listId: string): Markup | string {
+  if (given.kind !== 'meeting') {
     return ''
   }
-  const meeting = given.booking instanceof Meeting ? given.booking : undefined
+  const picker =
+    given.isReadOnly === true
+      ? ''
+      : html`<div class="pick">
+          <input name="participant-search" list="${listId}" autocomplete="off"
+            placeholder="Type a name" aria-label="Add a participant">
+          <button type="button" data-action="pick">Add</button>
+        </div>
+        <datalist id="${listId}"></datalist>`
   return html`<fieldset class="participants">
     <legend>Participants</legend>
-    ${participants.map(
-      (participant, rank) => html`<label class="participant"><input type="checkbox"
-        name="participant" value="${rank}" ${meeting?.hasParticipant(participant) ? 'checked' : ''}
-        >${participant.name}</label>`,
-    )}
+    <ul class="chips"></ul>
+    ${picker}
   </fieldset>`
 }
 
-/** The participants ticked. */
-function participantsTicked(form: HTMLFormElement, given: BookingDialogOptions): Participant[] {
-  const ticked = [...form.querySelectorAll<HTMLInputElement>('input[name="participant"]')]
-  return ticked
-    .filter((box) => box.checked)
-    .map((box) => given.schedule.participants[Number(box.value)])
-    .filter((participant): participant is Participant => participant !== undefined)
+/** The participants chosen in the dialog. */
+function participantsPicked(form: HTMLFormElement): Participant[] {
+  return [...(pickedOf.get(form) ?? [])]
+}
+
+/** The chips of the participants chosen, and the names still to choose among. */
+function showPicked(form: HTMLFormElement, given: BookingDialogOptions): void {
+  const picked = pickedOf.get(form) ?? []
+  const chips = form.querySelector('.chips')
+  if (chips !== null) {
+    chips.innerHTML = html`${picked.map((participant, rank) => {
+      const isNew = !given.schedule.participants.includes(participant)
+      const unpick =
+        given.isReadOnly === true
+          ? ''
+          : html`<button type="button" data-unpick="${rank}" aria-label="Remove ${participant.name}">×</button>`
+      return html`<li class="chip ${isNew ? 'new' : ''}">${participant.name}${isNew ? ' (new)' : ''}${unpick}</li>`
+    })}`.text
+  }
+  const names = form.querySelector('datalist')
+  if (names !== null) {
+    names.innerHTML = html`${given.schedule.participants
+      .filter((participant) => !picked.includes(participant))
+      .map((participant) => html`<option value="${participant.name}"></option>`)}`.text
+  }
+}
+
+/**
+ * Picks the participant a name typed names, whatever its case; a name no participant has makes a
+ * new one. Gives why a name is refused, or nothing.
+ */
+function pick(
+  form: HTMLFormElement,
+  given: BookingDialogOptions,
+  typed: string,
+): string | undefined {
+  const picked = pickedOf.get(form) ?? []
+  if (typed.trim() === '' || picked.some((participant) => participant.isNamed(typed))) {
+    return undefined
+  }
+  try {
+    picked.push(given.schedule.participantNamed(typed) ?? new Participant(typed))
+    return undefined
+  } catch (error) {
+    return (error as Error).message
+  }
+}
+
+/** Sets up the participants of the dialog: the chips, and the field that picks a name. */
+function setUpPicker(form: HTMLFormElement, given: BookingDialogOptions, update: () => void): void {
+  const meeting = given.booking instanceof Meeting ? given.booking : undefined
+  pickedOf.set(form, [...(meeting?.participants ?? [])])
+  showPicked(form, given)
+  const field = form.querySelector<HTMLInputElement>('input[name="participant-search"]')
+  const finding = form.querySelector('.finding') as HTMLElement
+  const pickTyped = () => {
+    if (field === null) {
+      return
+    }
+    const refused = pick(form, given, field.value)
+    field.value = refused === undefined ? '' : field.value
+    showPicked(form, given)
+    update()
+    if (refused !== undefined) {
+      finding.textContent = refused
+    }
+  }
+  field?.addEventListener('keydown', (event) => {
+    if (event.key === 'Enter') {
+      event.preventDefault()
+      pickTyped()
+    }
+  })
+  field?.addEventListener('input', (event) => {
+    const isChosenFromTheList =
+      !(event as InputEvent).inputType ||
+      (event as InputEvent).inputType === 'insertReplacementText'
+    if (isChosenFromTheList && given.schedule.participantNamed(field.value) !== undefined) {
+      pickTyped()
+    }
+  })
+  form.querySelector('[data-action="pick"]')?.addEventListener('click', pickTyped)
+  form.querySelector('.chips')?.addEventListener('click', (event) => {
+    const mark = (event.target as Element).closest<HTMLElement>('[data-unpick]')
+    if (mark !== null) {
+      pickedOf.get(form)?.splice(Number(mark.dataset.unpick), 1)
+      showPicked(form, given)
+      update()
+    }
+  })
 }
 
 /** The actions of the dialog: Close alone when read only; Remove, Cancel and Done otherwise. */
@@ -122,7 +219,7 @@ function actionsOf(given: BookingDialogOptions): Markup {
     <button type="submit" class="primary" data-action="done">Done</button>`
 }
 
-function markupOf(given: BookingDialogOptions): Markup {
+function markupOf(given: BookingDialogOptions, listId: string): Markup {
   const { booking } = given
   return html`<form method="dialog">
     <h2>${headingOf(given)}</h2>
@@ -133,7 +230,7 @@ function markupOf(given: BookingDialogOptions): Markup {
     <label>Start <select name="start">${options(theDay.quarters, String)}</select></label>
     <label>Duration <select name="duration">${options(durations, durationWritten)}</select></label>
     ${categoryField(given)}
-    ${participantsField(given)}
+    ${participantsField(given, listId)}
     ${noteField(given)}
     </fieldset>
     <p class="finding" role="alert"></p>
@@ -173,10 +270,6 @@ function choose(form: HTMLFormElement, given: BookingDialogOptions): void {
     const rank = meeting?.category === undefined ? -1 : Category.all.indexOf(meeting.category)
     category.value = rank < 0 ? '' : String(rank)
   }
-  for (const box of form.querySelectorAll<HTMLInputElement>('input[name="participant"]')) {
-    const participant = given.schedule.participants[Number(box.value)]
-    box.checked = participant !== undefined && meeting?.hasParticipant(participant) === true
-  }
 }
 
 /** What a list of the dialog has chosen; nothing while it shows its heading, valued empty. */
@@ -215,7 +308,7 @@ function candidateOf(form: HTMLFormElement, given: BookingDialogOptions, timing:
     ...timing,
     title: title.trim() || standInTitle,
     note: textOf(form, 'note'),
-    participants: participantsTicked(form, given),
+    participants: participantsPicked(form),
     category: chosen(form, 'category', Category.all),
   })
 }
@@ -252,7 +345,9 @@ function outcomeOf(form: HTMLFormElement, given: BookingDialogOptions): Outcome 
  * none, and the dialog says why; Cancel, Escape or a click outside the dialog change nothing.
  */
 export function openBookingDialog(page: Document, given: BookingDialogOptions): HTMLDialogElement {
-  const dialog = dialogOn(page, `booking-dialog ${given.kind}`, markupOf(given).text)
+  dialogsOpened += 1
+  const listId = `participant-names-${dialogsOpened}`
+  const dialog = dialogOn(page, `booking-dialog ${given.kind}`, markupOf(given, listId).text)
   const form = dialog.querySelector('form') as HTMLFormElement
   const finding = dialog.querySelector('.finding') as HTMLElement
   const done = dialog.querySelector<HTMLButtonElement>('[data-action="done"]')
@@ -265,6 +360,7 @@ export function openBookingDialog(page: Document, given: BookingDialogOptions): 
     return outcome
   }
   choose(form, given)
+  setUpPicker(form, given, update)
   form.addEventListener('input', update)
   form.addEventListener('change', update)
   form.addEventListener('submit', (event) => {
@@ -272,7 +368,13 @@ export function openBookingDialog(page: Document, given: BookingDialogOptions): 
     const { booking } = update()
     if (booking !== undefined && given.isReadOnly !== true) {
       closeDialog(dialog)
-      given.onDone(booking)
+      const newcomers =
+        booking instanceof Meeting
+          ? booking.participants.filter(
+              (participant) => !given.schedule.participants.includes(participant),
+            )
+          : []
+      given.onDone(booking, newcomers)
     }
   })
   dialog

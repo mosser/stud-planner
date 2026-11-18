@@ -165,11 +165,23 @@ describe('the meeting dialog of a meeting of the schedule', () => {
 describe('the participants of a meeting in its dialog', () => {
   const ana = new Participant('Ana')
   const bo = new Participant('Bo')
+  const withAna = aMeeting({ participants: [ana] })
+  const roster = new Schedule([withAna], [], [ana, bo])
 
-  it('are ticked among those of the schedule', () => {
-    const withAna = aMeeting({ participants: [ana] })
-    const roster = new Schedule([withAna], [], [ana, bo])
-    const onDone = vi.fn()
+  const chips = (dialog: HTMLElement) =>
+    [...dialog.querySelectorAll('.chip')].map((chip) => chip.firstChild?.textContent)
+
+  function typed(dialog: HTMLElement, name: string, how: 'Enter' | 'Add' = 'Enter'): void {
+    const field = dialog.querySelector('input[name="participant-search"]') as HTMLInputElement
+    field.value = name
+    if (how === 'Enter') {
+      field.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }))
+    } else {
+      ;(dialog.querySelector('[data-action="pick"]') as HTMLElement).click()
+    }
+  }
+
+  function opened(onDone = vi.fn()) {
     const dialog = openBookingDialog(document, {
       schedule: roster,
       kind: 'meeting',
@@ -177,16 +189,48 @@ describe('the participants of a meeting in its dialog', () => {
       proposal: withAna.timing,
       onDone,
     })
-    const boxes = [...dialog.querySelectorAll<HTMLInputElement>('input[name="participant"]')]
-    expect(boxes.map((box) => box.checked)).toEqual([true, false])
-    ;(boxes[1] as HTMLInputElement).checked = true
     choose(dialog, 'category', 'Master')
+    return dialog
+  }
+
+  it('are shown as chips, and picked by name among those of the schedule', () => {
+    const onDone = vi.fn()
+    const dialog = opened(onDone)
+    expect(chips(dialog)).toEqual(['Ana'])
+    const offered = [...dialog.querySelectorAll('datalist option')].map((option) =>
+      option.getAttribute('value'),
+    )
+    expect(offered).toEqual(['Bo'])
+    typed(dialog, ' bo')
+    expect(chips(dialog)).toEqual(['Ana', 'Bo'])
     dialog.querySelector('form')?.requestSubmit()
     expect(onDone.mock.calls[0]?.[0].participants).toEqual([ana, bo])
+    expect(onDone.mock.calls[0]?.[1]).toEqual([])
   })
 
-  it('are not asked of a time block, nor when the schedule has none', () => {
-    const roster = new Schedule([], [], [ana])
+  it('make a new participant of a name no one has, given with the meeting', () => {
+    const onDone = vi.fn()
+    const dialog = opened(onDone)
+    typed(dialog, 'Zoé', 'Add')
+    expect(dialog.querySelector('.chip.new')?.textContent).toContain('Zoé (new)')
+    dialog.querySelector('form')?.requestSubmit()
+    const [meeting, newcomers] = onDone.mock.calls[0] ?? []
+    expect(newcomers.map((participant: Participant) => participant.name)).toEqual(['Zoé'])
+    expect(meeting.participants[1]).toBe(newcomers[0])
+  })
+
+  it('lose a chip by its mark, and take no name twice', () => {
+    const onDone = vi.fn()
+    const dialog = opened(onDone)
+    typed(dialog, 'ANA')
+    expect(chips(dialog)).toEqual(['Ana'])
+    ;(dialog.querySelector('[data-unpick="0"]') as HTMLElement).click()
+    expect(chips(dialog)).toEqual([])
+    dialog.querySelector('form')?.requestSubmit()
+    expect(onDone.mock.calls[0]?.[0].participants).toEqual([])
+  })
+
+  it('are not asked of a time block, and only shown when read only', () => {
     const block = openBookingDialog(document, {
       schedule: roster,
       kind: 'time-block',
@@ -194,13 +238,17 @@ describe('the participants of a meeting in its dialog', () => {
       onDone: vi.fn(),
     })
     expect(block.querySelector('fieldset.participants')).toBeNull()
-    const none = openBookingDialog(document, {
-      schedule,
+    const shown = openBookingDialog(document, {
+      schedule: roster,
       kind: 'meeting',
-      proposal,
+      booking: withAna,
+      proposal: withAna.timing,
+      isReadOnly: true,
       onDone: vi.fn(),
     })
-    expect(none.querySelector('fieldset.participants')).toBeNull()
+    expect(chips(shown)).toEqual(['Ana'])
+    expect(shown.querySelector('[data-unpick]')).toBeNull()
+    expect(shown.querySelector('input[name="participant-search"]')).toBeNull()
   })
 })
 
