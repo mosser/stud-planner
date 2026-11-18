@@ -6,6 +6,8 @@ project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.2.1] - 2026-11-18
+
 ### Fixed
 
 - Hovering a meeting or a time block shows its description, in a card under it, in every
