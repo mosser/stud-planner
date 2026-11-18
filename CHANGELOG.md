@@ -12,9 +12,10 @@ project adheres to [Semantic Versioning](https://semver.org/).
 - A schedule of recurring meetings, weekly or bi-weekly, planned on two abstract weeks,
   week A and week B, which alternate, without dates, Monday to Friday from 08:00 to 18:00, by the quarter.
 - Three tabs, shown one at a time, each marked with the colour of its week: **Overview**,
-  shown first, which merges the two weeks: a bi-weekly booking takes half of its slots along
-  their diagonal, week A upper left, week B lower right, the other half left to the other
-  week, empty when it has nothing there; then **Week A** and **Week B**.
+  shown first, which shows the two weeks side by side in each day, week A on the left and
+  week B on the right, outlining the half of a week that has nothing where the other has a
+  booking; then **Week A** and **Week B**.
+- A refused change's warning is dismissed by its ×.
 - Adding a meeting by pressing a free slot and dragging down: held in the week of the tab,
   weekly or bi-weekly, or, from the overview, in both weeks; moving it by dragging,
   resizing it by its lower edge, and changing it in its dialog.

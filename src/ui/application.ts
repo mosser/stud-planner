@@ -111,7 +111,10 @@ export function mountApplication(root: HTMLElement, context: ApplicationContext)
       ? html`<p class="notice" data-notice="set-aside">${setAside()}</p>`
       : ''
     const refused =
-      refusal === undefined ? '' : html`<p class="notice refusal" role="alert">${refusal}</p>`
+      refusal === undefined
+        ? ''
+        : html`<p class="notice refusal" role="alert"><span>${refusal}</span><button type="button"
+            class="dismiss" data-action="dismiss" aria-label="Dismiss" title="Dismiss">×</button></p>`
     return html`${kept}${aside}${refused}`
   }
 
@@ -361,6 +364,11 @@ export function mountApplication(root: HTMLElement, context: ApplicationContext)
     const day = target.closest<HTMLElement>('[data-presence-week]')
     if (day !== null && !isLocked) {
       togglePresence(day.dataset.presenceWeek, day.dataset.presenceWeekday)
+      return
+    }
+    if (action === 'dismiss') {
+      refusal = undefined
+      render()
       return
     }
     if (action === 'participants') {

@@ -64,6 +64,7 @@ the browser's preference.
 | Week B | Gold |
 | Mark under a tab's name, 4 px: overview, week A, week B | Half blue and half gold, blue, gold |
 | Time block | Grey, 25 % on white |
+| Half of a week left empty on the overview | Dashed Dundurn Grey outline |
 | Category tag on a meeting | Black text, Grey border, on the meeting's fill |
 | Toggle of a day: said, not said | Black, Grey |
 | Icon in the masthead: frame, week A, week B | Dundurn Grey, Albion Falls Blue, gold |
@@ -73,11 +74,11 @@ the browser's preference.
 A booking is drawn with its cadence's colour as a border, and filled behind
 its text with a light tone of it:
 
-| Cadence | Fill | Half on the overview |
-|---|---|---|
-| Weekly | Green, 22 % on white | — |
-| Week A | Albion Falls Blue, 65 % on white | Albion Falls Blue |
-| Week B | Gold, 22 % on white | Gold, 40 % on white |
+| Cadence | Fill |
+|---|---|
+| Weekly | Green, 22 % on white |
+| Week A | Albion Falls Blue, 65 % on white |
+| Week B | Gold, 22 % on white |
 
 Week A is filled with Albion Falls Blue rather than a tint of the
 Bayfront Blue of its border: a tint of Bayfront Blue is a blue grey that
@@ -103,7 +104,6 @@ grey, whatever its cadence.
    | Grey | White | 7.2 |
    | Black | each fill | 14.6 at least |
    | Grey | each fill | 5.0 at least |
-   | Black | each half | 13.3 at least |
    | Black / Grey | Grey, 25 % on white (time block) | 14.4 / 4.9 |
 
    **Forbidden for text:** gold on white (1.6:1) or on any light tint, and

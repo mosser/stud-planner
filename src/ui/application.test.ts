@@ -247,7 +247,7 @@ describe('adding a meeting', () => {
     moveTo(point(Weekday.tuesday, '11:00'))
     release(point(Weekday.tuesday, '11:00'))
     expect(application.schedule.meetings[0]?.weekday).toBe(Weekday.monday)
-    expect(root.querySelector('.refusal')?.textContent).toBe(
+    expect(root.querySelector('.refusal span')?.textContent).toBe(
       'Overlaps the time block Teaching, every week, 10:00 to 12:00.',
     )
   })
@@ -291,9 +291,11 @@ describe('moving and resizing a meeting', () => {
     expect(root.querySelector('.preview.refused')).not.toBeNull()
     release(point(Weekday.tuesday, '10:30'))
     expect(describeMeetings(application.schedule)[0]).toBe('Lab meeting Monday 10:00-11:00')
-    expect(root.querySelector('.refusal')?.textContent).toBe(
+    expect(root.querySelector('.refusal span')?.textContent).toBe(
       'Overlaps Ana, week A, 10:00 to 11:00.',
     )
+    ;(root.querySelector('[data-action="dismiss"]') as HTMLElement).click()
+    expect(root.querySelector('.refusal')).toBeNull()
   })
 
   it('resizes a meeting by its lower edge', () => {
@@ -419,7 +421,7 @@ describe('downloading and uploading', () => {
     const { root, application } = mounted(new Schedule([lab]))
     uploadFile(root, 'not a schedule')
     await vi.waitFor(() => expect(root.querySelector('.refusal')).not.toBeNull())
-    expect(root.querySelector('.refusal')?.textContent).toBe(
+    expect(root.querySelector('.refusal span')?.textContent).toBe(
       'week.json is refused: it is not a schedule file, nor JSON.',
     )
     expect(application.schedule.meetings).toEqual([lab])

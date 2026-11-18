@@ -25,6 +25,11 @@ Options considered:
 - **Two abstract weeks, weekly and bi-weekly bookings only**, shown one at a
   time or merged in an overview.
 
+For the overview, **a slot cut along its diagonal**, week A upper left, week
+B lower right, pictures one slot shared by two weeks, but leaves a sliver of
+a triangle for the text of a short booking. **Halves side by side** keep each
+booking an upright rectangle, at the cost of half the width.
+
 For their names, **odd and even** read as the parity of a calendar week,
 which the system does not know, and which a week 53 breaks. **Week A and
 week B** name two weeks that alternate, and nothing more.
@@ -38,13 +43,12 @@ week B** name two weeks that alternate, and nothing more.
   week A or in week B). There is no monthly cadence.
 - The screen shows **three tabs**, one at a time: the **overview**, which
   merges the two weeks and is the tab shown first, then week A and week B
-  (`docs/specs/plan-the-meetings.md`). A bi-weekly booking is cut along the
-  diagonal of its time, week A upper left, week B lower right; the other half
-  holds the booking of the other week sharing that time, or is left empty,
-  its diagonal drawn. A weekly booking is whole. The overview so shows at
-  once what alternates and what does not. A booking's time is cut where what
-  it shares changes, not quarter by quarter: a quarter is a row too flat for
-  its halves to be read.
+  (`docs/specs/plan-the-meetings.md`). Each day is in two halves side by
+  side, week A on the left and week B on the right: a bi-weekly booking takes
+  its week's half, whole, and the other half is outlined where the other week
+  has nothing; a weekly booking takes both. The overview so shows at once
+  what alternates and what does not, and every booking keeps an upright
+  rectangle for its title, time and participants.
 - A booking added from a week's tab is held in that week: weekly, or
   bi-weekly in it. A booking added from the overview is held in both weeks:
   it is weekly.

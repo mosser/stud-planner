@@ -35,15 +35,13 @@
   --color-chosen-text: var(--mac-maroon);
   --color-chosen-tint: color-mix(in srgb, var(--mac-maroon) 12%, var(--mac-white));
   /*
-   * The fill of a booking, by cadence, and of its half on the overview, black text on them. The
-   * week A is filled with Albion Falls Blue, lighter than the Bayfront Blue of its border, so
-   * that it is not taken for the grey of a time block.
+   * The fill of a booking, by cadence, black text on it. Week A is filled with Albion Falls Blue,
+   * lighter than the Bayfront Blue of its border, so that it is not taken for the grey of a time
+   * block.
    */
   --fill-weekly: color-mix(in srgb, var(--mac-accent-green) 22%, var(--mac-white));
   --fill-week-a: color-mix(in srgb, var(--mac-accent-sky) 65%, var(--mac-white));
   --fill-week-b: color-mix(in srgb, var(--mac-gold) 22%, var(--mac-white));
-  --half-fill-week-a: var(--mac-accent-sky);
-  --half-fill-week-b: color-mix(in srgb, var(--mac-gold) 40%, var(--mac-white));
   --quarter-height: 1.1rem;
   color-scheme: light;
   font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
@@ -128,7 +126,7 @@ textarea {
 }
 
 .icon-week-a {
-  fill: var(--half-fill-week-a);
+  fill: var(--mac-accent-sky);
 }
 
 .icon-week-b {
@@ -149,7 +147,21 @@ textarea {
 }
 
 .notice.refusal {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
   border-left-color: var(--color-error);
+}
+
+.dismiss {
+  padding: 0 0.4rem;
+  border: 0;
+  background: none;
+  color: var(--color-text);
+  font-size: 1.1rem;
+  line-height: 1;
+  cursor: pointer;
 }
 
 .toolbar {
@@ -349,7 +361,6 @@ button:disabled {
 .preview {
   --cadence: var(--color-weekly);
   --fill: var(--fill-weekly);
-  --half-fill: var(--fill-weekly);
   /* A pixel of surface above and below: two bookings back to back stand apart. */
   margin: 1px 2px;
   border-left: 4px solid var(--cadence);
@@ -360,14 +371,12 @@ button:disabled {
 .preview.week-a {
   --cadence: var(--color-week-a);
   --fill: var(--fill-week-a);
-  --half-fill: var(--half-fill-week-a);
 }
 
 .booking.week-b,
 .preview.week-b {
   --cadence: var(--color-week-b);
   --fill: var(--fill-week-b);
-  --half-fill: var(--half-fill-week-b);
 }
 
 .booking {
@@ -391,7 +400,6 @@ button:disabled {
 
 /* A time block: the time no meeting can take, in grey, its cadence's colour as a border. */
 .booking.time-block,
-.booking.half.time-block,
 .preview.time-block {
   background: var(--color-blocked);
 }
@@ -474,7 +482,6 @@ button:disabled {
 
 .booking:hover .remove,
 .booking:focus-within .remove,
-.booking-label:hover .remove,
 .remove:focus-visible {
   opacity: 1;
 }
@@ -495,105 +502,39 @@ button:disabled {
 }
 
 /*
- * The overview: a bi-weekly meeting is drawn in pieces when it shares time with a meeting of the
- * other week; the time shared is cut along its diagonal, the upper left for week A, the lower
- * right for week B, and the rest is whole.
+ * The overview: each day column in two halves, week A on the left, week B on the right. A
+ * weekly booking takes both; a bi-weekly booking its week's; the other half, where the other
+ * week has nothing, is outlined.
  */
-.booking.piece {
-  margin-block: 0;
-  border-radius: 0;
+.week[data-shows="overview"] .day {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
 }
 
-/* The pieces of one booking join; only its ends stand apart from the next booking. */
-.booking.piece.first {
-  margin-top: 1px;
-  border-top-left-radius: 0.25rem;
-  border-top-right-radius: 0.25rem;
+.week[data-shows="overview"] .day > * {
+  grid-column: 1 / -1;
 }
 
-.booking.piece.last {
-  margin-bottom: 1px;
-  border-bottom-left-radius: 0.25rem;
-  border-bottom-right-radius: 0.25rem;
+.week[data-shows="overview"] .day > .week-a {
+  grid-column: 1;
 }
 
-.booking.half {
-  border-left: 0;
-  background: var(--half-fill);
+.week[data-shows="overview"] .day > .week-b {
+  grid-column: 2;
 }
 
-/* The half no booking of the other week takes: empty, its diagonal drawn in grey. */
+.week[data-shows="overview"] .day > .empty-half.week-a {
+  grid-column: 2;
+}
+
+.week[data-shows="overview"] .day > .empty-half.week-b {
+  grid-column: 1;
+}
+
 .empty-half {
-  margin: 0 2px;
+  margin: 1px 2px;
+  border: 1px dashed var(--color-rule);
+  border-radius: 0.25rem;
   pointer-events: none;
-  background: linear-gradient(
-    to bottom right,
-    transparent calc(50% - 1px),
-    var(--color-secondary-text) calc(50% - 1px),
-    var(--color-secondary-text) calc(50% + 1px),
-    transparent calc(50% + 1px)
-  );
-}
-
-.empty-half.week-a {
-  clip-path: polygon(100% 0, 100% 100%, 0 100%);
-}
-
-.empty-half.week-b {
-  clip-path: polygon(0 0, 100% 0, 0 100%);
-}
-
-.booking.half.week-a {
-  clip-path: polygon(0 0, 100% 0, 0 100%);
-}
-
-.booking.half.week-b {
-  clip-path: polygon(100% 0, 100% 100%, 0 100%);
-}
-
-.booking-label,
-.resize-zone {
-  position: relative;
-  z-index: 1;
-  margin: 0 2px;
-  pointer-events: none;
-}
-
-.booking-label {
-  display: flex;
-  padding: 0 0.3rem 0 calc(0.3rem + 4px);
-  font-size: 0.75rem;
-  line-height: 1.2;
-}
-
-.booking-label.shared {
-  padding-left: 0.3rem;
-}
-
-.booking-label .booking-title {
-  max-width: 60%;
-}
-
-.booking-label.week-b.shared {
-  align-items: flex-end;
-  justify-content: flex-end;
-}
-
-.booking-label .remove,
-.resize-zone .resize {
-  pointer-events: auto;
-}
-
-.booking-label.week-b.shared .remove {
-  top: auto;
-  right: auto;
-  bottom: 0;
-  left: 0;
-}
-
-/* The lower edge of a half of week A is its lower left corner: the handle stays within it. */
-.resize-zone.week-a.shared .resize {
-  right: 70%;
 }
 
 /* Dialogs. */

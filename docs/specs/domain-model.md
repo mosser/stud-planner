@@ -29,13 +29,13 @@ in the specification, in the interface and in the code.
 | Weekly | The cadence of a booking held in week A and in week B. |
 | Bi-weekly | The cadence of a booking held in one week only: week A or week B, its week. |
 | Week A, week B | The two abstract weeks the schedule is planned on, which alternate: A, B, A, B. They have no date: which week of the calendar is week A is the Organizer's to know. |
-| Overview | Week A and week B merged, as one grid: what the two weeks hold, alternating, and the time they share. A booking added from it is held in both weeks. |
+| Overview | Week A and week B side by side in each day, as one grid: what the two weeks hold, and what alternates. A booking added from it is held in both weeks. |
 | Weekday | Monday, Tuesday, Wednesday, Thursday or Friday. |
 | Day | The hours a booking can take on a weekday: from 08:00 to 18:00, configured in `config/calendar.json`. |
 | Quarter | Fifteen minutes. Starts and durations are whole quarters. |
 | Start | The time of day a booking begins: a quarter of the day, its end within the day. |
 | Duration | How long a booking lasts: one quarter at least, ending at the end of the day at most. |
-| Slot | A quarter of a weekday. On the overview, the slots of a bi-weekly booking are cut along their diagonal in two halves: the upper left half for week A, the lower right half for week B; the other half holds what the other week has there, or is empty. |
+| Slot | A quarter of a weekday. On the overview, each slot is in two halves side by side: the left for week A, the right for week B; a weekly booking takes both. |
 | Free, taken | A slot is taken in a week when a booking held that week covers it, and free otherwise. A weekly booking takes its slots in both weeks, a bi-weekly one in its week only. |
 | Overlap | Two bookings that would take the same slot in the same week: two meetings, a meeting in a time block, or two time blocks. The system refuses an overlap, whatever makes it: adding, moving, resizing, changing a cadence or a week, or uploading a file. |
 | Tab | One of the three grids the screen shows, one at a time: the overview, first, week A and week B. |

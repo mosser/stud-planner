@@ -9,8 +9,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 Organizer places weekly and bi-weekly bookings, meetings and the time blocks
 they are not available for meetings, on two abstract weeks, A and B, by
 pressing and dragging on them, and sees them one tab at a time or in the
-overview, where a bi-weekly booking takes half of its slots along their
-diagonal, week A upper left, week B lower right. A slot is never booked twice.
+overview, each day in two halves side by side, week A left, week B right. A slot is never booked twice.
 The schedule is kept in the browser and downloaded as, or uploaded from, a
 schedule file.
 
@@ -174,11 +173,10 @@ first.
   system never reads today's date. A booking is weekly (both weeks) or
   bi-weekly (in week A or in week B); there is no monthly cadence. Never say
   odd and even: they read as the parity of a calendar week.
-- Three tabs, one at a time: overview (first, shown when the page opens; a
-  bi-weekly booking is cut along its diagonal, week A upper left, week B
-  lower right, its other half the booking sharing that time or empty, its
-  diagonal drawn: `piecesOf` and `emptyHalf` in `grid.ts`), then week A and
-  week B. No occurrence: a booking is changed as a whole.
+- Three tabs, one at a time: overview (first, shown when the page opens; each
+  day in two halves, week A left and week B right, a weekly booking across
+  both, an outlined `emptyHalf` where the other week has nothing), then week
+  A and week B.
 - A booking added from a week's tab is held in that week (weekly or bi-weekly
   in it, `cadencesAddedFrom`); one added from the overview is weekly.
 

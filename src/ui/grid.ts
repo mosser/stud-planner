@@ -220,19 +220,8 @@ export function piecesOf(booking: Booking, schedule: Schedule): readonly Piece[]
 }
 
 /**
- * The classes of a piece: cut along its diagonal, shared with a booking of the other week or
- * alone, and rounded at the booking's ends.
- */
-function pieceClasses(piece: Piece, rank: number, count: number): string {
-  const classes = ['half', piece.isShared ? 'shared' : 'alone']
-  if (rank === 0) classes.push('first')
-  if (rank === count - 1) classes.push('last')
-  return classes.join(' ')
-}
-
-/**
- * The half of a piece no booking of the other week takes: left empty, its diagonal drawn, so that
- * the overview shows the booking alternates.
+ * The half of the day column a bi-weekly booking leaves empty on the overview, where the other
+ * week has nothing at that time: outlined, so that the overview shows the booking alternates.
  */
 function emptyHalf(piece: Piece, week: Week): Markup | string {
   return piece.isShared
@@ -241,38 +230,10 @@ function emptyHalf(piece: Piece, week: Week): Markup | string {
 }
 
 /**
- * A bi-weekly booking on the overview: each piece of its time cut along its diagonal, the upper
- * left half for week A, the lower right half for week B; the other half taken by the booking of
- * the other week it shares that time with, or left empty, its diagonal drawn. Its title and
- * remove mark stand over its first piece, its lower edge over its last.
+ * A booking on its tab, whole. On the overview, a bi-weekly booking takes the half of the day
+ * column that is its week's, week A the left, week B the right, and the other half is outlined
+ * where the other week has nothing; a weekly booking takes both halves.
  */
-function piecedBooking(
-  booking: Booking,
-  rank: number,
-  week: Week,
-  pieces: readonly Piece[],
-  drawing: Drawing,
-) {
-  const isLocked = drawing.isLocked === true
-  const dimmed = dimmedClass(booking, drawing)
-  const first = pieces[0] as Piece
-  const last = pieces[pieces.length - 1] as Piece
-  const kind = kindClass(booking)
-  const drawn = pieces.map((piece, index) => {
-    const focus =
-      index === 0 ? html`role="button" tabindex="0" aria-label="${accessibleNameOf(booking)}"` : ''
-    return html`<div class="booking piece ${kind} ${weekClass(week)} ${dimmed} ${pieceClasses(piece, index, pieces.length)}"
-      style="grid-row: ${rowsOf(piece)}" data-booking="${rank}" ${focus}></div>${emptyHalf(piece, week)}`
-  })
-  return html`${drawn}
-    <div class="booking-label ${weekClass(week)} ${dimmed} shared" style="grid-row: ${rowsOf(first)}">
-      <span class="booking-title">${labelOf(booking)}</span>${removeMark(booking, rank, isLocked)}
-    </div>
-    <div class="resize-zone ${weekClass(week)} shared" style="grid-row: ${rowsOf(last)}">
-      ${resizeHandle(rank, isLocked)}
-    </div>`
-}
-
 function bookingOnTab(
   booking: Booking,
   rank: number,
@@ -281,10 +242,11 @@ function bookingOnTab(
   drawing: Drawing,
 ): Markup {
   const week = booking.cadence.week
-  if (tab === 'overview' && week !== undefined) {
-    return piecedBooking(booking, rank, week, piecesOf(booking, schedule), drawing)
+  if (tab !== 'overview' || week === undefined) {
+    return wholeBooking(booking, rank, drawing)
   }
-  return wholeBooking(booking, rank, drawing)
+  const empty = piecesOf(booking, schedule).map((piece) => emptyHalf(piece, week))
+  return html`${wholeBooking(booking, rank, drawing)}${empty}`
 }
 
 function isShownOn(booking: Booking, tab: Tab): boolean {

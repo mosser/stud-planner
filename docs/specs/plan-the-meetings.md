@@ -15,7 +15,7 @@ and the one shown when the page opens; the switch is then on Meeting.
 
 | Tab | Shows |
 |---|---|
-| Overview | Every booking. A weekly booking fills its slots. A bi-weekly booking fills the half of its slots that is its week's, cut along their diagonal: the upper left half for week A, the lower right half for week B. The other half holds the booking of the other week that shares that time, or is left empty, its diagonal drawn, so that what alternates shows at once. Its time is cut where what it shares changes, each piece along its own diagonal. A title is written in its half's corner. |
+| Overview | Every booking, each day in two halves side by side: week A on the left, week B on the right. A weekly booking takes both halves. A bi-weekly booking takes the half of its week, whole, its title, time and participants written as on its week's tab; where the other week has nothing at that time, the other half is outlined, so that what alternates shows at once. |
 | Week A | The weekly bookings and the bi-weekly bookings held in week A. |
 | Week B | The weekly bookings and the bi-weekly bookings held in week B. |
 
@@ -53,7 +53,7 @@ Meetings and time blocks are moved, resized and removed alike.
 | Move | Dragging a booking to another slot changes its weekday and its start, never its duration, cadence or week; it cannot end after the day. |
 | Resize | Dragging the lower edge of a booking changes its duration, one quarter at a time, within the day. |
 | A weekly booking | Moved or resized on any tab, it changes in both weeks. |
-| Refused | While a drag would make an overlap, the booking shows where it would go as refused; dropped there, it goes back where it was, nothing changes, and the screen names the booking overlapped: *Overlaps the time block Teaching, every week, 10:00 to 12:00.* |
+| Refused | While a drag would make an overlap, the booking shows where it would go as refused; dropped there, it goes back where it was, nothing changes, and the screen names the booking overlapped: *Overlaps the time block Teaching, every week, 10:00 to 12:00.* The notice is dismissed by its mark, or by the next change. |
 | Escape | During a drag, Escape puts the booking back where it was. |
 | Remove | The remove mark of a booking, Delete while it has the focus, or Remove in its dialog asks the Organizer to confirm, naming the booking, its cadence and its time: *Remove Lab meeting, weekly, Monday 10:00 to 11:00?*, *Remove a time block, bi-weekly, week A, Friday 14:00 to 15:00?* Confirmed, the booking leaves the schedule; otherwise nothing changes. A weekly booking removed from one week's tab leaves both weeks. |
 
