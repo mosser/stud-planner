@@ -1,9 +1,11 @@
 // @vitest-environment happy-dom
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { Cadence, Week } from '../domain/cadence.ts'
+import { Category } from '../domain/category.ts'
 import { Duration } from '../domain/duration.ts'
 import { aMeeting, at } from '../domain/meeting.fixture.ts'
 import { Participant } from '../domain/participant.ts'
+import { Presence } from '../domain/presence.ts'
 import { Schedule } from '../domain/schedule.ts'
 import { TimeBlock } from '../domain/time-block.ts'
 import { Weekday } from '../domain/weekday.ts'
@@ -86,9 +88,14 @@ const describeMeetings = (schedule: Schedule) =>
     (meeting) => `${meeting.title} ${meeting.weekday.name} ${meeting.start}-${meeting.end}`,
   )
 
+/** Types the title, chooses the first category when the dialog asks for one, and submits. */
 function typeTitle(title: string): void {
   const input = dialog().querySelector('[name="title"]') as HTMLInputElement
   input.value = title
+  const category = dialog().querySelector<HTMLSelectElement>('[name="category"]')
+  if (category !== null && category.value === '') {
+    category.value = '0'
+  }
   input.dispatchEvent(new Event('input', { bubbles: true }))
   dialog().querySelector('form')?.requestSubmit()
 }
@@ -192,7 +199,11 @@ describe('adding a meeting', () => {
     const { root } = mounted(new Schedule())
     for (const tab of ['a', 'b', 'overview']) {
       ;(root.querySelector(`[data-tab="${tab}"]`) as HTMLElement).click()
-      expect(root.querySelector('.grid + .adding')).not.toBeNull()
+      expect(root.querySelector('.grid + .under-grid .adding')).not.toBeNull()
+      expect(root.querySelector('.grid + .under-grid [data-filter]')).not.toBeNull()
+      expect(root.querySelector('.under-grid label.filter')?.firstChild?.textContent).toBe(
+        'Filter by ',
+      )
     }
   })
 
@@ -512,20 +523,36 @@ describe('the participants on the page', () => {
     expect(root.querySelector('[data-filter]')).not.toBeNull()
   })
 
-  it('single out the meetings of the one chosen, and of no one once it is gone', () => {
+  function single(root: HTMLElement, value: string): void {
+    const filter = root.querySelector('[data-filter]') as HTMLSelectElement
+    filter.value = value
+    filter.dispatchEvent(new Event('change', { bubbles: true }))
+  }
+
+  it('single out the meetings of the one chosen under the grid', () => {
     const { root } = mounted(new Schedule([lab, withZoe], [], [zoe]), {}, 'overview')
     const filter = root.querySelector('[data-filter]') as HTMLSelectElement
-    expect([...filter.options].map((option) => option.textContent)).toEqual(['Everyone', 'Zoé'])
-    filter.value = 'Zoé'
-    filter.dispatchEvent(new Event('change', { bubbles: true }))
-    expect((root.querySelector('[data-filter]') as HTMLSelectElement).value).toBe('Zoé')
+    expect([...filter.options].map((option) => option.textContent)).toEqual([
+      'Everyone',
+      'Master',
+      'PhD',
+      'Project',
+      'Lab',
+      'Zoé',
+    ])
+    single(root, 'participant:Zoé')
+    expect((root.querySelector('[data-filter]') as HTMLSelectElement).value).toBe('participant:Zoé')
     expect(bookingElement(root, 0).classList.contains('dimmed')).toBe(true)
     expect(bookingElement(root, 1).classList.contains('dimmed')).toBe(false)
+    single(root, '')
+    expect(root.querySelectorAll('.dimmed')).toHaveLength(0)
   })
 
-  it('are not offered as a filter when the schedule has none', () => {
+  it('are not listed when the schedule has none, its categories still are', () => {
     const { root } = mounted(new Schedule([lab]))
-    expect(root.querySelector('[data-filter]')).toBeNull()
+    const filter = root.querySelector('[data-filter]') as HTMLSelectElement
+    expect(filter.querySelector('optgroup[label="Participants"]')).toBeNull()
+    expect(filter.querySelectorAll('optgroup[label="Categories"] option')).toHaveLength(4)
   })
 
   it('are shown read only while the schedule is locked', () => {
@@ -533,5 +560,71 @@ describe('the participants on the page', () => {
     ;(root.querySelector('[data-action="lock"]') as HTMLElement).click()
     ;(root.querySelector('[data-action="participants"]') as HTMLElement).click()
     expect(document.querySelector('dialog.participants-dialog form.add-participant')).toBeNull()
+  })
+})
+
+describe('the categories on the page', () => {
+  const phd = Category.named('PhD')
+  const ofPhd = aMeeting({ title: 'Thesis', weekday: Weekday.friday, category: phd })
+
+  it('tag each meeting that has one, and single out its meetings', () => {
+    const { root } = mounted(new Schedule([lab, ofPhd]), {}, 'overview')
+    expect(bookingElement(root, 1).querySelector('.category-tag')?.textContent).toBe('PhD')
+    expect(bookingElement(root, 0).querySelector('.category-tag')).toBeNull()
+    const filter = root.querySelector('[data-filter]') as HTMLSelectElement
+    filter.value = 'category:PhD'
+    filter.dispatchEvent(new Event('change', { bubbles: true }))
+    expect(bookingElement(root, 0).classList.contains('dimmed')).toBe(true)
+    expect(bookingElement(root, 1).classList.contains('dimmed')).toBe(false)
+  })
+})
+
+describe('on campus or remote', () => {
+  const toggle = (root: HTMLElement, week: string, weekday: string) =>
+    root.querySelector(
+      `[data-presence-week="${week}"][data-presence-weekday="${weekday}"]`,
+    ) as HTMLButtonElement
+
+  it('goes, for a day of the week of the tab, from not said to on campus, remote, and back', () => {
+    const { root, application } = mounted(new Schedule())
+    expect(toggle(root, 'A', 'monday').getAttribute('aria-label')).toBe(
+      'Monday: on campus or remote, not said',
+    )
+    toggle(root, 'A', 'monday').click()
+    expect(application.schedule.presenceOn(Week.a, Weekday.monday)).toBe(Presence.onCampus)
+    expect(toggle(root, 'A', 'monday').getAttribute('aria-label')).toBe('Monday: on campus')
+    toggle(root, 'A', 'monday').click()
+    expect(application.schedule.presenceOn(Week.a, Weekday.monday)).toBe(Presence.remote)
+    toggle(root, 'A', 'monday').click()
+    expect(application.schedule.presenceOn(Week.a, Weekday.monday)).toBeUndefined()
+    expect(application.schedule.presenceOn(Week.b, Weekday.monday)).toBeUndefined()
+  })
+
+  it('is one toggle on the overview while both weeks say the same, changing both', () => {
+    const { root, application } = mounted(new Schedule(), {}, 'overview')
+    expect(root.querySelectorAll('[data-presence-weekday="friday"]')).toHaveLength(1)
+    toggle(root, 'both', 'friday').click()
+    expect(application.schedule.presenceOn(Week.a, Weekday.friday)).toBe(Presence.onCampus)
+    expect(application.schedule.presenceOn(Week.b, Weekday.friday)).toBe(Presence.onCampus)
+    expect(toggle(root, 'both', 'friday').getAttribute('aria-label')).toBe('Friday: on campus')
+    expect(toggle(root, 'both', 'friday').querySelector('.presence-week')).toBeNull()
+  })
+
+  it('is two toggles on the overview when the weeks differ, each marked with its letter', () => {
+    const remoteInB = new Schedule().afterSettingPresence(Week.b, Weekday.friday, Presence.remote)
+    const { root, application } = mounted(remoteInB, {}, 'overview')
+    expect(toggle(root, 'B', 'friday').getAttribute('aria-label')).toBe('Friday, week B: remote')
+    expect(toggle(root, 'A', 'friday').querySelector('.presence-week')?.textContent).toBe('A')
+    toggle(root, 'A', 'friday').click()
+    expect(application.schedule.presenceOn(Week.a, Weekday.friday)).toBe(Presence.onCampus)
+    expect(application.schedule.presenceOn(Week.b, Weekday.friday)).toBe(Presence.remote)
+  })
+
+  it('does not change while the schedule is locked', () => {
+    const { root, application } = mounted(new Schedule())
+    ;(root.querySelector('[data-action="lock"]') as HTMLElement).click()
+    expect(toggle(root, 'A', 'monday').disabled).toBe(true)
+    toggle(root, 'A', 'monday').click()
+    expect(application.schedule.presences).toEqual([])
   })
 })

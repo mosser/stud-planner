@@ -1,5 +1,6 @@
 import type { Booking, Timing } from '../domain/booking.ts'
 import { Cadence } from '../domain/cadence.ts'
+import { Category } from '../domain/category.ts'
 import { theDay } from '../domain/day.ts'
 import { Duration } from '../domain/duration.ts'
 import {
@@ -70,6 +71,17 @@ function noteField(given: BookingDialogOptions): Markup | string {
   return html`<label>Note <textarea name="note" rows="2">${note ?? ''}</textarea></label>`
 }
 
+/** What a meeting is about, among the categories configured; none to choose for a time block. */
+function categoryField(given: BookingDialogOptions): Markup | string {
+  if (given.kind !== 'meeting') {
+    return ''
+  }
+  return html`<label>Category <select name="category">
+    <option value="">Choose a category</option>
+    ${Category.all.map((category, rank) => html`<option value="${rank}">${category.name}</option>`)}
+  </select></label>`
+}
+
 /** The participants of the schedule, each to tick, for a meeting; none for a time block. */
 function participantsField(given: BookingDialogOptions): Markup | string {
   const { participants } = given.schedule
@@ -120,6 +132,7 @@ function markupOf(given: BookingDialogOptions): Markup {
     <label>Weekday <select name="weekday">${options(Weekday.all, (weekday) => weekday.name)}</select></label>
     <label>Start <select name="start">${options(theDay.quarters, String)}</select></label>
     <label>Duration <select name="duration">${options(durations, durationWritten)}</select></label>
+    ${categoryField(given)}
     ${participantsField(given)}
     ${noteField(given)}
     </fieldset>
@@ -155,15 +168,24 @@ function choose(form: HTMLFormElement, given: BookingDialogOptions): void {
     }
   }
   const meeting = given.booking instanceof Meeting ? given.booking : undefined
+  const category = form.elements.namedItem('category') as HTMLSelectElement | null
+  if (category !== null) {
+    const rank = meeting?.category === undefined ? -1 : Category.all.indexOf(meeting.category)
+    category.value = rank < 0 ? '' : String(rank)
+  }
   for (const box of form.querySelectorAll<HTMLInputElement>('input[name="participant"]')) {
     const participant = given.schedule.participants[Number(box.value)]
     box.checked = participant !== undefined && meeting?.hasParticipant(participant) === true
   }
 }
 
+/** What a list of the dialog has chosen; nothing while it shows its heading, valued empty. */
 function chosen<T>(form: HTMLFormElement, name: string, values: readonly T[]): T | undefined {
   const field = form.elements.namedItem(name) as HTMLSelectElement | null
-  return values[Number(field?.value)]
+  if (field === null || field.value === '') {
+    return undefined
+  }
+  return values[Number(field.value)]
 }
 
 function textOf(form: HTMLFormElement, name: string): string {
@@ -194,6 +216,7 @@ function candidateOf(form: HTMLFormElement, given: BookingDialogOptions, timing:
     title: title.trim() || standInTitle,
     note: textOf(form, 'note'),
     participants: participantsTicked(form, given),
+    category: chosen(form, 'category', Category.all),
   })
 }
 
@@ -216,7 +239,9 @@ function outcomeOf(form: HTMLFormElement, given: BookingDialogOptions): Outcome 
   if (other !== undefined) {
     return { booking: undefined, finding: overlap(candidate, other) }
   }
-  if (given.kind === 'meeting' && textOf(form, 'title').trim() === '') {
+  const isIncomplete =
+    textOf(form, 'title').trim() === '' || (candidate instanceof Meeting && !candidate.category)
+  if (given.kind === 'meeting' && isIncomplete) {
     return { booking: undefined, finding: undefined }
   }
   return { booking: candidate, finding: undefined }

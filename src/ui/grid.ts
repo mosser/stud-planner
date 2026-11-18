@@ -1,8 +1,15 @@
 import type { Booking } from '../domain/booking.ts'
-import type { Week } from '../domain/cadence.ts'
+import { Week } from '../domain/cadence.ts'
+import type { Category } from '../domain/category.ts'
 import { theDay } from '../domain/day.ts'
 import { Duration } from '../domain/duration.ts'
-import { cadenceWritten, labelOf, timeOf, withParticipants } from '../domain/findings.ts'
+import {
+  cadenceWritten,
+  labelOf,
+  presenceLabel,
+  timeOf,
+  withParticipants,
+} from '../domain/findings.ts'
 import { Meeting } from '../domain/meeting.ts'
 import type { Participant } from '../domain/participant.ts'
 import type { Schedule } from '../domain/schedule.ts'
@@ -10,6 +17,7 @@ import type { TimeOfDay } from '../domain/time-of-day.ts'
 import { Weekday } from '../domain/weekday.ts'
 import { type Slot, type Tab, weekOf } from './gestures.ts'
 import { html, type Markup } from './html.ts'
+import { presenceIcon } from './icon.ts'
 
 /**
  * How a booking is named to a screen reader: Lab meeting, weekly, Monday 10:00 to 11:00; a time
@@ -20,7 +28,11 @@ export function accessibleNameOf(booking: Booking): string {
     booking.isTimeBlock && booking.title !== undefined
       ? `Time block: ${booking.title}`
       : labelOf(booking)
-  const spoken = `${name}, ${cadenceWritten(booking.cadence)}, ${booking.weekday.name} ${timeOf(booking)}`
+  const category =
+    booking instanceof Meeting && booking.category !== undefined
+      ? ` (${booking.category.name})`
+      : ''
+  const spoken = `${name}${category}, ${cadenceWritten(booking.cadence)}, ${booking.weekday.name} ${timeOf(booking)}`
   const people = participantsOf(booking)
   return people.length === 0 ? spoken : `${spoken}, ${withParticipants(people)}`
 }
@@ -38,15 +50,31 @@ export interface Drawing {
   readonly isLocked?: boolean | undefined
   /** The participant whose meetings stand out, every other booking dimmed; none when absent. */
   readonly participant?: Participant | undefined
+  /** The category whose meetings stand out, every other booking dimmed; none when absent. */
+  readonly category?: Category | undefined
 }
 
-/** Whether a booking is dimmed: a participant is singled out, and it is not one of their meetings. */
+/**
+ * Whether a booking is dimmed: a participant or a category is singled out, and it is not one of
+ * their meetings.
+ */
 function isDimmed(booking: Booking, drawing: Drawing): boolean {
-  const { participant } = drawing
-  return (
-    participant !== undefined &&
-    !(booking instanceof Meeting && booking.hasParticipant(participant))
-  )
+  const { participant, category } = drawing
+  if (participant !== undefined) {
+    return !(booking instanceof Meeting && booking.hasParticipant(participant))
+  }
+  if (category !== undefined) {
+    return !(booking instanceof Meeting && booking.category === category)
+  }
+  return false
+}
+
+/** The tag of a meeting's category; none for a meeting without one, or a time block. */
+function categoryTag(booking: Booking): Markup | string {
+  if (!(booking instanceof Meeting) || booking.category === undefined) {
+    return ''
+  }
+  return html`<span class="category-tag">${booking.category.name}</span>`
 }
 
 function dimmedClass(booking: Booking, drawing: Drawing): string {
@@ -119,7 +147,7 @@ function wholeBooking(booking: Booking, rank: number, drawing: Drawing): Markup 
   return html`<div class="booking ${classesOf(booking)} ${lengthClass(booking)} ${dimmedClass(booking, drawing)}"
     style="grid-row: ${rowsOf(booking)}" data-booking="${rank}" role="button" tabindex="0"
     aria-label="${name}" title="${name}">
-    <span class="booking-title">${labelOf(booking)}</span>
+    <span class="booking-title">${categoryTag(booking)}${labelOf(booking)}</span>
     <span class="booking-time">${timeOf(booking)}</span>
     ${participantsLine(booking)}
     ${removeMark(booking, rank, isLocked)}
@@ -221,7 +249,7 @@ function piecedBooking(
   })
   return html`${drawn}
     <div class="booking-label ${weekClass(week)} ${dimmed} ${sharedClass(first)}" style="grid-row: ${rowsOf(first)}">
-      <span class="booking-title">${labelOf(booking)}</span>${removeMark(booking, rank, isLocked)}
+      <span class="booking-title">${categoryTag(booking)}${labelOf(booking)}</span>${removeMark(booking, rank, isLocked)}
     </div>
     <div class="resize-zone ${weekClass(week)} ${sharedClass(last)}" style="grid-row: ${rowsOf(last)}">
       ${resizeHandle(rank, isLocked)}
@@ -257,6 +285,51 @@ function hourLabels(): Markup {
 }
 
 /**
+ * The toggles of a day, saying where the Organizer is on it: one for the week of the tab. On the
+ * overview, one for both weeks when they say the same, else one for each, marked with its letter.
+ * Each goes from not said, to on campus, to remote, and back.
+ */
+function presenceToggles(schedule: Schedule, tab: Tab, weekday: Weekday, drawing: Drawing): Markup {
+  const shown = weekOf(tab)
+  const isAlike = schedule.presenceOn(Week.a, weekday) === schedule.presenceOn(Week.b, weekday)
+  const isLocked = drawing.isLocked === true
+  if (shown !== undefined || isAlike) {
+    const week = shown ?? Week.a
+    return html`<span class="presences">${presenceToggle(schedule, weekday, week, {
+      weekKey: shown === undefined ? 'both' : week.key,
+      letter: undefined,
+      isLocked,
+    })}</span>`
+  }
+  return html`<span class="presences">${Week.all.map((week) =>
+    presenceToggle(schedule, weekday, week, { weekKey: week.key, letter: week, isLocked }),
+  )}</span>`
+}
+
+/** A toggle of a day: for a week, or for both (`both`); marked with the letter of its week when given. */
+function presenceToggle(
+  schedule: Schedule,
+  weekday: Weekday,
+  week: Week,
+  shownAs: {
+    readonly weekKey: string
+    readonly letter: Week | undefined
+    readonly isLocked: boolean
+  },
+): Markup {
+  const presence = schedule.presenceOn(week, weekday)
+  const label = presenceLabel(weekday.name, shownAs.letter?.name, presence?.name)
+  const letter =
+    shownAs.letter === undefined
+      ? ''
+      : html`<span class="presence-week">${shownAs.letter.key}</span>`
+  const weekClassName = shownAs.letter === undefined ? '' : weekClass(shownAs.letter)
+  return html`<button type="button" class="presence ${presence?.key ?? 'unsaid'} ${weekClassName}"
+    data-presence-week="${shownAs.weekKey}" data-presence-weekday="${weekday.key}"
+    aria-label="${label}" title="${label}" ${shownAs.isLocked ? 'disabled' : ''}>${presenceIcon(presence?.key)}${letter}</button>`
+}
+
+/**
  * The grid of a tab: a weekday per column, a quarter of the day per row, and its bookings, each
  * by its rank among the bookings of the schedule; without remove marks or handles while locked.
  */
@@ -272,7 +345,10 @@ export function gridOf(schedule: Schedule, tab: Tab, drawing: Drawing = {}): Mar
   )
   return html`<div class="week" data-shows="${tab}" style="--quarters: ${theDay.quarterCount}">
     <div class="corner"></div>
-    ${Weekday.all.map((weekday) => html`<div class="weekday">${weekday.name}</div>`)}
+    ${Weekday.all.map(
+      (weekday) =>
+        html`<div class="weekday">${weekday.name}${presenceToggles(schedule, tab, weekday, drawing)}</div>`,
+    )}
     <div class="hours">${hourLabels()}</div>
     ${columns}
   </div>`

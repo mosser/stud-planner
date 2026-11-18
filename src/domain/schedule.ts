@@ -1,8 +1,9 @@
 import type { Booking } from './booking.ts'
 import type { Cadence, Week } from './cadence.ts'
-import { nameTaken, notAParticipant, overlap } from './findings.ts'
+import { dayTwice, nameTaken, notAParticipant, overlap } from './findings.ts'
 import { Meeting } from './meeting.ts'
 import { Participant } from './participant.ts'
+import type { DayPresence, Presence } from './presence.ts'
 import { TimeBlock } from './time-block.ts'
 import type { TimeOfDay } from './time-of-day.ts'
 import type { Weekday } from './weekday.ts'
@@ -30,6 +31,8 @@ export class Schedule {
   readonly timeBlocks: readonly TimeBlock[]
   /** The participants of the schedule, in the order they were added; no two share a name. */
   readonly participants: readonly Participant[]
+  /** Where the Organizer is on the days of week A and week B that say so; each day once. */
+  readonly presences: readonly DayPresence[]
 
   /**
    * Throws an OverlapError when two of the bookings overlap, and a RangeError when two
@@ -39,7 +42,16 @@ export class Schedule {
     meetings: readonly Meeting[] = [],
     timeBlocks: readonly TimeBlock[] = [],
     participants: readonly Participant[] = [],
+    presences: readonly DayPresence[] = [],
   ) {
+    const twice = presences.find((day, rank) =>
+      presences
+        .slice(0, rank)
+        .some((before) => before.week === day.week && before.weekday === day.weekday),
+    )
+    if (twice !== undefined) {
+      throw new RangeError(dayTwice(twice.weekday.name, twice.week.name))
+    }
     const named = participants.find((participant, rank) =>
       participants.slice(0, rank).some((before) => before.isNamed(participant.name)),
     )
@@ -59,6 +71,19 @@ export class Schedule {
     this.meetings = [...meetings]
     this.timeBlocks = [...timeBlocks]
     this.participants = [...participants]
+    this.presences = [...presences]
+  }
+
+  /** Where the Organizer is on that day of that week; absent when the day does not say. */
+  presenceOn(week: Week, weekday: Weekday): Presence | undefined {
+    return this.presences.find((day) => day.week === week && day.weekday === weekday)?.presence
+  }
+
+  /** The schedule with that day of that week on campus, remote, or saying nothing (absent). */
+  afterSettingPresence(week: Week, weekday: Weekday, presence: Presence | undefined): Schedule {
+    const others = this.presences.filter((day) => day.week !== week || day.weekday !== weekday)
+    const presences = presence === undefined ? others : [...others, { week, weekday, presence }]
+    return new Schedule(this.meetings, this.timeBlocks, this.participants, presences)
   }
 
   /**
@@ -103,7 +128,7 @@ export class Schedule {
    */
   afterAddingParticipant(name: string): Schedule {
     const participants = [...this.participants, new Participant(name)]
-    return new Schedule(this.meetings, this.timeBlocks, participants)
+    return new Schedule(this.meetings, this.timeBlocks, participants, this.presences)
   }
 
   /**
@@ -138,7 +163,7 @@ export class Schedule {
         ? meeting.afterChanging({ participants: changed(meeting.participants) })
         : meeting,
     )
-    return new Schedule(meetings, this.timeBlocks, changed(this.participants))
+    return new Schedule(meetings, this.timeBlocks, changed(this.participants), this.presences)
   }
 
   /**
@@ -168,12 +193,18 @@ export class Schedule {
   /** The schedule with the booking added. Throws an OverlapError when it overlaps another. */
   afterAdding(booking: Booking): Schedule {
     if (booking instanceof Meeting) {
-      return new Schedule([...this.meetings, booking], this.timeBlocks, this.participants)
+      return new Schedule(
+        [...this.meetings, booking],
+        this.timeBlocks,
+        this.participants,
+        this.presences,
+      )
     }
     return new Schedule(
       this.meetings,
       [...this.timeBlocks, timeBlockOf(booking)],
       this.participants,
+      this.presences,
     )
   }
 
@@ -188,11 +219,12 @@ export class Schedule {
         this.meetings.with(rankIn(this.meetings, booking), changed),
         this.timeBlocks,
         this.participants,
+        this.presences,
       )
     }
     const block = timeBlockOf(booking)
     const blocks = this.timeBlocks.with(rankIn(this.timeBlocks, block), timeBlockOf(changed))
-    return new Schedule(this.meetings, blocks, this.participants)
+    return new Schedule(this.meetings, blocks, this.participants, this.presences)
   }
 
   /** The schedule without the booking. Throws a RangeError for a booking it does not hold. */
@@ -203,6 +235,7 @@ export class Schedule {
         this.meetings.filter((each) => each !== booking),
         this.timeBlocks,
         this.participants,
+        this.presences,
       )
     }
     rankIn(this.timeBlocks, timeBlockOf(booking))
@@ -210,6 +243,7 @@ export class Schedule {
       this.meetings,
       this.timeBlocks.filter((each) => each !== booking),
       this.participants,
+      this.presences,
     )
   }
 }

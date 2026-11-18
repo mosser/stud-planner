@@ -118,8 +118,8 @@ describe('the findings', () => {
       'a.json is refused: it is not a schedule file, nor JSON.',
     )
     expect(notAScheduleFile()).toBe('it is not a schedule file.')
-    expect(unknownVersion(4)).toBe(
-      'it is a schedule file of version 4, and this system reads versions 1 to 3.',
+    expect(unknownVersion(5)).toBe(
+      'it is a schedule file of version 5, and this system reads versions 1 to 4.',
     )
     expect(missingField(part, 'title')).toBe('meeting 2 has no title.')
     expect(unknownField(part, 'room')).toBe(

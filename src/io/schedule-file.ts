@@ -1,9 +1,12 @@
 import type { Booking, Timing } from '../domain/booking.ts'
 import { Cadence, Week } from '../domain/cadence.ts'
+import { Category } from '../domain/category.ts'
 import { Duration } from '../domain/duration.ts'
 import {
   bookingBroken,
   bookingsOverlap,
+  dayOfTheFile,
+  dayTwice,
   meetingOfTheFile,
   missingField,
   nameTaken,
@@ -19,6 +22,7 @@ import {
 } from '../domain/findings.ts'
 import { Meeting } from '../domain/meeting.ts'
 import { Participant } from '../domain/participant.ts'
+import { type DayPresence, Presence } from '../domain/presence.ts'
 import { Schedule } from '../domain/schedule.ts'
 import { TimeBlock } from '../domain/time-block.ts'
 import { TimeOfDay } from '../domain/time-of-day.ts'
@@ -29,30 +33,35 @@ export const scheduleFileName = 'stud-planner-schedule.json'
 
 const format = 'stud-planner/schedule'
 /** The version written; every version ever written is read (ADR 0007). */
-const version = 3
+const version = 4
 
 /**
  * How a version of the schedule file is written: the field and the values of the week of a
  * bi-weekly booking (version 1 as `parity`, odd for week A and even for week B; later ones as
- * `week`, A or B), and whether it lists participants (from version 3).
+ * `week`, A or B), whether it lists participants (from version 3), and whether its meetings have
+ * a category and its days say where the Organizer is (from version 4).
  */
 interface WeekWritten {
   readonly field: string
   readonly weeks: Readonly<Record<string, Week>>
   readonly hasParticipants: boolean
+  readonly hasCategoriesAndDays: boolean
 }
 
 const parity = { field: 'parity', weeks: { odd: Week.a, even: Week.b } }
 const lettered = { field: 'week', weeks: { A: Week.a, B: Week.b } }
 const weekWritten: Readonly<Record<number, WeekWritten>> = {
-  1: { ...parity, hasParticipants: false },
-  2: { ...lettered, hasParticipants: false },
-  3: { ...lettered, hasParticipants: true },
+  1: { ...parity, hasParticipants: false, hasCategoriesAndDays: false },
+  2: { ...lettered, hasParticipants: false, hasCategoriesAndDays: false },
+  3: { ...lettered, hasParticipants: true, hasCategoriesAndDays: false },
+  4: { ...lettered, hasParticipants: true, hasCategoriesAndDays: true },
 }
 
 function scheduleFields(written: WeekWritten): string[] {
   const fields = ['format', 'version', 'meetings', 'timeBlocks']
-  return written.hasParticipants ? [...fields, 'participants'] : fields
+  const participants = written.hasParticipants ? ['participants'] : []
+  const days = written.hasCategoriesAndDays ? ['days'] : []
+  return [...fields, ...participants, ...days]
 }
 
 /**
@@ -84,6 +93,14 @@ interface MeetingContent extends TimingContent {
   readonly title: string
   readonly note?: string
   readonly participants?: readonly string[]
+  readonly category?: string
+}
+
+/** A day of a week that says where the Organizer is, as the schedule file holds it. */
+interface DayContent {
+  readonly week: string
+  readonly weekday: string
+  readonly presence: string
 }
 
 /** A time block as the schedule file holds it. */
@@ -98,6 +115,7 @@ export interface ScheduleContent {
   readonly meetings: readonly MeetingContent[]
   readonly timeBlocks: readonly TimeBlockContent[]
   readonly participants: readonly string[]
+  readonly days: readonly DayContent[]
 }
 
 /** What reading a schedule file gives: the schedule, or why the file is refused. */
@@ -123,6 +141,7 @@ function contentOfMeeting(meeting: Meeting): MeetingContent {
     ...(meeting.participants.length === 0
       ? {}
       : { participants: meeting.participants.map((participant) => participant.name) }),
+    ...(meeting.category === undefined ? {} : { category: meeting.category.name }),
   }
 }
 
@@ -141,6 +160,11 @@ export function contentOf(schedule: Schedule): ScheduleContent {
     meetings: schedule.meetings.map(contentOfMeeting),
     timeBlocks: schedule.timeBlocks.map(contentOfTimeBlock),
     participants: schedule.participants.map((participant) => participant.name),
+    days: schedule.presences.map((day) => ({
+      week: day.week.key,
+      weekday: day.weekday.key,
+      presence: day.presence.key,
+    })),
   }
 }
 
@@ -267,14 +291,48 @@ function meetingOf(reading: Reading, value: unknown): Meeting {
     ...timingFields(reading.written),
     'note',
     ...participantsField,
+    ...(reading.written.hasCategoriesAndDays ? ['category'] : []),
   ])
   const description = {
     title: fieldRead(part, record, 'title', text),
     ...timingOf(reading, record),
     note: 'note' in record ? fieldRead(part, record, 'note', text) : undefined,
     participants: 'participants' in record ? participantsOf(reading, record) : [],
+    category:
+      'category' in record
+        ? fieldRead(part, record, 'category', (value) =>
+            typeof value === 'string' ? Category.named(value) : undefined,
+          )
+        : undefined,
   }
   return built(part, () => new Meeting(description))
+}
+
+/** The days of the weeks that say where the Organizer is, each once. */
+function daysOf(content: Record<string, unknown>): DayPresence[] {
+  if (!('days' in content)) {
+    return []
+  }
+  const days: DayPresence[] = []
+  listOf(content, 'days').forEach((value, index) => {
+    const part = dayOfTheFile(index + 1)
+    const record = recordOf('days', value)
+    checkFields(part, record, ['week', 'weekday', 'presence'])
+    const day = {
+      week: fieldRead(part, record, 'week', (each) =>
+        typeof each === 'string' ? Week.withKey(each) : undefined,
+      ),
+      weekday: fieldRead(part, record, 'weekday', weekday),
+      presence: fieldRead(part, record, 'presence', (each) =>
+        typeof each === 'string' ? Presence.withKey(each) : undefined,
+      ),
+    }
+    if (days.some((before) => before.week === day.week && before.weekday === day.weekday)) {
+      throw new Refusal(bookingBroken(part, dayTwice(day.weekday.name, day.week.name)))
+    }
+    days.push(day)
+  })
+  return days
 }
 
 /** The participants of the schedule, by name, no two with the same name. */
@@ -342,7 +400,7 @@ function scheduleOf(content: unknown): Schedule {
     const reason = overlap(booking, other)
     throw new Refusal(bookingsOverlap(partOf.get(other) ?? '', partOf.get(booking) ?? '', reason))
   }
-  return new Schedule(meetings, blocks, participants)
+  return new Schedule(meetings, blocks, participants, daysOf(content))
 }
 
 /** The schedule a schedule file's content holds, or why it is refused: nothing is taken then. */

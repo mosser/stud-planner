@@ -61,18 +61,25 @@ describe('the meeting dialog of a new meeting', () => {
     expect(dialog.querySelector('[data-action="remove"]')).toBeNull()
   })
 
-  it('refuses Done until the meeting has a title', () => {
+  it('refuses Done until the meeting has a title and a category', () => {
     const onDone = vi.fn()
     const dialog = openBookingDialog(document, { schedule, kind: 'meeting', proposal, onDone })
     expect(done(dialog).disabled).toBe(true)
     expect(finding(dialog)).toBe('')
     type(dialog, 'title', ' Ana ')
     type(dialog, 'note', 'Room 3')
+    expect(done(dialog).disabled).toBe(true)
+    choose(dialog, 'category', 'PhD')
     expect(done(dialog).disabled).toBe(false)
     dialog.querySelector('form')?.requestSubmit()
     expect(onDone).toHaveBeenCalledTimes(1)
     const added = onDone.mock.calls[0]?.[0]
-    expect([added.title, added.note, added.weekday]).toEqual(['Ana', 'Room 3', Weekday.tuesday])
+    expect([added.title, added.note, added.weekday, added.category?.name]).toEqual([
+      'Ana',
+      'Room 3',
+      Weekday.tuesday,
+      'PhD',
+    ])
     expect(dialog.isConnected).toBe(false)
   })
 
@@ -132,6 +139,8 @@ describe('the meeting dialog of a meeting of the schedule', () => {
     })
     expect(dialog.querySelector('h2')?.textContent).toBe('Lab meeting')
     expect(field<HTMLTextAreaElement>(dialog, 'note').value).toBe('Room 201')
+    expect(field<HTMLSelectElement>(dialog, 'category').value).toBe('')
+    choose(dialog, 'category', 'Lab')
     choose(dialog, 'duration', '1 h 30')
     dialog.querySelector('form')?.requestSubmit()
     expect(onDone.mock.calls[0]?.[0].end.toString()).toBe('11:30')
@@ -171,6 +180,7 @@ describe('the participants of a meeting in its dialog', () => {
     const boxes = [...dialog.querySelectorAll<HTMLInputElement>('input[name="participant"]')]
     expect(boxes.map((box) => box.checked)).toEqual([true, false])
     ;(boxes[1] as HTMLInputElement).checked = true
+    choose(dialog, 'category', 'Master')
     dialog.querySelector('form')?.requestSubmit()
     expect(onDone.mock.calls[0]?.[0].participants).toEqual([ana, bo])
   })

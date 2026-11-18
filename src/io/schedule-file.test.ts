@@ -1,7 +1,9 @@
 import { describe, expect, it } from 'vitest'
 import { Cadence, Week } from '../domain/cadence.ts'
+import { Category } from '../domain/category.ts'
 import { aMeeting, aTimeBlock, at } from '../domain/meeting.fixture.ts'
 import { Participant } from '../domain/participant.ts'
+import { Presence } from '../domain/presence.ts'
 import { Schedule } from '../domain/schedule.ts'
 import { Weekday } from '../domain/weekday.ts'
 import {
@@ -171,6 +173,61 @@ describe('the participants of the schedule file', () => {
   })
 })
 
+describe('the categories and the days of the schedule file', () => {
+  const phd = Category.named('PhD')
+  const withBoth = new Schedule(
+    [aMeeting({ category: phd })],
+    [],
+    [],
+    [{ week: Week.b, weekday: Weekday.monday, presence: Presence.remote }],
+  )
+
+  function fileOf(fields: Record<string, unknown>): unknown {
+    return { format: 'stud-planner/schedule', version: 4, meetings: [], ...fields }
+  }
+
+  it('are written, a category only on a meeting that has one', () => {
+    const content = contentOf(withBoth)
+    expect(content.meetings[0]?.category).toBe('PhD')
+    expect(content.days).toEqual([{ week: 'B', weekday: 'monday', presence: 'remote' }])
+    expect(contentOf(new Schedule([aMeeting()])).meetings[0]?.category).toBeUndefined()
+  })
+
+  it('are read back as they were written', () => {
+    const read = readScheduleFile(scheduleFileOf(withBoth))
+    expect(!read.isRefused && contentOf(read.schedule)).toEqual(contentOf(withBoth))
+  })
+
+  it('refuse a category that is not configured, and a day said twice or wrongly', () => {
+    expect(
+      reasonOf(
+        scheduleFromContent(fileOf({ meetings: [{ ...aMeetingContent, category: 'Course' }] })),
+      ),
+    ).toBe('meeting 1 cannot have "Course" as its category.')
+    const day = { week: 'A', weekday: 'friday', presence: 'on-campus' }
+    expect(reasonOf(scheduleFromContent(fileOf({ days: [day, day] })))).toBe(
+      'day 2: Friday of week A says twice where the Organizer is.',
+    )
+    expect(reasonOf(scheduleFromContent(fileOf({ days: [{ ...day, presence: 'home' }] })))).toBe(
+      'day 1 cannot have "home" as its presence.',
+    )
+    expect(reasonOf(scheduleFromContent(fileOf({ days: [{ ...day, room: 'B1' }] })))).toBe(
+      'day 1 has a field room, which a schedule file does not have.',
+    )
+  })
+
+  it('are none in a file of version 3, which cannot have them', () => {
+    const three = {
+      format: 'stud-planner/schedule',
+      version: 3,
+      meetings: [{ ...aMeetingContent, category: 'PhD' }],
+    }
+    expect(reasonOf(scheduleFromContent(three))).toBe(
+      'meeting 1 has a field category, which a schedule file does not have.',
+    )
+  })
+})
+
 describe('a schedule file of version 1', () => {
   const versionOne = {
     format: 'stud-planner/schedule',
@@ -205,9 +262,9 @@ describe('a schedule file of version 1', () => {
     )
   })
 
-  it('is written again as version 3', () => {
+  it('is written again as version 4', () => {
     const read = scheduleFromContent(versionOne)
-    expect(!read.isRefused && contentOf(read.schedule).version).toBe(3)
+    expect(!read.isRefused && contentOf(read.schedule).version).toBe(4)
   })
 })
 
@@ -219,7 +276,7 @@ describe('the schedule file', () => {
   it('writes each meeting as the specification lists, a week for a bi-weekly one only', () => {
     expect(contentOf(schedule)).toEqual({
       format: 'stud-planner/schedule',
-      version: 3,
+      version: 4,
       meetings: [
         { ...aMeetingContent, note: 'Room 201' },
         {
@@ -241,6 +298,7 @@ describe('the schedule file', () => {
       ],
       timeBlocks: [],
       participants: [],
+      days: [],
     })
   })
 
@@ -266,11 +324,11 @@ describe('the schedule file', () => {
   })
 
   it('refuses a version it does not read', () => {
-    expect(reasonOf(scheduleFromContent(fileWith([], { version: 4 })))).toBe(
-      'it is a schedule file of version 4, and this system reads versions 1 to 3.',
+    expect(reasonOf(scheduleFromContent(fileWith([], { version: 5 })))).toBe(
+      'it is a schedule file of version 5, and this system reads versions 1 to 4.',
     )
     expect(reasonOf(scheduleFromContent(fileWith([], { version: '2' })))).toBe(
-      'it is a schedule file of version "2", and this system reads versions 1 to 3.',
+      'it is a schedule file of version "2", and this system reads versions 1 to 4.',
     )
   })
 

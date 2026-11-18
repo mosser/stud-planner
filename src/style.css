@@ -30,6 +30,8 @@
   /* Time blocks: grey over the surface, their cadence's colour as a border. */
   --color-blocked: color-mix(in srgb, var(--mac-grey) 25%, var(--mac-white));
   /* What is chosen, the tab shown or the kind a press adds: maroon on a light maroon. */
+  /* The frame of the icon in the masthead: Dundurn Grey on maroon. */
+  --color-icon-frame: var(--mac-accent-light-grey);
   --color-chosen-text: var(--mac-maroon);
   --color-chosen-tint: color-mix(in srgb, var(--mac-maroon) 12%, var(--mac-white));
   /*
@@ -122,7 +124,7 @@ textarea {
 }
 
 .icon-frame {
-  stroke: currentColor;
+  stroke: var(--color-icon-frame);
 }
 
 .icon-week-a {
@@ -219,10 +221,18 @@ button.primary {
   height: 1.25rem;
 }
 
-.adding {
+/* Under the grid: what a press adds, and what stands out. */
+.under-grid {
+  display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: center;
+  gap: 1.5rem;
   margin-top: 0.75rem;
+}
+
+.adding {
+  align-items: center;
 }
 
 .adding span {
@@ -258,10 +268,50 @@ button:disabled {
 }
 
 .weekday {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
   padding: 0.25rem;
   border-bottom: 1px solid var(--color-rule);
   font-weight: 600;
-  text-align: center;
+}
+
+/* Where the Organizer is on a day: a building on campus, a house remote, a dashed circle unsaid. */
+.presences {
+  display: inline-flex;
+  gap: 0.15rem;
+}
+
+.presence {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.1rem;
+  padding: 0.1rem 0.2rem;
+  border: 1px solid transparent;
+  border-radius: 0.3rem;
+  background: none;
+  color: var(--color-text);
+  font: inherit;
+  font-size: 0.7rem;
+  cursor: pointer;
+}
+
+.presence:hover:not(:disabled) {
+  border-color: var(--color-rule);
+}
+
+.presence:disabled {
+  cursor: default;
+}
+
+.presence.unsaid {
+  color: var(--color-secondary-text);
+}
+
+.presence-icon {
+  width: 1.1rem;
+  height: 1.1rem;
 }
 
 .hours,
@@ -369,13 +419,43 @@ button:disabled {
   max-width: 100%;
 }
 
-.booking.short .booking-participants {
+.booking.short .category-tag {
+  margin-right: 0.3rem;
+  padding: 0 0.25rem;
+  border: 1px solid var(--color-secondary-text);
+  border-radius: 0.2rem;
+  color: var(--color-text);
+  font-size: 0.65rem;
+  font-weight: 600;
+}
+
+.booking-participants {
   flex-basis: 100%;
 }
 
 .booking.shortest .booking-time,
-.booking.shortest .booking-participants {
+.booking.shortest .category-tag {
+  margin-right: 0.3rem;
+  padding: 0 0.25rem;
+  border: 1px solid var(--color-secondary-text);
+  border-radius: 0.2rem;
+  color: var(--color-text);
+  font-size: 0.65rem;
+  font-weight: 600;
+}
+
+.booking-participants {
   display: none;
+}
+
+.category-tag {
+  margin-right: 0.3rem;
+  padding: 0 0.25rem;
+  border: 1px solid var(--color-secondary-text);
+  border-radius: 0.2rem;
+  color: var(--color-text);
+  font-size: 0.65rem;
+  font-weight: 600;
 }
 
 .booking-participants {
@@ -604,8 +684,14 @@ dialog label.participant {
   cursor: pointer;
 }
 
+.filter {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: var(--color-secondary-text);
+}
+
 .participant-filter {
-  margin-right: auto;
   padding: 0.35rem 0.6rem;
   border: 1px solid var(--color-rule);
   border-radius: 0.375rem;

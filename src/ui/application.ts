@@ -1,5 +1,6 @@
 import type { Booking } from '../domain/booking.ts'
-import type { Cadence } from '../domain/cadence.ts'
+import { type Cadence, Week } from '../domain/cadence.ts'
+import { Category } from '../domain/category.ts'
 import { theDay } from '../domain/day.ts'
 import {
   fileRefused,
@@ -10,7 +11,9 @@ import {
   setAside,
 } from '../domain/findings.ts'
 import type { Participant } from '../domain/participant.ts'
+import { Presence } from '../domain/presence.ts'
 import type { Schedule } from '../domain/schedule.ts'
+import { Weekday } from '../domain/weekday.ts'
 import { readScheduleFile, scheduleFileName, scheduleFileOf } from '../io/schedule-file.ts'
 import type { Restored, ScheduleStore } from '../io/schedule-store.ts'
 import { type Kind, openBookingDialog } from './booking-dialog.ts'
@@ -98,7 +101,7 @@ export function mountApplication(root: HTMLElement, context: ApplicationContext)
   /** Whether the schedule is locked against every change. */
   let isLocked = context.restored.isLocked
   /** The name of the participant whose meetings stand out; none, everyone's being shown alike. */
-  let singledOutName: string | undefined
+  let singledOutValue = ''
   const isSetAside = context.restored.wasSetAside
   let refusal: string | undefined
 
@@ -125,22 +128,46 @@ export function mountApplication(root: HTMLElement, context: ApplicationContext)
       )}</div>`
   }
 
-  /** The participant whose meetings stand out, while they are a participant of the schedule. */
-  function singledOut(): Participant | undefined {
-    return singledOutName === undefined ? undefined : schedule.participantNamed(singledOutName)
+  /**
+   * What stands out on the grid: a category's meetings, or a participant's while they are a
+   * participant of the schedule; nothing, everything being shown alike.
+   */
+  function singledOut(): { participant?: Participant; category?: Category } {
+    const [kind, ...rest] = singledOutValue.split(':')
+    const name = rest.join(':')
+    const participant = kind === 'participant' ? schedule.participantNamed(name) : undefined
+    const category = kind === 'category' ? Category.named(name) : undefined
+    return {
+      ...(participant === undefined ? {} : { participant }),
+      ...(category === undefined ? {} : { category }),
+    }
   }
 
-  /** The list that singles out a participant's meetings, when the schedule has participants. */
-  function participantFilter() {
-    if (schedule.participants.length === 0) {
-      return ''
+  /** The value the filter shows: what stands out, or Everyone. */
+  function filterValue(): string {
+    const { participant, category } = singledOut()
+    if (participant !== undefined) {
+      return `participant:${participant.name}`
     }
-    return html`<select class="participant-filter" data-filter aria-label="Participant">
+    return category === undefined ? '' : `category:${category.name}`
+  }
+
+  /** The list under the grid that singles out a category's meetings, or a participant's. */
+  function filterList() {
+    const participants =
+      schedule.participants.length === 0
+        ? ''
+        : html`<optgroup label="Participants">${schedule.participants.map(
+            (participant) =>
+              html`<option value="participant:${participant.name}">${participant.name}</option>`,
+          )}</optgroup>`
+    return html`<label class="filter">Filter by <select class="participant-filter" data-filter>
       <option value="">Everyone</option>
-      ${schedule.participants.map(
-        (participant) => html`<option value="${participant.name}">${participant.name}</option>`,
-      )}
-    </select>`
+      <optgroup label="Categories">${Category.all.map(
+        (category) => html`<option value="category:${category.name}">${category.name}</option>`,
+      )}</optgroup>
+      ${participants}
+    </select></label>`
   }
 
   /** The lock, a padlock closed while the schedule is locked; Lock to a screen reader. */
@@ -164,7 +191,6 @@ export function mountApplication(root: HTMLElement, context: ApplicationContext)
               html`<button type="button" role="tab" data-tab="${each}"
                 aria-selected="${each === tab ? 'true' : 'false'}">${tabNames[each]}</button>`,
           )}</div>
-          ${participantFilter()}
           <div class="actions">
             <button type="button" class="icon-button" data-action="participants"
               aria-label="Participants" title="Participants">${participantsIcon()}</button>
@@ -175,14 +201,14 @@ export function mountApplication(root: HTMLElement, context: ApplicationContext)
             <input type="file" accept=".json,application/json" data-file hidden>
           </div>
         </div>
-        <div class="grid ${isLocked ? 'locked' : ''}" role="tabpanel" aria-label="${tabNames[tab]}">${gridOf(schedule, tab, { isLocked, participant: singledOut() })}</div>
-        ${addingSwitch()}
+        <div class="grid ${isLocked ? 'locked' : ''}" role="tabpanel" aria-label="${tabNames[tab]}">${gridOf(schedule, tab, { isLocked, ...singledOut() })}</div>
+        <div class="under-grid">${addingSwitch()}${filterList()}</div>
       </main>
       <footer class="site-footer">stud-planner v${context.version}</footer>
     `.text
     const filter = root.querySelector<HTMLSelectElement>('[data-filter]')
     if (filter !== null) {
-      filter.value = singledOut()?.name ?? ''
+      filter.value = filterValue()
     }
   }
 
@@ -265,6 +291,28 @@ export function mountApplication(root: HTMLElement, context: ApplicationContext)
     }
   }
 
+  /**
+   * Moves a day on, in a week or in both (`both`, the two saying the same): from not said, to on
+   * campus, to remote, and back to not said.
+   */
+  function togglePresence(weekKey: string | undefined, weekdayKey: string | undefined): void {
+    const weeks = weekKey === 'both' ? Week.all : [Week.withKey(weekKey ?? '')]
+    const weekday = Weekday.withKey(weekdayKey ?? '')
+    const [first] = weeks
+    if (first === undefined || weekday === undefined) {
+      return
+    }
+    const cycle = [undefined, ...Presence.all]
+    const next = cycle[(cycle.indexOf(schedule.presenceOn(first, weekday)) + 1) % cycle.length]
+    let changed = schedule
+    for (const week of weeks) {
+      if (week !== undefined) {
+        changed = changed.afterSettingPresence(week, weekday, next)
+      }
+    }
+    change(changed)
+  }
+
   function lock(locked: boolean): void {
     isLocked = locked
     void context.store.keepLock(locked)
@@ -301,6 +349,11 @@ export function mountApplication(root: HTMLElement, context: ApplicationContext)
       lock(!isLocked)
       render()
     }
+    const day = target.closest<HTMLElement>('[data-presence-week]')
+    if (day !== null && !isLocked) {
+      togglePresence(day.dataset.presenceWeek, day.dataset.presenceWeekday)
+      return
+    }
     if (action === 'participants') {
       openParticipantsDialog(page, {
         schedule: () => schedule,
@@ -316,7 +369,7 @@ export function mountApplication(root: HTMLElement, context: ApplicationContext)
   root.addEventListener('change', (event) => {
     const filter = event.target as HTMLSelectElement
     if (filter.matches('[data-filter]')) {
-      singledOutName = filter.value === '' ? undefined : filter.value
+      singledOutValue = filter.value
       render()
       return
     }

@@ -22,10 +22,11 @@ from `file://` and is served by GitHub Pages at
 
 It follows the conventions of its siblings `macreport` and `streaming-hat`.
 
-**Current state:** the specification (`docs/specs/`) and ADRs 0001 to 0013
+**Current state:** the specification (`docs/specs/`) and ADRs 0001 to 0014
 are implemented: the three tabs, meetings and time blocks added, moved,
 resized and removed by dragging, the dialog of a booking, overlaps refused,
-the lock, participants, the schedule kept in IndexedDB, and downloaded as or uploaded
+the lock, participants, categories, on campus or remote days, the schedule
+kept in IndexedDB, and downloaded as or uploaded
 from its file. Not released yet.
 
 ## Where things live
@@ -51,7 +52,7 @@ Layout of the code:
 
 ```
 src/domain/   Schedule (no overlap), Booking with Meeting and TimeBlock,
-              Participant,
+              Participant, Category (config/categories.json), Presence,
               Cadence and Week, Weekday, TimeOfDay, Duration, Day
               (config/calendar.json), findings.ts (every sentence shown);
               *.fixture.ts are test helpers
@@ -65,8 +66,9 @@ src/ui/       application.ts (state, toolbar, tabs, drags), gestures.ts (what a
               confirmation.ts, dialog.ts, html.ts
 src/main.ts   entry point, mounted from index.html
 src/style.css palette tokens and all styling
-config/       calendar.json: the hours of the day; inlined at build time and
-              checked by the build
+config/       calendar.json: the hours of the day; categories.json: the
+              categories of meetings; inlined at build time and checked by
+              the build
 scripts/      check-adr.sh: the scriptable ADR checks; release.sh and
               release-notes.sh: cutting a release (ADR 0002)
 ```
@@ -215,6 +217,18 @@ first.
 - The schedule file is version 3: `participants` by name, in the schedule and
   on a meeting. The grid writes them, singles one out (`dimmed`), and draws
   a booking of half an hour or less compact (`lengthClass`).
+
+### ADR 0014: categories and days
+
+- `Category` comes from `config/categories.json` (checked by
+  `checkCategories()`); a meeting refers to one, required by the dialog,
+  absent only on meetings read from version 3 or earlier. The list under the
+  grid singles out a category or a participant (`category:`/`participant:`).
+- `Schedule.presences` says, per day of week A and of week B, on campus or
+  remote, or nothing; toggled in the day headers. The schedule file is
+  version 4 (`category`, `days`); versions 1 to 3 are read.
+- A booking added takes the weeks of its tab; only a booking changed has a
+  Weeks field.
 
 ## Writing
 

@@ -62,6 +62,29 @@ export function durationWritten(duration: Duration): string {
   return minutes === 0 ? `${hours} h` : `${hours} h ${String(minutes).padStart(2, '0')}`
 }
 
+/**
+ * Where the Organizer is on a day, as its toggle is named: Monday: on campus; Monday, week B:
+ * remote; Monday: on campus or remote, not said.
+ */
+export function presenceLabel(
+  weekday: string,
+  week: string | undefined,
+  presence: string | undefined,
+): string {
+  const day = week === undefined ? weekday : `${weekday}, ${week}`
+  return `${day}: ${presence === undefined ? 'on campus or remote, not said' : presence.toLocaleLowerCase()}`
+}
+
+/** Why a day of a week cannot say twice where the Organizer is. */
+export function dayTwice(weekday: string, week: string): string {
+  return `${weekday} of ${week} says twice where the Organizer is.`
+}
+
+/** Why a meeting cannot be without a category. */
+export function needsACategory(): string {
+  return 'A meeting needs a category.'
+}
+
 /** Why a participant cannot be without a name. */
 export function needsAName(): string {
   return 'A participant needs a name.'
@@ -173,7 +196,7 @@ export function notAScheduleFile(): string {
 
 /** Why a file is refused: it is a schedule file of a version this system does not read. */
 export function unknownVersion(version: unknown): string {
-  return `it is a schedule file of version ${JSON.stringify(version)}, and this system reads versions 1 to 3.`
+  return `it is a schedule file of version ${JSON.stringify(version)}, and this system reads versions 1 to 4.`
 }
 
 /** Why a file is refused: a part of it has a field missing. */
@@ -204,6 +227,11 @@ export function bookingsOverlap(part: string, otherPart: string, reason: string)
 /** A meeting of a schedule file, by its rank, the first being 1: meeting 3. */
 export function meetingOfTheFile(rank: number): string {
   return `meeting ${rank}`
+}
+
+/** A day of a schedule file, by its rank, the first being 1: day 2. */
+export function dayOfTheFile(rank: number): string {
+  return `day ${rank}`
 }
 
 /** A participant of a schedule file, by its rank, the first being 1: participant 2. */

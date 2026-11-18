@@ -77,3 +77,18 @@ export function participantsIcon(): Markup {
     `<svg class="action-icon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c0-3.6 2.9-6 6.5-6s6.5 2.4 6.5 6"/><path d="M16 4.6a3.5 3.5 0 0 1 0 6.8M18 14.3c2.1.7 3.5 2.8 3.5 5.7"/></svg>`,
   )
 }
+
+/** The icon of where the Organizer is on a day: a building on campus, a house remote, or a dashed circle when the day does not say. */
+export function presenceIcon(presenceKey: string | undefined): Markup {
+  const drawings: Record<string, string> = {
+    'on-campus': '<path d="M3 21h18M5 21V10M19 21V10M9 21v-7M15 21v-7M2.5 10L12 4l9.5 6z"/>',
+    remote: '<path d="M3 11l9-7 9 7M5 9.5V21h14V9.5M10 21v-6h4v6"/>',
+  }
+  const drawing =
+    presenceKey === undefined
+      ? '<circle cx="12" cy="12" r="7" stroke-dasharray="3 3"/>'
+      : (drawings[presenceKey] ?? '')
+  return raw(
+    `<svg class="presence-icon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${drawing}</svg>`,
+  )
+}

@@ -64,6 +64,22 @@ or less writes its title and time on one line, and its participants under
 them; a booking of a quarter, its title alone. Every booking tells all of
 itself on hover: its title, cadence, weekday, time and participants.
 
+## Categories
+
+| Rule | Behaviour |
+|---|---|
+| On a meeting | The dialog of a meeting asks for its category, among those `config/categories.json` lists, *Choose a category* until one is chosen; Done is refused until it is. A meeting read without one asks for it when next changed. |
+| On the grid | A meeting is tagged with its category, before its title; a screen reader hears it after the title: *Lab meeting (Lab), weekly, …* |
+| Singled out | The list under the grid singles out a category's meetings, as it does a participant's. |
+
+## On campus or remote
+
+| Rule | Behaviour |
+|---|---|
+| The toggle | The header of each weekday holds a toggle saying where the Organizer is on that day: a building on campus, a house remote, a dashed circle when it does not say. A click goes from not said to on campus, to remote, and back. |
+| Its week | On a week's tab, the toggle is that of the day in the week of the tab. On the overview, a day has one toggle while week A and week B say the same, which changes both; else two, marked A and B, one for the day in each week. |
+| Locked | The toggles are shown, and do not change. |
+
 ## Participants
 
 | Rule | Behaviour |
@@ -73,14 +89,14 @@ itself on hover: its title, cadence, weekday, time and participants.
 | Rename | A name changed in the list renames the participant, in every meeting they take part in. |
 | Remove | The remove mark of a participant takes them out of the schedule and of every meeting; when they take part in some, the Organizer confirms first: *Remove Ana from the participants, and from 2 meetings?* |
 | On a meeting | The dialog of a meeting ticks its participants among those of the schedule. The grid writes them under the meeting's time; a screen reader hears them: *Lab meeting, weekly, Monday 10:00 to 11:00, with Ana and Bo.* |
-| Singled out | A list after the tabs, *Everyone* or a participant's name, shown when the schedule has participants, singles out that participant's meetings: every other booking is faded. |
+| Singled out | A list under the grid, beside the switch, labelled *Filter by*, offers *Everyone*, the categories and the participants: one chosen singles out their meetings, every other booking faded. |
 | Locked | The participants are shown, and none is added, renamed or removed. |
 
 ## The dialog of a booking
 
 A click on a booking, without a drag, opens its dialog: title, weeks (both
-weeks, week A or week B), weekday, start and duration, and for a meeting its
-participants and its note, with
+weeks, week A or week B, when it is changed), weekday, start and duration,
+and for a meeting its category, participants and note, with
 Done and Remove. Every change a move or a resize makes can also be made here,
 with the keyboard. Done is refused while the booking would overlap another,
 and the dialog names it: *Overlaps Lab meeting, week A, 10:00 to 11:00.* A

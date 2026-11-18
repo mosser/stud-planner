@@ -33,8 +33,12 @@ project adheres to [Semantic Versioning](https://semver.org/).
   remembers it.
 - **Participants**: the people of the schedule, students and co-supervisors, each named
   once, added, renamed and removed in their own dialog. A meeting is ticked with its
-  participants, who are written on it; a list above the grid singles out one participant's
+  participants, who are written on it; the list under the grid singles out one participant's
   meetings.
+- **Categories**: every meeting is Master, PhD, Project or Lab, tagged on the grid, and the
+  list under the grid singles out a category's meetings as it does a participant's.
+- **On campus or remote**: each weekday's header says where you are that day, in week A and
+  in week B, with a click.
 - Meetings of half an hour or less stay readable: title and time on one line, participants
   under them; every booking tells all of itself on hover.
 - The schedule is kept by the browser between two sessions, and is downloaded as, or

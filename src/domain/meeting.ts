@@ -1,4 +1,5 @@
 import { Booking, type Timing } from './booking.ts'
+import type { Category } from './category.ts'
 import { needsATitle, participantTwice } from './findings.ts'
 import type { Participant } from './participant.ts'
 
@@ -7,6 +8,7 @@ export interface MeetingDescription extends Timing {
   readonly title: string
   readonly note?: string | undefined
   readonly participants?: readonly Participant[] | undefined
+  readonly category?: Category | undefined
 }
 
 /** A recurring meeting of the schedule, held for as long as it is in it. */
@@ -17,6 +19,11 @@ export class Meeting extends Booking implements MeetingDescription {
   readonly note: string | undefined
   /** The participants of the schedule who take part in it, each once; none, possibly. */
   readonly participants: readonly Participant[]
+  /**
+   * What it is about. Every meeting the Organizer adds or changes has one; one read from a
+   * schedule written before categories has none until it is changed.
+   */
+  readonly category: Category | undefined
 
   /**
    * Throws a RangeError for a meeting without a title, that does not fit within the day, or that
@@ -40,6 +47,7 @@ export class Meeting extends Booking implements MeetingDescription {
     this.title = title
     this.note = note === '' ? undefined : note
     this.participants = [...participants]
+    this.category = description.category
   }
 
   /** Whether the participant takes part in the meeting. */
@@ -69,6 +77,7 @@ export class Meeting extends Booking implements MeetingDescription {
       title: this.title,
       note: this.note,
       participants: this.participants,
+      category: this.category,
     }
   }
 }

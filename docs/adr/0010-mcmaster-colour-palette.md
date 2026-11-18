@@ -64,7 +64,9 @@ the browser's preference.
 | Week B | Gold |
 | Mark under a tab's name, 4 px: overview, week A, week B | Half blue and half gold, blue, gold |
 | Time block | Grey, 25 % on white |
-| Icon in the masthead: frame, week A, week B | White, Albion Falls Blue, gold |
+| Category tag on a meeting | Black text, Grey border, on the meeting's fill |
+| Toggle of a day: said, not said | Black, Grey |
+| Icon in the masthead: frame, week A, week B | Dundurn Grey, Albion Falls Blue, gold |
 | Icon of the browser's tab: frame, week A, week B | Maroon, Bayfront Blue, gold; read from the roles when the page opens |
 | Refused, errors | Maroon |
 

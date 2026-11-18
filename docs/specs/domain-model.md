@@ -13,11 +13,13 @@ in the specification, in the interface and in the code.
 | Concept | Meaning |
 |---|---|
 | Organizer | The person who plans their recurring meetings with students, and the time they are not available for them, and the only user of the system. |
-| Schedule | What the Organizer plans: the meetings, the time blocks, and the participants. There is one schedule at a time. No two of its bookings overlap. |
+| Schedule | What the Organizer plans: the meetings, the time blocks, the participants, and where the Organizer is on each day of week A and of week B. There is one schedule at a time. No two of its bookings overlap. |
 | Booking | What takes slots of the schedule: a meeting or a time block. Both have a cadence, a weekday, a start and a duration, and are added, moved, resized and removed alike. |
-| Meeting | A recurring meeting of the schedule: its title, its cadence, its weekday, its start, its duration, its participants, and its note when the Organizer gives one. A meeting has no date: it recurs for as long as it is in the schedule. |
+| Meeting | A recurring meeting of the schedule: its title, its cadence, its weekday, its start, its duration, its category, its participants, and its note when the Organizer gives one. A meeting has no date: it recurs for as long as it is in the schedule. |
+| Category | What a meeting is about: Master, PhD, Project or Lab, configured in `config/categories.json`. A meeting added or changed has one; one read from a file written before categories has none until it is changed. |
+| On campus, remote | Where the Organizer is on a day of a week: its presence. Each day of week A and of week B says so, or not; the two weeks may differ. |
 | Participant | A person the Organizer meets: a student, a co-supervisor. A participant of the schedule, by a name no other participant has, whatever its case. A meeting is with some of them, each once, or none. No participant is ever in two meetings at once, since no two meetings overlap. A time block has none. |
-| Singled out | A participant whose meetings stand out on the grid, every other booking faded, while chosen in the list above it. |
+| Singled out | A category, or a participant, whose meetings stand out on the grid, every other booking faded, while chosen in the list under it. |
 | Time block | A recurring time the Organizer is not available for meetings: teaching, a committee, research. No meeting can be booked in it. It has a title when the Organizer gives one, a cadence, a weekday, a start and a duration, and no note. |
 | Title | What a booking is called, in the Organizer's words, without leading or trailing spaces: a meeting's is not empty; a time block may have none, and is then shown as *Time block*. Two bookings may have the same title. |
 | Note | Free text the Organizer attaches to a meeting: a room, a link, the participants. The system never reads what it says. |
@@ -35,7 +37,7 @@ in the specification, in the interface and in the code.
 | Free, taken | A slot is taken in a week when a booking held that week covers it, and free otherwise. A weekly booking takes its slots in both weeks, a bi-weekly one in its week only. |
 | Overlap | Two bookings that would take the same slot in the same week: two meetings, a meeting in a time block, or two time blocks. The system refuses an overlap, whatever makes it: adding, moving, resizing, changing a cadence or a week, or uploading a file. |
 | Tab | One of the three grids the screen shows, one at a time: the overview, first, week A and week B. |
-| Switch | What a press adds, on every tab: Meeting or Time block. It stands under the grid. |
+| Switch | What a press adds, on every tab: Meeting or Time block. It stands under the grid, beside the list that singles out a category or a participant. |
 | Lock | What keeps the schedule from every change, made by accident or not, until it is unlocked. The browser keeps it with the schedule. |
 | Keep | What the browser does of the schedule, and of its lock: it holds them between two sessions, best effort, and gives them back when the page opens. |
 | Schedule file | The schedule as a file of the Organizer's computer, downloaded and uploaded: see `schedule-file.md`. It is how a schedule is shared, never published. |

@@ -1,17 +1,18 @@
 # Schedule file
 
 The schedule as a file: JSON, UTF-8, one object. The browser keeps the same
-content (ADR 0006). The system writes version 3, and reads versions 1 to 3.
+content (ADR 0006). The system writes version 4, and reads versions 1 to 4.
 
 ## The schedule
 
 | Field | Value |
 |---|---|
 | `format` | `"stud-planner/schedule"`. |
-| `version` | `3`; `1` and `2` are read as their sections say. A file of another version is refused. |
+| `version` | `4`; `1` to `3` are read as their sections say. A file of another version is refused. |
 | `meetings` | The meetings, an array, possibly empty, in no particular order. |
 | `timeBlocks` | The time blocks, an array, possibly empty, in no particular order. A file without it holds no time block. |
 | `participants` | The participants, by name, an array of texts, possibly empty, no two names alike whatever their case. A file without it holds no participant. |
+| `days` | The days of the weeks that say where the Organizer is, an array, possibly empty: see *A day*. A file without it says nothing of any day. |
 
 ## A meeting
 
@@ -25,6 +26,7 @@ content (ADR 0006). The system writes version 3, and reads versions 1 to 3.
 | `duration` | In minutes, a whole number of quarters. |
 | `note` | Its note; absent when it has none. |
 | `participants` | Its participants, by name, each a participant of the schedule, once; absent when it has none. |
+| `category` | The name of its category, one of `config/categories.json`; absent when it has none. |
 
 ## A time block
 
@@ -32,6 +34,21 @@ content (ADR 0006). The system writes version 3, and reads versions 1 to 3.
 |---|---|
 | `title` | Its title; absent when it has none. |
 | `cadence`, `week`, `weekday`, `start`, `duration` | As for a meeting. |
+
+## A day
+
+| Field | Value |
+|---|---|
+| `week` | `"A"` or `"B"`. |
+| `weekday` | `"monday"` to `"friday"`. |
+| `presence` | `"on-campus"` or `"remote"`. |
+
+No two days have the same week and weekday.
+
+## Version 3
+
+A file of version 3 is read as one of version 4 without categories and days:
+it has no `category` and no `days`.
 
 ## Version 2
 
@@ -44,7 +61,7 @@ A file of version 1 is read as one of version 2, but for the week of a
 bi-weekly booking, written `parity`: `"odd"` for week A, `"even"` for week B.
 It has no `week`.
 
-Downloaded again, a file of an earlier version is written as version 3.
+Downloaded again, a file of an earlier version is written as version 4.
 
 ## Refusal
 

@@ -2,6 +2,7 @@ import { readFileSync } from 'node:fs'
 import type { Plugin } from 'vite'
 import { viteSingleFile } from 'vite-plugin-singlefile'
 import { defineConfig } from 'vitest/config'
+import { Category } from './src/domain/category.ts'
 import { Day } from './src/domain/day.ts'
 
 const { version } = JSON.parse(readFileSync('./package.json', 'utf8')) as { version: string }
@@ -30,10 +31,20 @@ function checkCalendar(): Plugin {
   }
 }
 
+/** Refuses to build unless `config/categories.json` lists categories, no two alike. */
+function checkCategories(): Plugin {
+  return {
+    name: 'stud-planner:check-categories',
+    buildStart() {
+      Category.listedIn(JSON.parse(readFileSync('./config/categories.json', 'utf8')))
+    },
+  }
+}
+
 export default defineConfig({
   base: './',
   define: { __VERSION__: JSON.stringify(version) },
-  plugins: [checkCalendar(), viteSingleFile(), nameAfterVersion()],
+  plugins: [checkCalendar(), checkCategories(), viteSingleFile(), nameAfterVersion()],
   build: { assetsInlineLimit: Number.MAX_SAFE_INTEGER },
   test: {
     include: ['src/**/*.test.ts'],
