@@ -61,9 +61,9 @@ Meetings and time blocks are moved, resized and removed alike.
 
 The grid fills the window: its quarters share the height the rest of the
 page leaves, a line of text each at least, below which the page scrolls. Two
-bookings back to back stand a pixel apart. A booking of half an hour
-or less writes its title and time on one line, and its participants under
-them; a booking of a quarter, its title alone. Every booking tells all of
+bookings back to back stand a pixel apart. A booking always writes its time under its title. A booking of half an hour
+or less leaves its participants to its description; a booking of a quarter
+writes its title alone. Every booking tells all of
 itself on hover: its title, cadence, weekday, time and participants.
 
 ## Categories

@@ -217,7 +217,8 @@ first.
   name becomes a participant added with the meeting (`onDone`'s newcomers).
   The grid writes two names and a count (`participantsWritten`), singles out
   a participant's or a category's meetings (`dimmed`, never a time block),
-  and draws a booking of half an hour or less compact (`lengthClass`).
+  and draws a booking of half an hour or less without its participants, a quarter
+  with its title alone (`lengthClass`); the time is always under the title.
 
 ### ADR 0014: categories and days
 

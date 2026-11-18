@@ -407,7 +407,7 @@ button:disabled {
   padding: 0 0.3rem;
   border-radius: 0.25rem;
   font-size: 0.75rem;
-  line-height: 1.2;
+  line-height: 1.1;
   cursor: grab;
 }
 
@@ -435,27 +435,11 @@ button:disabled {
 }
 
 /*
- * A short booking stays readable: half an hour or less, its title and time on one line and its
- * participants under them; a quarter, its title alone. Its description is shown on hover.
+ * A short booking stays readable: its time is always under its title; half an hour or less,
+ * its participants are left to its description, shown on hover; a quarter, its title alone.
  */
-.booking.short {
-  display: flex;
-  flex-wrap: wrap;
-  align-content: flex-start;
-  column-gap: 0.4rem;
-}
-
-.booking.short .booking-title {
-  flex: 0 1 auto;
-  max-width: 100%;
-}
-
-.booking.short .booking-participants {
-  flex-basis: 100%;
-}
-
-.booking.shortest .booking-time,
-.booking.shortest .booking-participants {
+.booking.short .booking-participants,
+.booking.shortest .booking-time {
   display: none;
 }
 
@@ -473,6 +457,7 @@ button:disabled {
 }
 
 .booking-time {
+  display: block;
   color: var(--color-secondary-text);
 }
 

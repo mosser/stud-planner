@@ -6,6 +6,11 @@ project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Changed
+
+- A meeting's time is always written under its title, half-hour meetings included, whose
+  participants show on hover.
+
 ## [1.1.0] - 2026-11-17
 
 ### Added
