@@ -6,6 +6,8 @@ project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.0.0] - 2026-11-17
+
 ### Added
 
 - **Supervision Planner**, with its icon in the masthead and the browser's tab.
