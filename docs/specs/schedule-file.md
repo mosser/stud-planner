@@ -36,6 +36,7 @@ content (ADR 0006). The system writes version 6, and reads versions 1 to 6.
 |---|---|
 | `title` | Its title; absent when it has none. |
 | `cadence`, `week`, `weekday`, `start`, `duration` | As for a meeting. |
+| `colour` | `"pink"`, `"lime"` or `"purple"`; absent for a grey time block. |
 
 ## A day
 
@@ -49,7 +50,8 @@ No two days have the same week and weekday.
 
 ## Version 5
 
-A file of version 5 has no `tentative`: its meetings are confirmed.
+A file of version 5 has no `tentative` and no `colour`: its meetings are
+confirmed, and its time blocks grey.
 
 ## Version 4
 

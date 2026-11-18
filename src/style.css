@@ -27,8 +27,14 @@
   --color-week-b: var(--mac-gold);
   --color-refused: var(--mac-maroon);
   --color-error: var(--mac-maroon);
-  /* Time blocks: grey over the surface, their cadence's colour as a border. */
+  /*
+   * Time blocks: grey over the surface unless the Organizer chooses another colour, none a
+   * cadence's, their cadence's colour as a border.
+   */
   --color-blocked: color-mix(in srgb, var(--mac-grey) 25%, var(--mac-white));
+  --color-blocked-pink: color-mix(in srgb, var(--mac-accent-pink) 50%, var(--mac-white));
+  --color-blocked-lime: color-mix(in srgb, var(--mac-accent-lime) 65%, var(--mac-white));
+  --color-blocked-purple: color-mix(in srgb, var(--mac-accent-purple) 50%, var(--mac-white));
   /* What is chosen, the tab shown or the kind a press adds: maroon on a light maroon. */
   /* The frame of the icon in the masthead: Dundurn Grey on maroon. */
   --color-icon-frame: var(--mac-accent-light-grey);
@@ -433,10 +439,29 @@ button:disabled {
   );
 }
 
-/* A time block: the time no meeting can take, in grey, its cadence's colour as a border. */
+/*
+ * A time block: the time no meeting can take, in grey or the colour the Organizer chose, its
+ * cadence's colour as a border. The swatches of the dialog show the same colours.
+ */
 .booking.time-block,
-.preview.time-block {
+.preview.time-block,
+.swatch.colour-grey {
   background: var(--color-blocked);
+}
+
+.booking.time-block.colour-pink,
+.swatch.colour-pink {
+  background: var(--color-blocked-pink);
+}
+
+.booking.time-block.colour-lime,
+.swatch.colour-lime {
+  background: var(--color-blocked-lime);
+}
+
+.booking.time-block.colour-purple,
+.swatch.colour-purple {
+  background: var(--color-blocked-purple);
 }
 
 .booking-title {
@@ -734,11 +759,32 @@ dialog label {
   font-size: 0.875rem;
 }
 
-/* A box to tick, before its words, on one line. */
+/* A box to tick, or a choice, before its words, on one line. */
 dialog label.check {
   display: flex;
   align-items: center;
   gap: 0.4rem;
+}
+
+/* The colours of a time block, side by side, each with its swatch. */
+dialog fieldset.colours {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem 1rem;
+}
+
+dialog fieldset.colours legend {
+  width: 100%;
+  margin-bottom: 0.2rem;
+  padding: 0;
+  font-size: 0.875rem;
+}
+
+.swatch {
+  width: 1rem;
+  height: 1rem;
+  border: 1px solid var(--color-secondary-text);
+  border-radius: 0.2rem;
 }
 
 dialog input,

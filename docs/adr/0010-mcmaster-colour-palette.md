@@ -1,7 +1,7 @@
 # ADR 0010: Use the McMaster University colour palette
 
 - **Status:** Accepted
-- **Date:** 2026-11-17
+- **Date:** 2026-11-18
 - **Deciders:** Sébastien Mosser
 
 ## Context
@@ -10,7 +10,8 @@ The application is used at McMaster University, next to its siblings
 `macreport` and `streaming-hat`, which use McMaster's palette. It needs colours
 for its chrome and three colours of data: weekly, week-A and week-B
 bookings, which must stay apart on the overview, where a booking of week A and one of week B
-share their slots.
+share their slots. The Organizer also tells their time blocks apart by a
+colour of their choice, which must not be taken for a cadence.
 
 McMaster publishes its palette and usage rules at
 <https://brand.mcmaster.ca/guidelines_introduction/visual-identity-guidelines/colour-palette/>.
@@ -63,7 +64,8 @@ the browser's preference.
 | Week A | Bayfront Blue |
 | Week B | Gold |
 | Mark under a tab's name, 4 px: overview, week A, week B | Half blue and half gold, blue, gold |
-| Time block | Grey, 25 % on white |
+| Time block: grey, pink, lime, purple | Grey 25 %, Royal Botanical Pink 50 %, Cootes Paradise Green 65 %, Pier 4 Purple 50 %, on white |
+| Swatch of a colour in a time block's dialog | That fill, Grey border |
 | Half of a week left empty on the overview | Dashed Dundurn Grey outline |
 | Category tag on a meeting | Black text, Grey border, on the meeting's fill |
 | Toggle of a day: said, not said | Black, Grey |
@@ -83,7 +85,13 @@ its text with a light tone of it:
 Week A is filled with Albion Falls Blue rather than a tint of the
 Bayfront Blue of its border: a tint of Bayfront Blue is a blue grey that
 cannot be told from the grey of a time block. A time block is filled with its
-grey, whatever its cadence.
+colour, grey unless the Organizer chooses another, whatever its cadence. Its
+colours are the accents no cadence uses: Royal Botanical Pink, Cootes
+Paradise Green and Pier 4 Purple; King's Forest Green, Albion Falls Blue and
+gold are the cadences', and a tint of Bayfront Blue is a grey.
+
+A tentative meeting is hatched with its fill and the white surface, its
+border dashed (ADR 0015): its text stands on one or the other.
 
 ### Usage rules
 
@@ -105,6 +113,9 @@ grey, whatever its cadence.
    | Black | each fill | 14.6 at least |
    | Grey | each fill | 5.0 at least |
    | Black / Grey | Grey, 25 % on white (time block) | 14.4 / 4.9 |
+   | Black / Grey | Pink, 50 % on white (time block) | 14.7 / 5.1 |
+   | Black / Grey | Cootes Paradise Green, 65 % on white (time block) | 17.7 / 6.1 |
+   | Black / Grey | Purple, 50 % on white (time block) | 14.1 / 4.9 |
 
    **Forbidden for text:** gold on white (1.6:1) or on any light tint, and
    white on gold.

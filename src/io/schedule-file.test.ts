@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { Cadence, Week } from '../domain/cadence.ts'
 import { Category } from '../domain/category.ts'
+import { Colour } from '../domain/colour.ts'
 import { aMeeting, aTimeBlock, at } from '../domain/meeting.fixture.ts'
 import { Participant } from '../domain/participant.ts'
 import { Presence } from '../domain/presence.ts'
@@ -54,16 +55,40 @@ describe('the time blocks of the schedule file', () => {
   const withBlocks = new Schedule(
     [aMeeting()],
     [
-      aTimeBlock({ title: 'Teaching' }),
+      aTimeBlock({ title: 'Teaching', colour: Colour.lime }),
       aTimeBlock({ cadence: Cadence.biWeekly(Week.a), weekday: Weekday.friday }),
     ],
   )
 
-  it('are written after the meetings, a title only when there is one', () => {
+  it('are written after the meetings, a title and a colour only when there is one', () => {
     expect(contentOf(withBlocks).timeBlocks).toEqual([
-      { title: 'Teaching', cadence: 'weekly', weekday: 'wednesday', start: '14:00', duration: 120 },
+      {
+        title: 'Teaching',
+        cadence: 'weekly',
+        weekday: 'wednesday',
+        start: '14:00',
+        duration: 120,
+        colour: 'lime',
+      },
       { cadence: 'bi-weekly', week: 'A', weekday: 'friday', start: '14:00', duration: 120 },
     ])
+  })
+
+  it('have a colour of the palette, from version 6 only', () => {
+    const blockIn = (version: number, colour: unknown) => ({
+      format: 'stud-planner/schedule',
+      version,
+      meetings: [],
+      timeBlocks: [{ ...aTimeBlockContent, colour }],
+    })
+    const read = scheduleFromContent(blockIn(6, 'purple'))
+    expect(!read.isRefused && read.schedule.timeBlocks[0]?.colour).toBe(Colour.purple)
+    expect(reasonOf(scheduleFromContent(blockIn(6, 'green')))).toBe(
+      'time block 1 cannot have "green" as its colour.',
+    )
+    expect(reasonOf(scheduleFromContent(blockIn(5, 'pink')))).toBe(
+      'time block 1 has a field colour, which a schedule file does not have.',
+    )
   })
 
   it('are read back as they were written', () => {

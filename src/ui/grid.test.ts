@@ -1,6 +1,7 @@
 // @vitest-environment happy-dom
 import { describe, expect, it } from 'vitest'
 import { Cadence, Week } from '../domain/cadence.ts'
+import { Colour } from '../domain/colour.ts'
 import { Duration } from '../domain/duration.ts'
 import { aMeeting, aTimeBlock, at } from '../domain/meeting.fixture.ts'
 import { Participant } from '../domain/participant.ts'
@@ -86,7 +87,7 @@ describe('a time block on the grid', () => {
     weekday: Weekday.monday,
     start: at('09:00'),
   })
-  const named = aTimeBlock({ title: 'Teaching', weekday: Weekday.friday })
+  const named = aTimeBlock({ title: 'Teaching', weekday: Weekday.friday, colour: Colour.pink })
   const withBlocks = new Schedule([bo], [block, named])
 
   function drawn(tab: 'overview' | 'a' | 'b'): HTMLElement {
@@ -106,6 +107,19 @@ describe('a time block on the grid', () => {
       'Time block: Teaching, weekly, Friday 14:00 to 16:00',
     )
     expect(drawn('b').querySelector('[data-booking="1"]')).toBeNull()
+  })
+
+  it('is drawn in its colour, grey unless another is chosen', () => {
+    const inWeekA = drawn('a')
+    expect(inWeekA.querySelector('[data-booking="1"]')?.classList.contains('colour-grey')).toBe(
+      true,
+    )
+    expect(inWeekA.querySelector('[data-booking="2"]')?.classList.contains('colour-pink')).toBe(
+      true,
+    )
+    expect(drawn('overview').querySelector('[data-booking="0"]')?.className).not.toContain(
+      'colour-',
+    )
   })
 
   it('shares on the overview the time it has in common with a meeting of the other week', () => {

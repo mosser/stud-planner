@@ -37,7 +37,7 @@ Options considered for the words:
   **uploaded** from a file the Organizer chooses, in the format of
   `docs/specs/schedule-file.md`, `version` 6. A change of format is a new
   version, and the system reads every version it has written: version 5,
-  its meetings all confirmed; version 4,
+  its meetings all confirmed and its time blocks grey; version 4,
   its one-to-one meetings named after their student; version 3, as one
   without categories and days; version 2, as one without participants;
   version 1, which writes the week of a bi-weekly booking as a parity, odd or

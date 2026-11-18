@@ -2,6 +2,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { Cadence, Week } from '../domain/cadence.ts'
 import { Category } from '../domain/category.ts'
+import { Colour } from '../domain/colour.ts'
 import { Duration } from '../domain/duration.ts'
 import { aMeeting, aTimeBlock, at } from '../domain/meeting.fixture.ts'
 import { Participant } from '../domain/participant.ts'
@@ -319,11 +320,47 @@ describe('the dialog of a time block', () => {
     expect(done(dialog).disabled).toBe(false)
     dialog.querySelector('form')?.requestSubmit()
     const added = onDone.mock.calls[0]?.[0]
-    expect([added.isTimeBlock, added.title, added.weekday]).toEqual([
+    expect([added.isTimeBlock, added.title, added.weekday, added.colour]).toEqual([
       true,
       undefined,
       Weekday.tuesday,
+      Colour.grey,
     ])
+  })
+
+  it('offers the colours of a time block, its own chosen, and has no tentative box', () => {
+    const block = aTimeBlock({ colour: Colour.lime })
+    const onDone = vi.fn()
+    const dialog = openBookingDialog(document, {
+      schedule: new Schedule([], [block]),
+      kind: 'time-block',
+      booking: block,
+      proposal: block,
+      onDone,
+    })
+    expect(dialog.querySelector('[name="tentative"]')).toBeNull()
+    const colours = [...dialog.querySelectorAll<HTMLInputElement>('input[name="colour"]')]
+    expect(colours.map((each) => [each.value, each.checked])).toEqual([
+      ['grey', false],
+      ['pink', false],
+      ['lime', true],
+      ['purple', false],
+    ])
+    const purple = colours[3] as HTMLInputElement
+    purple.checked = true
+    purple.dispatchEvent(new Event('change', { bubbles: true }))
+    dialog.querySelector('form')?.requestSubmit()
+    expect(onDone.mock.calls[0]?.[0].colour).toBe(Colour.purple)
+  })
+
+  it('has no colour for a meeting', () => {
+    const dialog = openBookingDialog(document, {
+      schedule,
+      kind: 'meeting',
+      proposal,
+      onDone: vi.fn(),
+    })
+    expect(dialog.querySelector('[name="colour"]')).toBeNull()
   })
 
   it('refuses Done while the time block would overlap a meeting', () => {

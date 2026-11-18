@@ -1,6 +1,7 @@
 import type { Booking, Timing } from '../domain/booking.ts'
 import { Cadence, Week } from '../domain/cadence.ts'
 import { Category } from '../domain/category.ts'
+import { Colour } from '../domain/colour.ts'
 import { Duration } from '../domain/duration.ts'
 import {
   bookingBroken,
@@ -40,8 +41,8 @@ const version = 6
  * bi-weekly booking (version 1 as `parity`, odd for week A and even for week B; later ones as
  * `week`, A or B), whether it lists participants (from version 3), whether its meetings have
  * a category and its days say where the Organizer is (from version 4), whether a one-to-one
- * meeting names its student (from version 5), and whether a meeting may be tentative (from
- * version 6).
+ * meeting names its student (from version 5), and whether a meeting may be tentative and a
+ * time block have a colour (from version 6).
  */
 interface WeekWritten {
   readonly field: string
@@ -49,36 +50,36 @@ interface WeekWritten {
   readonly hasParticipants: boolean
   readonly hasCategoriesAndDays: boolean
   readonly hasStudents: boolean
-  readonly hasTentative: boolean
+  readonly hasTentativeAndColours: boolean
 }
 
 const parity = { field: 'parity', weeks: { odd: Week.a, even: Week.b } }
 const lettered = { field: 'week', weeks: { A: Week.a, B: Week.b } }
 const before = { hasParticipants: false, hasCategoriesAndDays: false, hasStudents: false }
 const weekWritten: Readonly<Record<number, WeekWritten>> = {
-  1: { ...parity, ...before, hasTentative: false },
-  2: { ...lettered, ...before, hasTentative: false },
-  3: { ...lettered, ...before, hasParticipants: true, hasTentative: false },
+  1: { ...parity, ...before, hasTentativeAndColours: false },
+  2: { ...lettered, ...before, hasTentativeAndColours: false },
+  3: { ...lettered, ...before, hasParticipants: true, hasTentativeAndColours: false },
   4: {
     ...lettered,
     ...before,
     hasParticipants: true,
     hasCategoriesAndDays: true,
-    hasTentative: false,
+    hasTentativeAndColours: false,
   },
   5: {
     ...lettered,
     hasParticipants: true,
     hasCategoriesAndDays: true,
     hasStudents: true,
-    hasTentative: false,
+    hasTentativeAndColours: false,
   },
   6: {
     ...lettered,
     hasParticipants: true,
     hasCategoriesAndDays: true,
     hasStudents: true,
-    hasTentative: true,
+    hasTentativeAndColours: true,
   },
 }
 
@@ -138,6 +139,8 @@ interface DayContent {
 /** A time block as the schedule file holds it. */
 interface TimeBlockContent extends TimingContent {
   readonly title?: string
+  /** Absent for a grey time block. */
+  readonly colour?: string
 }
 
 /** The schedule as the schedule file holds it, and as the browser keeps it (ADR 0006). */
@@ -184,6 +187,7 @@ function contentOfTimeBlock(block: TimeBlock): TimeBlockContent {
   return {
     ...(block.title === undefined ? {} : { title: block.title }),
     ...contentOfTiming(block),
+    ...(block.colour === Colour.grey ? {} : { colour: block.colour.key }),
   }
 }
 
@@ -339,7 +343,7 @@ function meetingOf(reading: Reading, value: unknown): Meeting {
     ...participantsField,
     ...(reading.written.hasCategoriesAndDays ? ['category'] : []),
     ...(reading.written.hasStudents ? ['student'] : []),
-    ...(reading.written.hasTentative ? ['tentative'] : []),
+    ...(reading.written.hasTentativeAndColours ? ['tentative'] : []),
   ])
   const description = {
     title: 'student' in record ? undefined : fieldRead(part, record, 'title', text),
@@ -435,10 +439,20 @@ function rosterOf(content: Record<string, unknown>): Participant[] {
 function timeBlockOf(reading: Reading, value: unknown): TimeBlock {
   const { part } = reading
   const record = recordOf('timeBlocks', value)
-  checkFields(part, record, ['title', ...timingFields(reading.written)])
+  checkFields(part, record, [
+    'title',
+    ...timingFields(reading.written),
+    ...(reading.written.hasTentativeAndColours ? ['colour'] : []),
+  ])
   const description = {
     title: 'title' in record ? fieldRead(part, record, 'title', text) : undefined,
     ...timingOf(reading, record),
+    colour:
+      'colour' in record
+        ? fieldRead(part, record, 'colour', (value) =>
+            typeof value === 'string' ? Colour.withKey(value) : undefined,
+          )
+        : undefined,
   }
   return built(part, () => new TimeBlock(description))
 }

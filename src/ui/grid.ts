@@ -14,6 +14,7 @@ import {
 import { Meeting } from '../domain/meeting.ts'
 import { byName, type Participant } from '../domain/participant.ts'
 import type { Schedule } from '../domain/schedule.ts'
+import { TimeBlock } from '../domain/time-block.ts'
 import type { TimeOfDay } from '../domain/time-of-day.ts'
 import { Weekday } from '../domain/weekday.ts'
 import { type Slot, type Tab, weekOf } from './gestures.ts'
@@ -95,9 +96,14 @@ export function kindClass(booking: Booking): string {
   return booking.isTimeBlock ? 'time-block' : 'meeting'
 }
 
+/**
+ * The classes a booking is drawn with: its kind, its cadence, and a tentative meeting as such, a
+ * time block in its colour.
+ */
 function classesOf(booking: Booking): string {
   const tentative = booking instanceof Meeting && booking.isTentative ? ' tentative' : ''
-  return `${kindClass(booking)} ${cadenceClass(booking)}${tentative}`
+  const colour = booking instanceof TimeBlock ? ` colour-${booking.colour.key}` : ''
+  return `${kindClass(booking)} ${cadenceClass(booking)}${tentative}${colour}`
 }
 
 /** The rows of the day column a booking, or where one goes, takes, as a grid-row value. */

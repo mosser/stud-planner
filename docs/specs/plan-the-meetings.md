@@ -23,8 +23,9 @@ Each tab is marked under its name with the colour of the week it shows, that
 of week A, of week B, or both for the overview: the colours its
 bi-weekly bookings are bordered with. A weekly booking looks alike on the three
 tabs, and unlike a bi-weekly one. A
-time block is grey, a meeting is tinted with the colour of its cadence; both
-are bordered with that colour. So is what a drag shows of a booking added,
+time block is grey, or the colour chosen in its dialog, pink, lime or purple;
+a meeting is tinted with the colour of its cadence; both are bordered with
+that colour. So is what a drag shows of a booking added,
 moved or resized. A time block without a title is shown as *Time block*.
 
 ## Adding a meeting or a time block
@@ -105,9 +106,10 @@ itself on hover: its title, cadence, weekday, time and participants.
 ## The dialog of a booking
 
 A click on a booking, without a drag, opens its dialog: title, weeks (both
-weeks, week A or week B, when it is changed), weekday, start and duration,
-and for a meeting its category, participants, whether it is tentative, and its note, with
-Done and Remove. Every change a move or a resize makes can also be made here,
+weeks, week A or week B, when it is changed), weekday, start and duration;
+for a time block its colour, each offered by a swatch and its name; for a
+meeting its category, participants, whether it is tentative, and its note;
+with Done and Remove. Every change a move or a resize makes can also be made here,
 with the keyboard. Done is refused while the booking would overlap another,
 and the dialog names it: *Overlaps Lab meeting, week A, 10:00 to 11:00.* A
 bi-weekly booking made weekly overlaps whatever takes its slots in the other

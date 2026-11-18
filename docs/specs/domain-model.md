@@ -23,7 +23,8 @@ in the specification, in the interface and in the code.
 | On campus, remote | Where the Organizer is on a day of a week: its presence. Each day of week A and of week B says so, or not; the two weeks may differ. |
 | Participant | A person the Organizer meets: a student, a co-supervisor. A participant of the schedule, by a name no other participant has, whatever its case. A meeting is with some of them, each once, or none. No participant is ever in two meetings at once, since no two meetings overlap. A time block has none. |
 | Singled out | A category, or a participant, whose meetings stand out on the grid, every other meeting faded, while chosen in the list under it. Time blocks are never faded. |
-| Time block | A recurring time the Organizer is not available for meetings: teaching, a committee, research. No meeting can be booked in it. It has a title when the Organizer gives one, a cadence, a weekday, a start and a duration, and no note. |
+| Time block | A recurring time the Organizer is not available for meetings: teaching, a committee, research. No meeting can be booked in it. It has a title when the Organizer gives one, a colour, a cadence, a weekday, a start and a duration, and no note. |
+| Colour | What a time block is filled with: grey, unless the Organizer chooses pink, lime or purple. A meeting has none of its own: it is tinted with the colour of its cadence. |
 | Title | What a booking is called, in the Organizer's words, without leading or trailing spaces: a titled meeting's is not empty; a one-to-one meeting's is its student's name; a time block may have none, and is then shown as *Time block*. Two bookings may have the same title. |
 | Note | Free text the Organizer attaches to a meeting: a room, a link, the participants. The system never reads what it says. |
 | Cadence | How often a booking recurs: weekly or bi-weekly. |

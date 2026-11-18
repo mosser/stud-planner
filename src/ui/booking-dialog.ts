@@ -1,6 +1,7 @@
 import type { Booking, Timing } from '../domain/booking.ts'
 import { Cadence } from '../domain/cadence.ts'
 import { Category } from '../domain/category.ts'
+import { Colour } from '../domain/colour.ts'
 import { theDay } from '../domain/day.ts'
 import { Duration } from '../domain/duration.ts'
 import {
@@ -97,6 +98,20 @@ function timeBlockTitle(given: BookingDialogOptions): Markup | string {
   return html`<label>Title <input name="title" value="${given.booking?.title ?? ''}" autocomplete="off"></label>`
 }
 
+/** The colour of a time block, grey unless another is chosen; a meeting has its cadence's. */
+function colourField(given: BookingDialogOptions): Markup | string {
+  if (given.kind !== 'time-block') {
+    return ''
+  }
+  const current = given.booking instanceof TimeBlock ? given.booking.colour : Colour.grey
+  return html`<fieldset class="colours"><legend>Colour</legend>${Colour.all.map(
+    (colour) =>
+      html`<label class="check"><input type="radio" name="colour" value="${colour.key}" ${
+        colour === current ? 'checked' : ''
+      }><span class="swatch colour-${colour.key}" aria-hidden="true"></span>${colour.name}</label>`,
+  )}</fieldset>`
+}
+
 function noteField(given: BookingDialogOptions): Markup | string {
   if (given.kind !== 'meeting') {
     return ''
@@ -145,6 +160,7 @@ function markupOf(given: BookingDialogOptions): Markup {
     ${categoryField(given)}
     <div class="who"></div>
     ${timeBlockTitle(given)}
+    ${colourField(given)}
     ${weeksField(given)}
     <label>Weekday <select name="weekday">${options(Weekday.all, (weekday) => weekday.name)}</select></label>
     <label>Start <select name="start">${options(theDay.quarters, String)}</select></label>
@@ -211,7 +227,12 @@ function timingOf(form: HTMLFormElement, given: BookingDialogOptions): Timing | 
  */
 function probeOf(form: HTMLFormElement, given: BookingDialogOptions, timing: Timing): Booking {
   if (given.kind === 'time-block') {
-    return new TimeBlock({ ...timing, title: textOf(form, 'title') })
+    const colour = form.querySelector<HTMLInputElement>('input[name="colour"]:checked')?.value
+    return new TimeBlock({
+      ...timing,
+      title: textOf(form, 'title'),
+      colour: Colour.withKey(colour ?? ''),
+    })
   }
   return new Meeting({ ...timing, title: standInTitle })
 }

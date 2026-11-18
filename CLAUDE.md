@@ -50,7 +50,7 @@ from its file. Not released yet.
 Layout of the code:
 
 ```
-src/domain/   Schedule (no overlap), Booking with Meeting and TimeBlock,
+src/domain/   Schedule (no overlap), Booking with Meeting and TimeBlock (its Colour),
               Participant, Category (config/categories.json), Presence,
               Cadence and Week, Weekday, TimeOfDay, Duration, Day
               (config/calendar.json), findings.ts (every sentence shown);
@@ -132,7 +132,9 @@ first.
 - Colour literals are the `--mac-*` tokens of the palette block of
   `src/style.css`, and nothing else; the interface uses `--color-*` roles and
   `color-mix()` tints of them. Maroon dominates the chrome. The cadences are
-  data: weekly green, week A blue (filled light sky), week B gold. One theme, light;
+  data: weekly green, week A blue (filled light sky), week B gold. A time
+  block is grey, or the pink, lime or purple chosen in its dialog
+  (`Colour`, `colour-*` classes). One theme, light;
   the tab shown and the kind a press adds are light maroon, not solid.
 - Gold is never text. Every text and background pairing is one tabled in the
   ADR, or measured at 4.5:1 at least.
@@ -243,8 +245,9 @@ first.
   added; a time block is never tentative. A tentative meeting takes its slots
   as any other (ADR 0009 unchanged). The grid hatches it and dashes its border
   (`.tentative`), and its description says *tentative*.
-- The schedule file is version 6 (`tentative`, absent when confirmed);
-  versions 1 to 5 are read.
+- The schedule file is version 6 (`tentative` on a meeting, absent when
+  confirmed; `colour` on a time block, absent when grey); versions 1 to 5
+  are read.
 
 ## Writing
 

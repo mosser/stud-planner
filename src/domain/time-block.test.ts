@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { Cadence, Week } from './cadence.ts'
+import { Colour } from './colour.ts'
 import { Duration } from './duration.ts'
 import { aMeeting, aTimeBlock, at } from './meeting.fixture.ts'
 import { OverlapError, Schedule } from './schedule.ts'
@@ -16,6 +17,14 @@ describe('a time block', () => {
     expect(aMeeting().isTimeBlock).toBe(false)
   })
 
+  it('is grey unless the Organizer chooses another colour', () => {
+    expect(aTimeBlock().colour).toBe(Colour.grey)
+    expect(aTimeBlock({ colour: Colour.pink }).colour).toBe(Colour.pink)
+    expect(Colour.all.map((colour) => colour.name)).toEqual(['Grey', 'Pink', 'Lime', 'Purple'])
+    expect(Colour.withKey('lime')).toBe(Colour.lime)
+    expect(Colour.withKey('green')).toBeUndefined()
+  })
+
   it('fits within the day', () => {
     expect(() => aTimeBlock({ start: at('17:00') })).toThrow('A time block cannot end after 18:00.')
     expect(() => aTimeBlock({ start: at('07:00') })).toThrow(
@@ -23,13 +32,14 @@ describe('a time block', () => {
     )
   })
 
-  it('moves and resizes as a copy, keeping its title', () => {
-    const block = aTimeBlock({ title: 'Teaching' })
+  it('moves and resizes as a copy, keeping its title and its colour', () => {
+    const block = aTimeBlock({ title: 'Teaching', colour: Colour.purple })
     const moved = block.afterMovingTo(Weekday.friday, at('09:00'))
-    expect([moved.title, moved.weekday, moved.end.toString()]).toEqual([
+    expect([moved.title, moved.weekday, moved.end.toString(), moved.colour]).toEqual([
       'Teaching',
       Weekday.friday,
       '11:00',
+      Colour.purple,
     ])
     expect(moved.isTimeBlock).toBe(true)
     expect(block.afterResizingTo(Duration.ofQuarters(1)).end.toString()).toBe('14:15')
