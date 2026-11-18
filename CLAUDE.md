@@ -215,7 +215,8 @@ first.
   have none. No overlap means no participant in two meetings at once.
 - A meeting's dialog picks participants as chips (`setUpPicker`), and a new
   name becomes a participant added with the meeting (`onDone`'s newcomers).
-  The grid writes two names and a count (`participantsWritten`), singles out
+  The grid writes all names where they fit, else two and a count
+  (`fitParticipants`, `participantsWritten`, after each render and resize), singles out
   a participant's or a category's meetings (`dimmed`, never a time block),
   and draws a booking of half an hour or less without its participants, a quarter
   with its title alone (`lengthClass`); the time is always under the title.

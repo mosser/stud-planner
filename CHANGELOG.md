@@ -6,6 +6,11 @@ project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Changed
+
+- A meeting tall enough to list all its participants lists them all, rather than two and how
+  many others; the short form is kept for the meetings where they do not fit.
+
 ## [1.1.1] - 2026-11-17
 
 ### Changed

@@ -129,11 +129,32 @@ export function participantsWritten(names: readonly string[]): string {
   return others > 0 ? `${written} +${others}` : written
 }
 
+/**
+ * The participants of a meeting on the grid: all of them, as many lines as its height allows;
+ * the short form, two names and how many others, kept for `fitParticipants` when they do not fit.
+ */
 function participantsLine(booking: Booking): Markup | string {
   const people = participantsOf(booking)
-  return people.length === 0
-    ? ''
-    : html`<span class="booking-participants">${participantsWritten(people)}</span>`
+  if (people.length === 0) {
+    return ''
+  }
+  const all = people.join(', ')
+  const short = participantsWritten(people)
+  return html`<span class="booking-participants" data-all="${all}" data-short="${short}">${all}</span>`
+}
+
+/**
+ * Writes on each meeting of the grid all its participants where they fit, and the short form, two
+ * names and how many others, where they do not. Done once the grid is laid out, and again when
+ * the window is resized.
+ */
+export function fitParticipants(grid: ParentNode): void {
+  for (const line of grid.querySelectorAll<HTMLElement>('.booking-participants')) {
+    line.textContent = line.dataset.all ?? ''
+    if (line.scrollHeight > line.clientHeight + 1) {
+      line.textContent = line.dataset.short ?? ''
+    }
+  }
 }
 
 /**

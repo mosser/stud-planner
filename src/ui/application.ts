@@ -29,7 +29,15 @@ import {
   type Tab,
   tabs,
 } from './gestures.ts'
-import { cadenceClass, gridOf, kindClass, rowsOf, slotAt, weekClass } from './grid.ts'
+import {
+  cadenceClass,
+  fitParticipants,
+  gridOf,
+  kindClass,
+  rowsOf,
+  slotAt,
+  weekClass,
+} from './grid.ts'
 import { html } from './html.ts'
 import {
   downloadIcon,
@@ -213,6 +221,7 @@ export function mountApplication(root: HTMLElement, context: ApplicationContext)
     if (filter !== null) {
       filter.value = filterValue()
     }
+    fitParticipants(root)
   }
 
   /** Takes a changed schedule: kept at once, shown, and the last refusal forgotten. */
@@ -415,6 +424,7 @@ export function mountApplication(root: HTMLElement, context: ApplicationContext)
   })
 
   attachDrags()
+  page.defaultView?.addEventListener('resize', () => fitParticipants(root))
 
   /** Adding, moving and resizing a booking by dragging on the grid (ADR 0004). */
   function attachDrags(): void {

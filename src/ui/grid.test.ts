@@ -8,6 +8,7 @@ import { Schedule } from '../domain/schedule.ts'
 import { Weekday } from '../domain/weekday.ts'
 import {
   accessibleNameOf,
+  fitParticipants,
   gridOf,
   lengthClass,
   participantsWritten,
@@ -159,6 +160,27 @@ describe('the participants on the grid', () => {
     )
     expect(dimmed).toEqual(['1'])
     expect(drawn().querySelectorAll('.dimmed')).toHaveLength(0)
+  })
+
+  it('are all written where they fit, else two of them and how many others', () => {
+    const many = aMeeting({
+      title: 'Lab',
+      weekday: Weekday.friday,
+      participants: [ana, bo, new Participant('Chloé')],
+    })
+    const element = document.createElement('div')
+    element.innerHTML = gridOf(new Schedule([many], [], many.participants), 'a').text
+    const line = element.querySelector('.booking-participants') as HTMLElement
+    expect(line.textContent).toBe('Ana, Bo, Chloé')
+    const sized = (scroll: number, client: number) => {
+      Object.defineProperty(line, 'scrollHeight', { value: scroll, configurable: true })
+      Object.defineProperty(line, 'clientHeight', { value: client, configurable: true })
+      fitParticipants(element)
+      return line.textContent
+    }
+    expect(sized(40, 40)).toBe('Ana, Bo, Chloé')
+    expect(sized(60, 20)).toBe('Ana, Bo +1')
+    expect(sized(20, 40)).toBe('Ana, Bo, Chloé')
   })
 
   it('are written two at most, then counted', () => {
