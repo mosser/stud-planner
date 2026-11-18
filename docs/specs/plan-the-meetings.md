@@ -65,7 +65,10 @@ page leaves, a line of text each at least, below which the page scrolls. Two
 bookings back to back stand a pixel apart. A booking always writes its time under its title. A booking of half an hour
 or less leaves its participants to its description; a booking of a quarter
 writes its title alone. Every booking tells all of
-itself on hover: its title, cadence, weekday, time and participants.
+itself on hover, in a card under it once the pointer rests on it, above it
+when there is no room under: its title and category, whether it is tentative,
+its cadence, weekday, time and participants. The card goes when the pointer
+leaves or presses, and never shows during a drag or for a touch.
 
 ## Categories
 

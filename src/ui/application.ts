@@ -38,6 +38,7 @@ import {
   slotAt,
   weekClass,
 } from './grid.ts'
+import { attachHoverCard } from './hover-card.ts'
 import { html } from './html.ts'
 import {
   downloadIcon,
@@ -111,6 +112,8 @@ export function mountApplication(root: HTMLElement, context: ApplicationContext)
   /** The name of the participant whose meetings stand out; none, everyone's being shown alike. */
   let singledOutValue = ''
   const isSetAside = context.restored.wasSetAside
+  /** The description of the booking the pointer rests on, shown beside it. */
+  const hoverCard = attachHoverCard(root, page)
   let refusal: string | undefined
 
   function notices() {
@@ -189,6 +192,7 @@ export function mountApplication(root: HTMLElement, context: ApplicationContext)
   }
 
   function render(): void {
+    hoverCard.hide()
     root.innerHTML = html`
       <header class="masthead">
         <h1>${iconMarkup()}${systemName}</h1>

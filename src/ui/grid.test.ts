@@ -1,6 +1,7 @@
 // @vitest-environment happy-dom
 import { describe, expect, it } from 'vitest'
 import { Cadence, Week } from '../domain/cadence.ts'
+import { Category } from '../domain/category.ts'
 import { Colour } from '../domain/colour.ts'
 import { Duration } from '../domain/duration.ts'
 import { aMeeting, aTimeBlock, at } from '../domain/meeting.fixture.ts'
@@ -136,12 +137,18 @@ describe('a short booking on the grid', () => {
     expect(lengthClass(aMeeting({ duration: Duration.ofQuarters(3) }))).toBe('')
   })
 
-  it('tells all of itself on hover', () => {
+  it('tells all of itself, on hover and to a screen reader, its category once', () => {
     const element = document.createElement('div')
-    element.innerHTML = gridOf(new Schedule([aMeeting()]), 'a').text
-    expect(element.querySelector('[data-booking="0"]')?.getAttribute('title')).toBe(
-      'Lab meeting, weekly, Monday 10:00 to 11:00',
-    )
+    const project = Category.named('Project')
+    element.innerHTML = gridOf(
+      new Schedule([aMeeting(), aMeeting({ weekday: Weekday.friday, category: project })]),
+      'a',
+    ).text
+    const described = (rank: number) =>
+      element.querySelector(`[data-booking="${rank}"]`)?.getAttribute('aria-label')
+    expect(described(0)).toBe('Lab meeting, weekly, Monday 10:00 to 11:00')
+    expect(described(1)).toBe('Lab meeting | Project, weekly, Friday 10:00 to 11:00')
+    expect(element.querySelector('.booking[title]')).toBeNull()
   })
 
   it('draws a tentative meeting as such, and says so on hover', () => {
@@ -149,7 +156,7 @@ describe('a short booking on the grid', () => {
     element.innerHTML = gridOf(new Schedule([aMeeting({ isTentative: true })]), 'a').text
     const meeting = element.querySelector('[data-booking="0"]')
     expect(meeting?.classList.contains('tentative')).toBe(true)
-    expect(meeting?.getAttribute('title')).toBe(
+    expect(meeting?.getAttribute('aria-label')).toBe(
       'Lab meeting, tentative, weekly, Monday 10:00 to 11:00',
     )
     expect(rendered('a').querySelector('.tentative')).toBeNull()

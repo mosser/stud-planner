@@ -61,6 +61,7 @@ src/io/       schedule-file.ts (the JSON file), schedule-store.ts (IndexedDB:
               shared-schedules.ts (inlines schedules/*.json)
 src/ui/       application.ts (state, toolbar, tabs, drags), gestures.ts (what a
               press or a drag makes, pure), grid.ts (a tab's grid, slotAt),
+              hover-card.ts (a booking's description on hover),
               booking-dialog.ts, participants-dialog.ts, icon.ts,
               confirmation.ts, dialog.ts, html.ts
 src/main.ts   entry point, mounted from index.html
@@ -125,6 +126,8 @@ first.
   changes the schedule once, when it ends; Escape cancels it. Moving and
   resizing can also be done with the keyboard in the meeting dialog; adding
   is done on the grid only (there is no Add a meeting button).
+- A booking is described on hover by `hover-card.ts` (its `aria-label`, in a
+  card), never by a `title` attribute, which some browsers do not show.
 - Colours: see ADR 0010.
 
 ### ADR 0010: McMaster palette

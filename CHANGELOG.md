@@ -6,6 +6,12 @@ project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Fixed
+
+- Hovering a meeting or a time block shows its description, in a card under it, in every
+  browser; the browser's own tooltip, which some browsers never showed, is gone.
+- A meeting's category is said once in its description, rather than twice.
+
 ## [1.2.0] - 2026-11-18
 
 ### Added

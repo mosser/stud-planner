@@ -22,21 +22,17 @@ import { html, type Markup } from './html.ts'
 import { presenceIcon } from './icon.ts'
 
 /**
- * How a booking is named to a screen reader: Lab meeting, weekly, Monday 10:00 to 11:00; a
- * tentative meeting as Lab meeting, tentative, weekly, and so on; a time block as Time block:
- * Teaching, and so on.
+ * How a booking is named to a screen reader, and described on hover: Lab meeting | Lab, weekly,
+ * Monday 10:00 to 11:00; a tentative meeting as Lab meeting | Lab, tentative, weekly, and so on;
+ * a time block as Time block: Teaching, and so on.
  */
 export function accessibleNameOf(booking: Booking): string {
   const name =
     booking.isTimeBlock && booking.title !== undefined
       ? `Time block: ${booking.title}`
       : labelOf(booking)
-  const category =
-    booking instanceof Meeting && booking.category !== undefined
-      ? ` (${booking.category.name})`
-      : ''
   const tentative = booking instanceof Meeting && booking.isTentative ? `, ${tentativeWritten}` : ''
-  const spoken = `${name}${category}${tentative}, ${cadenceWritten(booking.cadence)}, ${booking.weekday.name} ${timeOf(booking)}`
+  const spoken = `${name}${tentative}, ${cadenceWritten(booking.cadence)}, ${booking.weekday.name} ${timeOf(booking)}`
   const people = participantsOf(booking)
   return people.length === 0 ? spoken : `${spoken}, ${withParticipants(people)}`
 }
@@ -185,7 +181,7 @@ function wholeBooking(booking: Booking, rank: number, drawing: Drawing): Markup 
   const name = accessibleNameOf(booking)
   return html`<div class="booking ${classesOf(booking)} ${lengthClass(booking)} ${dimmedClass(booking, drawing)}"
     style="grid-row: ${rowsOf(booking)}" data-booking="${rank}" role="button" tabindex="0"
-    aria-label="${name}" title="${name}">
+    aria-label="${name}">
     <span class="booking-title">${labelOf(booking)}</span>
     <span class="booking-time">${timeOf(booking)}</span>
     ${participantsLine(booking)}

@@ -1,7 +1,7 @@
 # ADR 0004: User interface without a framework
 
 - **Status:** Accepted
-- **Date:** 2026-11-17
+- **Date:** 2026-11-18
 - **Deciders:** Sébastien Mosser
 
 ## Context
@@ -29,6 +29,11 @@ Options considered:
   drag shows where the meeting would go and changes the schedule once, when it
   ends. Moving and resizing can also be done with the keyboard, in the
   meeting dialog; adding is done on the grid, with a pointer.
+- A booking's description shows on hover in a card the page draws
+  (`src/ui/hover-card.ts`), on Pointer Events, after a short rest, and not as
+  a `title` tooltip: a browser shows that only after a long still pause, and
+  some embedded browsers never do. The card is hidden from screen readers,
+  which read the same words from the booking's `aria-label`.
 - Colours come from the palette of ADR 0010, through the `--color-*` roles
   of `src/style.css`.
 
@@ -42,8 +47,8 @@ Options considered:
 **Negative / accepted trade-offs**
 
 - Re-rendering is explicit and coarse; screens must stay small.
-- Snapping, the preview of a drag and its cancellation are code of our own,
-  with their tests.
+- Snapping, the preview of a drag and its cancellation, and the card shown on
+  hover, are code of our own, with their tests.
 - A meeting cannot be added without a pointer: the screen offers no other way
   to add one than pressing a slot.
 
