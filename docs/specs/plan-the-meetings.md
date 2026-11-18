@@ -50,7 +50,7 @@ Meetings and time blocks are moved, resized and removed alike.
 
 | Rule | Behaviour |
 |---|---|
-| Move | Dragging a booking to another slot changes its weekday and its start, never its duration, cadence or week; it cannot end after the day. |
+| Move | Dragging a booking to another slot changes its weekday and its start, never its duration; it cannot end after the day. On the overview, a bi-weekly booking dragged into the other week's half of a day is held in that week from then on; a weekly booking stays weekly. On a week's tab, a move never changes the week. |
 | Resize | Dragging the lower edge of a booking changes its duration, one quarter at a time, within the day. |
 | A weekly booking | Moved or resized on any tab, it changes in both weeks. |
 | Refused | While a drag would make an overlap, the booking shows where it would go as refused; dropped there, it goes back where it was, nothing changes, and the screen names the booking overlapped: *Overlaps the time block Teaching, every week, 10:00 to 12:00.* The notice is dismissed by its mark, or by the next change. |

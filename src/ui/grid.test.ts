@@ -244,6 +244,16 @@ describe('the slot under a point', () => {
     expect(slotAt(placed(), 150, 85)).toEqual({ weekday: Weekday.tuesday, quarter: 8 })
   })
 
+  it('is, on the overview, in the half of week A on the left and of week B on the right', () => {
+    const overview = rendered('overview')
+    overview.querySelectorAll<HTMLElement>('.day').forEach((column, rank) => {
+      column.getBoundingClientRect = () =>
+        ({ left: rank * 100, right: rank * 100 + 100, width: 100, top: 0, height: 400 }) as DOMRect
+    })
+    expect(slotAt(overview, 120, 85)?.half).toBe(Week.a)
+    expect(slotAt(overview, 180, 85)?.half).toBe(Week.b)
+  })
+
   it('is in the nearest column, within the day, when the point is outside', () => {
     expect(slotAt(placed(), 900, -20)).toEqual({ weekday: Weekday.friday, quarter: 0 })
     expect(slotAt(placed(), -5, 900)).toEqual({ weekday: Weekday.monday, quarter: 39 })

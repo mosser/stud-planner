@@ -24,6 +24,8 @@ export function weekOf(tab: Tab): Week | undefined {
 export interface Slot {
   readonly weekday: Weekday
   readonly quarter: number
+  /** The half of the day column pointed at, on the overview: week A the left, week B the right. */
+  readonly half?: Week | undefined
 }
 
 /** Where a new meeting goes: its weekday, its start and its duration. */
@@ -85,12 +87,18 @@ export function spanPressed(schedule: Schedule, cadence: Cadence, pressed: Slot)
 
 /**
  * The booking dragged to a slot, held by the quarter it was pressed at: on the slot's weekday,
- * lasting as long, within the day.
+ * lasting as long, within the day. On the overview, a bi-weekly booking dragged into the other
+ * week's half is held in that week; a weekly booking stays weekly.
  */
 export function bookingMoved(booking: Booking, heldAt: number, slot: Slot): Booking {
   const latestStart = theDay.quarterCount - booking.duration.quarters
   const quarter = Math.min(Math.max(slot.quarter - heldAt, 0), latestStart)
-  return booking.afterMovingTo(slot.weekday, theDay.timeOfQuarter(quarter))
+  const moved = booking.afterMovingTo(slot.weekday, theDay.timeOfQuarter(quarter))
+  const { half } = slot
+  if (half === undefined || booking.cadence.isWeekly || booking.cadence.week === half) {
+    return moved
+  }
+  return moved.afterChanging({ cadence: Cadence.biWeekly(half) })
 }
 
 /** The booking whose lower edge is dragged to a quarter: ending with it, one quarter at least. */

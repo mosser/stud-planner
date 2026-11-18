@@ -20,9 +20,15 @@ const lab = aMeeting()
 const ana = aMeeting({ title: 'Ana', weekday: Weekday.tuesday, cadence: inWeekA })
 
 /** Each day column 100 pixels wide, Monday first; each quarter 10 pixels high from 08:00. */
-function point(weekday: Weekday, time: string): { clientX: number; clientY: number } {
+/** A point of a day column at a time: its middle, or its left or right quarter (week A or B). */
+function point(
+  weekday: Weekday,
+  time: string,
+  side: 'middle' | 'left' | 'right' = 'middle',
+): { clientX: number; clientY: number } {
   const quarter = (at(time).minutes - 8 * 60) / 15
-  return { clientX: Weekday.all.indexOf(weekday) * 100 + 50, clientY: quarter * 10 + 5 }
+  const across = { middle: 50, left: 25, right: 75 }[side]
+  return { clientX: Weekday.all.indexOf(weekday) * 100 + across, clientY: quarter * 10 + 5 }
 }
 
 beforeEach(() => {
@@ -30,7 +36,7 @@ beforeEach(() => {
     this: HTMLElement,
   ) {
     const rank = Weekday.all.findIndex((weekday) => weekday.key === this.dataset.weekday)
-    return { left: rank * 100, right: rank * 100 + 100, top: 0, height: 400 } as DOMRect
+    return { left: rank * 100, right: rank * 100 + 100, width: 100, top: 0, height: 400 } as DOMRect
   })
 })
 
@@ -296,6 +302,32 @@ describe('moving and resizing a meeting', () => {
     )
     ;(root.querySelector('[data-action="dismiss"]') as HTMLElement).click()
     expect(root.querySelector('.refusal')).toBeNull()
+  })
+
+  it('moves a bi-weekly meeting into the other week by dragging it across on the overview', () => {
+    const { root, application } = mounted(new Schedule([ana]), {}, 'overview')
+    press(bookingElement(root, 0), point(Weekday.tuesday, '10:00', 'left'))
+    moveTo(point(Weekday.tuesday, '10:00', 'right'))
+    expect(root.querySelector('.preview')?.classList.contains('week-b')).toBe(true)
+    release(point(Weekday.tuesday, '10:00', 'right'))
+    expect(application.schedule.meetings[0]?.cadence).toBe(Cadence.biWeekly(Week.b))
+    expect(application.schedule.meetings[0]?.start.toString()).toBe('10:00')
+  })
+
+  it('refuses a meeting moved into the other week where that week is taken', () => {
+    const bo = aMeeting({
+      title: 'Bo',
+      weekday: Weekday.tuesday,
+      cadence: Cadence.biWeekly(Week.b),
+    })
+    const { root, application } = mounted(new Schedule([ana, bo]), {}, 'overview')
+    press(bookingElement(root, 0), point(Weekday.tuesday, '10:00', 'left'))
+    moveTo(point(Weekday.tuesday, '10:00', 'right'))
+    release(point(Weekday.tuesday, '10:00', 'right'))
+    expect(application.schedule.meetings[0]?.cadence).toBe(Cadence.biWeekly(Week.a))
+    expect(root.querySelector('.refusal span')?.textContent).toBe(
+      'Overlaps Bo, week B, 10:00 to 11:00.',
+    )
   })
 
   it('resizes a meeting by its lower edge', () => {

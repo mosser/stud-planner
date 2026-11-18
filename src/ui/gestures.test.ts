@@ -70,6 +70,24 @@ describe('adding by dragging', () => {
   })
 })
 
+describe('moving into the other week on the overview', () => {
+  it('holds a bi-weekly booking dragged into the half of the other week in that week', () => {
+    const moved = bookingMoved(ana, 0, { weekday: Weekday.friday, quarter: 8, half: Week.b })
+    expect([moved.cadence, moved.weekday, moved.start.toString()]).toEqual([
+      Cadence.biWeekly(Week.b),
+      Weekday.friday,
+      '10:00',
+    ])
+    expect(bookingMoved(ana, 0, { ...monday(8), half: Week.a }).cadence).toBe(inWeekA)
+  })
+
+  it("keeps a weekly booking weekly, and the week of a booking moved on a week's tab", () => {
+    const weekly = aMeeting({ title: 'Lab' })
+    expect(bookingMoved(weekly, 0, { ...monday(8), half: Week.b }).cadence).toBe(Cadence.weekly)
+    expect(bookingMoved(ana, 0, monday(12)).cadence).toBe(inWeekA)
+  })
+})
+
 describe('moving and resizing', () => {
   it('moves a meeting by the quarter it is held at, keeping its duration', () => {
     const moved = bookingMoved(ana, 2, { weekday: Weekday.friday, quarter: 22 })

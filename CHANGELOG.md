@@ -6,6 +6,11 @@ project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+
+- On the overview, a bi-weekly meeting or time block dragged into the other week's half of a
+  day moves to that week.
+
 ### Changed
 
 - The grid fills the window, its quarter hours sharing the height left, a line of text each

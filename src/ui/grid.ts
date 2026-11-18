@@ -355,5 +355,12 @@ export function slotAt(grid: Element, x: number, y: number): Slot | undefined {
     return undefined
   }
   const quarter = Math.floor(((y - box.top) / box.height) * theDay.quarterCount)
-  return { weekday, quarter: Math.min(Math.max(quarter, 0), theDay.quarterCount - 1) }
+  const isOverview = grid.querySelector('.week[data-shows="overview"]') !== null
+  const isLeft = x < box.left + box.width / 2
+  const half = isLeft ? Week.a : Week.b
+  return {
+    weekday,
+    quarter: Math.min(Math.max(quarter, 0), theDay.quarterCount - 1),
+    ...(isOverview ? { half } : {}),
+  }
 }

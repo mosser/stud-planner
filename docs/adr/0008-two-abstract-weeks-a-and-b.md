@@ -48,7 +48,8 @@ week B** name two weeks that alternate, and nothing more.
   its week's half, whole, and the other half is outlined where the other week
   has nothing; a weekly booking takes both. The overview so shows at once
   what alternates and what does not, and every booking keeps an upright
-  rectangle for its title, time and participants.
+  rectangle for its title, time and participants. Dragged into the other
+  half, a bi-weekly booking moves to the other week.
 - A booking added from a week's tab is held in that week: weekly, or
   bi-weekly in it. A booking added from the overview is held in both weeks:
   it is weekly.

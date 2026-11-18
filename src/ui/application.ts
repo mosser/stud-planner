@@ -86,7 +86,7 @@ type Drag =
     }
 
 function isSameSlot(one: Slot, other: Slot): boolean {
-  return one.weekday === other.weekday && one.quarter === other.quarter
+  return one.weekday === other.weekday && one.quarter === other.quarter && one.half === other.half
 }
 
 /** The page: a masthead, the tabs and their grid, and a footer naming the version. */
@@ -443,7 +443,7 @@ export function mountApplication(root: HTMLElement, context: ApplicationContext)
         return
       }
       const isRefused = schedule.overlapOf(current.candidate, current.booking) !== undefined
-      const classes = `${kindClass(current.booking)} ${cadenceClass(current.booking)}`
+      const classes = `${kindClass(current.candidate)} ${cadenceClass(current.candidate)}`
       show(
         current.candidate.weekday.key,
         rowsOf(current.candidate),
@@ -501,7 +501,8 @@ export function mountApplication(root: HTMLElement, context: ApplicationContext)
       const isUnchanged =
         candidate.weekday === booking.weekday &&
         candidate.start.equals(booking.start) &&
-        candidate.duration.equals(booking.duration)
+        candidate.duration.equals(booking.duration) &&
+        candidate.cadence === booking.cadence
       if (isUnchanged) {
         return
       }
