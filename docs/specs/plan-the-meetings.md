@@ -59,8 +59,9 @@ Meetings and time blocks are moved, resized and removed alike.
 
 ## Short bookings
 
-Two bookings back to back stand a pixel apart. A quarter is drawn tall enough
-for a line of text. A booking of half an hour
+The grid fills the window: its quarters share the height the rest of the
+page leaves, a line of text each at least, below which the page scrolls. Two
+bookings back to back stand a pixel apart. A booking of half an hour
 or less writes its title and time on one line, and its participants under
 them; a booking of a quarter, its title alone. Every booking tells all of
 itself on hover: its title, cadence, weekday, time and participants.
@@ -85,7 +86,7 @@ itself on hover: its title, cadence, weekday, time and participants.
 
 | Rule | Behaviour |
 |---|---|
-| The list | The participants button, beside Download and Upload, opens the participants of the schedule: each by name, with the number of meetings they take part in. |
+| The list | The participants button, beside Download and Upload, opens the participants of the schedule: each by name, with the number of meetings they take part in. Participants are listed by name, A to Z, whatever the case and the accents, here as in the list under the grid, the names offered as one types, and a meeting's chips and names. |
 | Add | A name typed and added makes a participant; a name another participant has, whatever its case, is refused and the reason shown. |
 | Rename | A name changed in the list renames the participant, in every meeting they take part in. |
 | Remove | The remove mark of a participant takes them out of the schedule and of every meeting; the one-to-one meetings they are the student of go with them. When they take part in some, the Organizer confirms first: *Remove Kalvin from the participants, and from 3 meetings? Their 2 one-to-one meetings go too.* |

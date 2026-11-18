@@ -10,7 +10,7 @@ import {
   replacementQuestion,
   setAside,
 } from '../domain/findings.ts'
-import type { Participant } from '../domain/participant.ts'
+import { byName, type Participant } from '../domain/participant.ts'
 import { Presence } from '../domain/presence.ts'
 import type { Schedule } from '../domain/schedule.ts'
 import { Weekday } from '../domain/weekday.ts'
@@ -160,7 +160,7 @@ export function mountApplication(root: HTMLElement, context: ApplicationContext)
     const participants =
       schedule.participants.length === 0
         ? ''
-        : html`<optgroup label="Participants">${schedule.participants.map(
+        : html`<optgroup label="Participants">${byName(schedule.participants).map(
             (participant) =>
               html`<option value="participant:${participant.name}">${participant.name}</option>`,
           )}</optgroup>`
@@ -204,7 +204,7 @@ export function mountApplication(root: HTMLElement, context: ApplicationContext)
             <input type="file" accept=".json,application/json" data-file hidden>
           </div>
         </div>
-        <div class="grid ${isLocked ? 'locked' : ''}" role="tabpanel" aria-label="${tabNames[tab]}">${gridOf(schedule, tab, { isLocked, ...singledOut() })}</div>
+        <div class="grid ${isLocked ? 'locked' : ''}" style="--quarters: ${theDay.quarterCount}" role="tabpanel" aria-label="${tabNames[tab]}">${gridOf(schedule, tab, { isLocked, ...singledOut() })}</div>
         <div class="under-grid">${addingSwitch()}${filterList()}</div>
       </main>
       <footer class="site-footer">stud-planner v${context.version}</footer>

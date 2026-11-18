@@ -1,5 +1,5 @@
 import { participantRemovalQuestion } from '../domain/findings.ts'
-import type { Participant } from '../domain/participant.ts'
+import { byName, type Participant } from '../domain/participant.ts'
 import type { Schedule } from '../domain/schedule.ts'
 import { closeDialog, dialogOn, showDialog } from './dialog.ts'
 import { html, type Markup } from './html.ts'
@@ -41,9 +41,10 @@ function rowOf(
   </li>`
 }
 
+/** The participants of the schedule, A to Z, each by its rank in the schedule. */
 function listOf(schedule: Schedule, isReadOnly: boolean): string {
-  return html`${schedule.participants.map((participant, rank) =>
-    rowOf(schedule, participant, rank, isReadOnly),
+  return html`${byName(schedule.participants).map((participant) =>
+    rowOf(schedule, participant, schedule.participants.indexOf(participant), isReadOnly),
   )}`.text
 }
 

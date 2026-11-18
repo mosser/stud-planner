@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { Cadence, Week } from './cadence.ts'
 import { Category } from './category.ts'
 import { aMeeting, at } from './meeting.fixture.ts'
-import { Participant } from './participant.ts'
+import { byName, Participant } from './participant.ts'
 import { Schedule } from './schedule.ts'
 import { Weekday } from './weekday.ts'
 
@@ -18,6 +18,19 @@ describe('a participant', () => {
   it('is named so whatever the case', () => {
     expect(ana.isNamed(' ana')).toBe(true)
     expect(ana.isNamed('Anaïs')).toBe(false)
+  })
+})
+
+describe('participants by name', () => {
+  it('are listed A to Z, whatever the case and the accents', () => {
+    const names = ['zoé', 'Émile', 'ana', 'Bo'].map((name) => new Participant(name))
+    expect(byName(names).map((participant) => participant.name)).toEqual([
+      'ana',
+      'Bo',
+      'Émile',
+      'zoé',
+    ])
+    expect(names[0]?.name).toBe('zoé')
   })
 })
 

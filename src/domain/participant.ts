@@ -22,3 +22,10 @@ export class Participant {
     return this.name.toLocaleLowerCase() === name.trim().toLocaleLowerCase()
   }
 }
+
+const collator = new Intl.Collator(undefined, { sensitivity: 'base' })
+
+/** The participants by name, A to Z, whatever the case and the accents: Ana, Émile, Zoé. */
+export function byName<T extends { readonly name: string }>(participants: readonly T[]): T[] {
+  return [...participants].sort((one, other) => collator.compare(one.name, other.name))
+}

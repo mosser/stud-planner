@@ -1,5 +1,5 @@
 import type { Participant as ParticipantType } from '../domain/participant.ts'
-import { Participant } from '../domain/participant.ts'
+import { byName, Participant } from '../domain/participant.ts'
 import type { Schedule } from '../domain/schedule.ts'
 import { html } from './html.ts'
 
@@ -36,14 +36,15 @@ export function drawPicker(element: HTMLElement, given: PickerOptions): void {
   const listId = `participant-names-${pickersDrawn}`
   const show = () => {
     const isFull = given.limit !== undefined && given.picked.length >= given.limit
-    const chips = given.picked.map((participant, rank) => {
+    const chips = byName(given.picked).map((participant) => {
+      const rank = given.picked.indexOf(participant)
       const isNew = !given.schedule.participants.includes(participant)
       const unpick = given.isReadOnly
         ? ''
         : html`<button type="button" data-unpick="${rank}" aria-label="Remove ${participant.name}">×</button>`
       return html`<li class="chip ${isNew ? 'new' : ''}">${participant.name}${isNew ? ' (new)' : ''}${unpick}</li>`
     })
-    const offered = given.schedule.participants.filter(
+    const offered = byName(given.schedule.participants).filter(
       (participant) =>
         !given.picked.includes(participant) && !given.elsewhere().includes(participant),
     )

@@ -6,6 +6,12 @@ project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Changed
+
+- The grid fills the window, its quarter hours sharing the height left, a line of text each
+  at least; a smaller window scrolls.
+- Participants are listed by name, A to Z, wherever they are listed.
+
 ## [1.0.0] - 2026-11-17
 
 ### Added

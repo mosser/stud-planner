@@ -49,6 +49,15 @@ describe('the participants dialog', () => {
     ).toEqual(['1 meeting', 'no meeting'])
   })
 
+  it('lists the participants A to Z, whatever order they were added in', () => {
+    const { dialog, schedule } = opened(new Schedule([], [], [bo, ana]))
+    expect(names(dialog)).toEqual(['Ana', 'Bo'])
+    const field = dialog.querySelector('input[data-participant="1"]') as HTMLInputElement
+    field.value = 'Anaïs'
+    field.dispatchEvent(new Event('change', { bubbles: true }))
+    expect(schedule().participants.map((participant) => participant.name)).toEqual(['Bo', 'Anaïs'])
+  })
+
   it('adds a participant by name, and says why a name is refused', () => {
     const { dialog, schedule } = opened(new Schedule([], [], [ana]))
     addNamed(dialog, ' Bo ')

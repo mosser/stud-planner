@@ -11,7 +11,7 @@ import {
   withParticipants,
 } from '../domain/findings.ts'
 import { Meeting } from '../domain/meeting.ts'
-import type { Participant } from '../domain/participant.ts'
+import { byName, type Participant } from '../domain/participant.ts'
 import type { Schedule } from '../domain/schedule.ts'
 import type { TimeOfDay } from '../domain/time-of-day.ts'
 import { Weekday } from '../domain/weekday.ts'
@@ -37,10 +37,10 @@ export function accessibleNameOf(booking: Booking): string {
   return people.length === 0 ? spoken : `${spoken}, ${withParticipants(people)}`
 }
 
-/** The names of the participants of a meeting; none for a time block. */
+/** The names of the participants of a meeting besides its student, A to Z; none for a time block. */
 function participantsOf(booking: Booking): readonly string[] {
   return booking instanceof Meeting
-    ? booking.participants.map((participant) => participant.name)
+    ? byName(booking.participants).map((participant) => participant.name)
     : []
 }
 

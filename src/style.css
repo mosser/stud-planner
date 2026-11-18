@@ -42,7 +42,8 @@
   --fill-weekly: color-mix(in srgb, var(--mac-accent-green) 22%, var(--mac-white));
   --fill-week-a: color-mix(in srgb, var(--mac-accent-sky) 65%, var(--mac-white));
   --fill-week-b: color-mix(in srgb, var(--mac-gold) 22%, var(--mac-white));
-  --quarter-height: 1.1rem;
+  /* The least height of a quarter: a line of text. Below it, the page scrolls. */
+  --quarter-least: 0.8rem;
   color-scheme: light;
   font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
 }
@@ -56,6 +57,13 @@ body {
   background: var(--color-surface);
   color: var(--color-text);
   line-height: 1.5;
+}
+
+/* The page fills the window: the grid takes whatever height the rest leaves. */
+#app {
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh;
 }
 
 button,
@@ -134,9 +142,20 @@ textarea {
 }
 
 .screen {
-  max-width: 72rem;
-  margin: 0 auto;
-  padding: 1rem 1.5rem 1.5rem;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  padding: 1rem 1.5rem 1rem;
+}
+
+/*
+ * The grid takes the height the rest of the page leaves, its quarters sharing it; never less than
+ * a line of text per quarter, below which the page scrolls.
+ */
+.grid {
+  display: flex;
+  flex: 1 1 0;
+  min-height: calc(var(--quarters) * var(--quarter-least) + 2.5rem);
 }
 
 .notice {
@@ -275,6 +294,9 @@ button:disabled {
 /* The grid of a tab: the hours, then a column per weekday, a row per quarter. */
 .week {
   display: grid;
+  flex: 1;
+  min-height: 0;
+  grid-template-rows: auto minmax(0, 1fr);
   grid-template-columns: 3.5rem repeat(5, minmax(0, 1fr));
   user-select: none;
 }
@@ -329,7 +351,7 @@ button:disabled {
 .hours,
 .day {
   display: grid;
-  grid-template-rows: repeat(var(--quarters), var(--quarter-height));
+  grid-template-rows: repeat(var(--quarters), minmax(var(--quarter-least), 1fr));
 }
 
 .hour {
@@ -347,8 +369,8 @@ button:disabled {
     linear-gradient(var(--color-rule) 1px, transparent 1px),
     linear-gradient(var(--color-faint-rule) 1px, transparent 1px);
   background-size:
-    100% calc(var(--quarter-height) * 4),
-    100% var(--quarter-height);
+    100% calc(400% / var(--quarters)),
+    100% calc(100% / var(--quarters));
   cursor: cell;
   touch-action: none;
 }
