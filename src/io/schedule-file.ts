@@ -20,7 +20,7 @@ import {
   unknownVersion,
   valueNotAllowed,
 } from '../domain/findings.ts'
-import { Meeting } from '../domain/meeting.ts'
+import { Meeting, type MeetingDescription } from '../domain/meeting.ts'
 import { Participant } from '../domain/participant.ts'
 import { type DayPresence, Presence } from '../domain/presence.ts'
 import { Schedule } from '../domain/schedule.ts'
@@ -33,7 +33,7 @@ export const scheduleFileName = 'stud-planner-schedule.json'
 
 const format = 'stud-planner/schedule'
 /** The version written; every version ever written is read (ADR 0007). */
-const version = 4
+const version = 5
 
 /**
  * How a version of the schedule file is written: the field and the values of the week of a
@@ -46,15 +46,17 @@ interface WeekWritten {
   readonly weeks: Readonly<Record<string, Week>>
   readonly hasParticipants: boolean
   readonly hasCategoriesAndDays: boolean
+  readonly hasStudents: boolean
 }
 
 const parity = { field: 'parity', weeks: { odd: Week.a, even: Week.b } }
 const lettered = { field: 'week', weeks: { A: Week.a, B: Week.b } }
 const weekWritten: Readonly<Record<number, WeekWritten>> = {
-  1: { ...parity, hasParticipants: false, hasCategoriesAndDays: false },
-  2: { ...lettered, hasParticipants: false, hasCategoriesAndDays: false },
-  3: { ...lettered, hasParticipants: true, hasCategoriesAndDays: false },
-  4: { ...lettered, hasParticipants: true, hasCategoriesAndDays: true },
+  1: { ...parity, hasParticipants: false, hasCategoriesAndDays: false, hasStudents: false },
+  2: { ...lettered, hasParticipants: false, hasCategoriesAndDays: false, hasStudents: false },
+  3: { ...lettered, hasParticipants: true, hasCategoriesAndDays: false, hasStudents: false },
+  4: { ...lettered, hasParticipants: true, hasCategoriesAndDays: true, hasStudents: false },
+  5: { ...lettered, hasParticipants: true, hasCategoriesAndDays: true, hasStudents: true },
 }
 
 function scheduleFields(written: WeekWritten): string[] {
@@ -71,7 +73,8 @@ function scheduleFields(written: WeekWritten): string[] {
 interface Reading {
   readonly part: string
   readonly written: WeekWritten
-  readonly participants: readonly Participant[]
+  /** The participants of the schedule: a file before students may add one, named by a title. */
+  readonly participants: Participant[]
 }
 
 function timingFields(written: WeekWritten): string[] {
@@ -88,9 +91,13 @@ interface TimingContent {
   readonly duration: number
 }
 
-/** A meeting as the schedule file holds it: its participants by name. */
+/**
+ * A meeting as the schedule file holds it: its participants by name; a one-to-one meeting its
+ * student by name, and no title.
+ */
 interface MeetingContent extends TimingContent {
-  readonly title: string
+  readonly title?: string
+  readonly student?: string
   readonly note?: string
   readonly participants?: readonly string[]
   readonly category?: string
@@ -135,7 +142,9 @@ function contentOfTiming(booking: Booking): TimingContent {
 
 function contentOfMeeting(meeting: Meeting): MeetingContent {
   return {
-    title: meeting.title,
+    ...(meeting.student === undefined
+      ? { title: meeting.title }
+      : { student: meeting.student.name }),
     ...contentOfTiming(meeting),
     ...(meeting.note === undefined ? {} : { note: meeting.note }),
     ...(meeting.participants.length === 0
@@ -265,6 +274,17 @@ function recordOf(list: string, value: unknown): Record<string, unknown> {
   return value
 }
 
+/** The student a one-to-one meeting names, a participant of the schedule. */
+function studentOf(reading: Reading, record: Record<string, unknown>): Participant {
+  const { part } = reading
+  const name = fieldRead(part, record, 'student', text)
+  const student = reading.participants.find((each) => each.isNamed(name))
+  if (student === undefined) {
+    throw new Refusal(bookingBroken(part, notAParticipant(name)))
+  }
+  return student
+}
+
 /** The participants a meeting names, each a participant of the schedule. */
 function participantsOf(reading: Reading, record: Record<string, unknown>): Participant[] {
   const { part } = reading
@@ -292,9 +312,11 @@ function meetingOf(reading: Reading, value: unknown): Meeting {
     'note',
     ...participantsField,
     ...(reading.written.hasCategoriesAndDays ? ['category'] : []),
+    ...(reading.written.hasStudents ? ['student'] : []),
   ])
   const description = {
-    title: fieldRead(part, record, 'title', text),
+    title: 'student' in record ? undefined : fieldRead(part, record, 'title', text),
+    student: 'student' in record ? studentOf(reading, record) : undefined,
     ...timingOf(reading, record),
     note: 'note' in record ? fieldRead(part, record, 'note', text) : undefined,
     participants: 'participants' in record ? participantsOf(reading, record) : [],
@@ -305,7 +327,29 @@ function meetingOf(reading: Reading, value: unknown): Meeting {
           )
         : undefined,
   }
+  if (!reading.written.hasStudents && description.category?.isOneToOne === true) {
+    return built(part, () => new Meeting(namedAfterItsStudent(reading, description)))
+  }
   return built(part, () => new Meeting(description))
+}
+
+/**
+ * A one-to-one meeting of a file written before students, which has a title: its student is the
+ * participant of that name, made one of the schedule when none has it, and the meeting is named
+ * after them.
+ */
+function namedAfterItsStudent(
+  reading: Reading,
+  description: MeetingDescription,
+): MeetingDescription {
+  const title = description.title ?? ''
+  let student = reading.participants.find((participant) => participant.isNamed(title))
+  if (student === undefined) {
+    student = built(reading.part, () => new Participant(title))
+    reading.participants.push(student)
+  }
+  const others = (description.participants ?? []).filter((participant) => participant !== student)
+  return { ...description, title: undefined, student, participants: others }
 }
 
 /** The days of the weeks that say where the Organizer is, each once. */

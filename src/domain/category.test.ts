@@ -17,19 +17,36 @@ describe('the categories', () => {
     expect(Category.named('Course')).toBeUndefined()
   })
 
-  it('are a list of names, not empty, no two alike', () => {
-    expect(Category.listedIn([' A ', 'B']).map((category) => category.name)).toEqual(['A', 'B'])
+  it('are one-to-one, Master and PhD, or titled, Project and Lab', () => {
+    expect(Category.all.map((category) => category.isOneToOne)).toEqual([true, true, false, false])
+  })
+
+  it('are a list of names and kinds, not empty, no two alike', () => {
+    const listed = Category.listedIn([
+      { name: ' A ', kind: 'one-to-one' },
+      { name: 'B', kind: 'titled' },
+    ])
+    expect(listed.map((category) => [category.name, category.isOneToOne])).toEqual([
+      ['A', true],
+      ['B', false],
+    ])
     expect(() => Category.listedIn([])).toThrow(TypeError)
-    expect(() => Category.listedIn(['A', '  '])).toThrow(TypeError)
-    expect(() => Category.listedIn(['A', 'a'])).toThrow(TypeError)
-    expect(() => Category.listedIn({ A: 1 })).toThrow(TypeError)
+    expect(() => Category.listedIn([{ name: '  ', kind: 'titled' }])).toThrow(TypeError)
+    expect(() => Category.listedIn([{ name: 'A', kind: 'group' }])).toThrow(TypeError)
+    expect(() =>
+      Category.listedIn([
+        { name: 'A', kind: 'titled' },
+        { name: 'a', kind: 'titled' },
+      ]),
+    ).toThrow(TypeError)
+    expect(() => Category.listedIn(['A'])).toThrow(TypeError)
   })
 
   it('give a meeting what it is about, kept when it moves', () => {
-    const phd = Category.named('PhD')
+    const lab = Category.named('Lab')
     expect(aMeeting().category).toBeUndefined()
-    const meeting = aMeeting({ category: phd })
-    expect(meeting.category).toBe(phd)
-    expect(meeting.afterResizingTo(meeting.duration).category).toBe(phd)
+    const meeting = aMeeting({ category: lab })
+    expect(meeting.category).toBe(lab)
+    expect(meeting.afterResizingTo(meeting.duration).category).toBe(lab)
   })
 })

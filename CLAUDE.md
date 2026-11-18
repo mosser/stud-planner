@@ -223,13 +223,17 @@ first.
 
 ### ADR 0014: categories and days
 
-- `Category` comes from `config/categories.json` (checked by
-  `checkCategories()`); a meeting refers to one, required by the dialog,
-  absent only on meetings read from version 3 or earlier. The list under the
+- `Category` comes from `config/categories.json` (`{ name, kind }`, checked by
+  `checkCategories()`); one-to-one (Master, PhD) means a `student`, after whom
+  the meeting is titled, and co-supervisors; titled (Project, Lab) a title and
+  participants. The dialog asks the category first (`drawWho`, pickers in
+  `picker.ts`). Removing a student removes their one-to-one meetings. A meeting
+  is shown as *title | category* (`labelOf`). The list under the
   grid singles out a category or a participant (`category:`/`participant:`).
 - `Schedule.presences` says, per day of week A and of week B, on campus or
   remote, or nothing; toggled in the day headers. The schedule file is
-  version 4 (`category`, `days`); versions 1 to 3 are read.
+  version 5 (`category`, `days`, `student`); versions 1 to 4 are read, a
+  version 4 one-to-one meeting taking its title as its student's name.
 - A booking added takes the weeks of its tab; only a booking changed has a
   Weeks field.
 

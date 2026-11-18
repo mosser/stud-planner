@@ -174,9 +174,9 @@ describe('the participants of the schedule file', () => {
 })
 
 describe('the categories and the days of the schedule file', () => {
-  const phd = Category.named('PhD')
+  const lab = Category.named('Lab')
   const withBoth = new Schedule(
-    [aMeeting({ category: phd })],
+    [aMeeting({ category: lab })],
     [],
     [],
     [{ week: Week.b, weekday: Weekday.monday, presence: Presence.remote }],
@@ -188,7 +188,7 @@ describe('the categories and the days of the schedule file', () => {
 
   it('are written, a category only on a meeting that has one', () => {
     const content = contentOf(withBoth)
-    expect(content.meetings[0]?.category).toBe('PhD')
+    expect(content.meetings[0]?.category).toBe('Lab')
     expect(content.days).toEqual([{ week: 'B', weekday: 'monday', presence: 'remote' }])
     expect(contentOf(new Schedule([aMeeting()])).meetings[0]?.category).toBeUndefined()
   })
@@ -228,6 +228,80 @@ describe('the categories and the days of the schedule file', () => {
   })
 })
 
+describe('the student of a one-to-one meeting in the schedule file', () => {
+  const kalvin = new Participant('Kalvin')
+  const sup = new Participant('Sup')
+  const phd = Category.named('PhD')
+  const oneToOne = new Schedule(
+    [aMeeting({ category: phd, student: kalvin, participants: [sup] })],
+    [],
+    [kalvin, sup],
+  )
+
+  it('is written by name, and the meeting with no title', () => {
+    const [meeting] = contentOf(oneToOne).meetings
+    expect(meeting?.student).toBe('Kalvin')
+    expect(meeting?.title).toBeUndefined()
+    expect(meeting?.participants).toEqual(['Sup'])
+  })
+
+  it('is read back as it was written', () => {
+    const read = readScheduleFile(scheduleFileOf(oneToOne))
+    expect(!read.isRefused && contentOf(read.schedule)).toEqual(contentOf(oneToOne))
+    expect(!read.isRefused && read.schedule.meetings[0]?.title).toBe('Kalvin')
+  })
+
+  it('refuses a student who is not a participant, and a one-to-one meeting without one', () => {
+    const file = (meeting: Record<string, unknown>) => ({
+      format: 'stud-planner/schedule',
+      version: 5,
+      participants: ['Kalvin'],
+      meetings: [{ ...aMeetingContent, category: 'PhD', ...meeting }],
+    })
+    expect(reasonOf(scheduleFromContent(file({ title: undefined, student: 'Zoé' })))).toBe(
+      'meeting 1: Zoé is not a participant of the schedule.',
+    )
+    expect(reasonOf(scheduleFromContent(file({})))).toBe(
+      'meeting 1: A one-to-one meeting needs a student.',
+    )
+  })
+
+  it('is, in a file of version 4, the participant a one-to-one meeting is titled after', () => {
+    const four = {
+      format: 'stud-planner/schedule',
+      version: 4,
+      participants: ['Kalvin', 'Sup'],
+      meetings: [
+        { ...aMeetingContent, title: 'Kalvin', category: 'PhD', participants: ['Kalvin', 'Sup'] },
+        { ...aMeetingContent, title: 'Zoé', category: 'Master', weekday: 'friday' },
+      ],
+    }
+    const read = scheduleFromContent(four)
+    expect(read.isRefused ? read.reason : '').toBe('')
+    if (!read.isRefused) {
+      const [kalvin, zoe] = read.schedule.meetings
+      expect([kalvin?.student?.name, kalvin?.participants.map((each) => each.name)]).toEqual([
+        'Kalvin',
+        ['Sup'],
+      ])
+      expect(zoe?.student?.name).toBe('Zoé')
+      expect(read.schedule.participants.map((each) => each.name)).toEqual(['Kalvin', 'Sup', 'Zoé'])
+    }
+  })
+
+  it('is none in a file of version 4, which cannot name one', () => {
+    const four = {
+      format: 'stud-planner/schedule',
+      version: 4,
+      participants: ['Kalvin'],
+      meetings: [{ ...aMeetingContent, student: 'Kalvin' }],
+    }
+    expect(reasonOf(scheduleFromContent(four))).toBe(
+      'meeting 1 has a field student, which a schedule file does not have.',
+    )
+  })
+})
+
 describe('a schedule file of version 1', () => {
   const versionOne = {
     format: 'stud-planner/schedule',
@@ -262,9 +336,9 @@ describe('a schedule file of version 1', () => {
     )
   })
 
-  it('is written again as version 4', () => {
+  it('is written again as version 5', () => {
     const read = scheduleFromContent(versionOne)
-    expect(!read.isRefused && contentOf(read.schedule).version).toBe(4)
+    expect(!read.isRefused && contentOf(read.schedule).version).toBe(5)
   })
 })
 
@@ -276,7 +350,7 @@ describe('the schedule file', () => {
   it('writes each meeting as the specification lists, a week for a bi-weekly one only', () => {
     expect(contentOf(schedule)).toEqual({
       format: 'stud-planner/schedule',
-      version: 4,
+      version: 5,
       meetings: [
         { ...aMeetingContent, note: 'Room 201' },
         {
@@ -324,11 +398,11 @@ describe('the schedule file', () => {
   })
 
   it('refuses a version it does not read', () => {
-    expect(reasonOf(scheduleFromContent(fileWith([], { version: 5 })))).toBe(
-      'it is a schedule file of version 5, and this system reads versions 1 to 4.',
+    expect(reasonOf(scheduleFromContent(fileWith([], { version: 6 })))).toBe(
+      'it is a schedule file of version 6, and this system reads versions 1 to 5.',
     )
     expect(reasonOf(scheduleFromContent(fileWith([], { version: '2' })))).toBe(
-      'it is a schedule file of version "2", and this system reads versions 1 to 4.',
+      'it is a schedule file of version "2", and this system reads versions 1 to 5.',
     )
   })
 

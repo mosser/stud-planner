@@ -72,14 +72,6 @@ function isDimmed(booking: Booking, drawing: Drawing): boolean {
   return false
 }
 
-/** The tag of a meeting's category; none for a meeting without one, or a time block. */
-function categoryTag(booking: Booking): Markup | string {
-  if (!(booking instanceof Meeting) || booking.category === undefined) {
-    return ''
-  }
-  return html`<span class="category-tag">${booking.category.name}</span>`
-}
-
 function dimmedClass(booking: Booking, drawing: Drawing): string {
   return isDimmed(booking, drawing) ? 'dimmed' : ''
 }
@@ -163,7 +155,7 @@ function wholeBooking(booking: Booking, rank: number, drawing: Drawing): Markup 
   return html`<div class="booking ${classesOf(booking)} ${lengthClass(booking)} ${dimmedClass(booking, drawing)}"
     style="grid-row: ${rowsOf(booking)}" data-booking="${rank}" role="button" tabindex="0"
     aria-label="${name}" title="${name}">
-    <span class="booking-title">${categoryTag(booking)}${labelOf(booking)}</span>
+    <span class="booking-title">${labelOf(booking)}</span>
     <span class="booking-time">${timeOf(booking)}</span>
     ${participantsLine(booking)}
     ${removeMark(booking, rank, isLocked)}
@@ -274,7 +266,7 @@ function piecedBooking(
   })
   return html`${drawn}
     <div class="booking-label ${weekClass(week)} ${dimmed} shared" style="grid-row: ${rowsOf(first)}">
-      <span class="booking-title">${categoryTag(booking)}${labelOf(booking)}</span>${removeMark(booking, rank, isLocked)}
+      <span class="booking-title">${labelOf(booking)}</span>${removeMark(booking, rank, isLocked)}
     </div>
     <div class="resize-zone ${weekClass(week)} shared" style="grid-row: ${rowsOf(last)}">
       ${resizeHandle(rank, isLocked)}

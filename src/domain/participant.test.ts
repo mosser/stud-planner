@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { Cadence, Week } from './cadence.ts'
+import { Category } from './category.ts'
 import { aMeeting, at } from './meeting.fixture.ts'
 import { Participant } from './participant.ts'
 import { Schedule } from './schedule.ts'
@@ -94,5 +95,61 @@ describe('the participants of a schedule', () => {
     expect(() => schedule.afterAdding(aMeeting({ title: 'Other', participants: [ana] }))).toThrow(
       'Overlaps Lab meeting, week A, 10:00 to 11:00.',
     )
+  })
+})
+
+describe('the student of a one-to-one meeting', () => {
+  const phd = Category.named('PhD')
+  const lab = Category.named('Lab')
+  const kalvin = new Participant('Kalvin')
+  const supervisor = new Participant('Sup')
+
+  it('names the meeting, which has no title of its own', () => {
+    const meeting = aMeeting({
+      title: 'ignored',
+      category: phd,
+      student: kalvin,
+      participants: [supervisor],
+    })
+    expect(meeting.title).toBe('Kalvin')
+    expect(meeting.description.title).toBeUndefined()
+    expect(meeting.everyone).toEqual([kalvin, supervisor])
+    expect(meeting.hasParticipant(kalvin)).toBe(true)
+  })
+
+  it('is needed by a one-to-one meeting, and had by no other', () => {
+    expect(() => aMeeting({ category: phd })).toThrow('A one-to-one meeting needs a student.')
+    expect(() => aMeeting({ category: lab, student: kalvin })).toThrow(
+      'Only a one-to-one meeting has a student.',
+    )
+    expect(() => aMeeting({ category: lab, title: ' ' })).toThrow('A meeting needs a title.')
+    expect(() => aMeeting({ category: phd, student: kalvin, participants: [kalvin] })).toThrow(
+      'A meeting names Kalvin twice.',
+    )
+  })
+
+  it('is a participant of the schedule, renamed in the meeting it names', () => {
+    const meeting = aMeeting({ category: phd, student: kalvin })
+    expect(() => new Schedule([meeting])).toThrow('Kalvin is not a participant of the schedule.')
+    const schedule = new Schedule([meeting], [], [kalvin])
+    const renamed = schedule.afterRenaming(kalvin, 'Calvin')
+    expect(renamed.meetings[0]?.title).toBe('Calvin')
+    expect(renamed.meetingsOf(renamed.participants[0] as Participant)).toHaveLength(1)
+  })
+
+  it('takes their one-to-one meetings with them when removed, and leaves the others', () => {
+    const own = aMeeting({ category: phd, student: kalvin, participants: [supervisor] })
+    const theirs = aMeeting({
+      title: 'Lab',
+      category: lab,
+      weekday: Weekday.friday,
+      participants: [kalvin, supervisor],
+    })
+    const schedule = new Schedule([own, theirs], [], [kalvin, supervisor])
+    const without = schedule.afterRemovingParticipant(kalvin)
+    expect(without.meetings.map((meeting) => meeting.title)).toEqual(['Lab'])
+    expect(without.meetings[0]?.participants).toEqual([supervisor])
+    const withoutSupervisor = schedule.afterRemovingParticipant(supervisor)
+    expect(withoutSupervisor.meetings[0]?.everyone).toEqual([kalvin])
   })
 })

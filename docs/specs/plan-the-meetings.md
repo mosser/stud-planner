@@ -59,7 +59,8 @@ Meetings and time blocks are moved, resized and removed alike.
 
 ## Short bookings
 
-A quarter is drawn tall enough for a line of text. A booking of half an hour
+Two bookings back to back stand a pixel apart. A quarter is drawn tall enough
+for a line of text. A booking of half an hour
 or less writes its title and time on one line, and its participants under
 them; a booking of a quarter, its title alone. Every booking tells all of
 itself on hover: its title, cadence, weekday, time and participants.
@@ -68,8 +69,8 @@ itself on hover: its title, cadence, weekday, time and participants.
 
 | Rule | Behaviour |
 |---|---|
-| On a meeting | The dialog of a meeting asks for its category, among those `config/categories.json` lists, *Choose a category* until one is chosen; Done is refused until it is. A meeting read without one asks for it when next changed. |
-| On the grid | A meeting is tagged with its category, before its title; a screen reader hears it after the title: *Lab meeting (Lab), weekly, …* |
+| In the dialog | The dialog of a meeting asks for its category first, *Choose a category* until one is chosen, then what it needs: a one-to-one meeting, Master or PhD, its **student**, one participant, and its **co-supervisors**; a titled meeting, Project or Lab, its **title** and its **participants**. Done is refused until the category is chosen and the student picked, or the title typed. A meeting read without a category asks for it when next changed. |
+| On the grid | A meeting is shown by its title and its category, *Kalvin \| PhD*, *Thesis tool \| Project*; once when they are the same word. A one-to-one meeting's title is its student's name, renamed with them. |
 | Singled out | The list under the grid singles out a category's meetings, as it does a participant's. |
 
 ## On campus or remote
@@ -87,8 +88,8 @@ itself on hover: its title, cadence, weekday, time and participants.
 | The list | The participants button, beside Download and Upload, opens the participants of the schedule: each by name, with the number of meetings they take part in. |
 | Add | A name typed and added makes a participant; a name another participant has, whatever its case, is refused and the reason shown. |
 | Rename | A name changed in the list renames the participant, in every meeting they take part in. |
-| Remove | The remove mark of a participant takes them out of the schedule and of every meeting; when they take part in some, the Organizer confirms first: *Remove Ana from the participants, and from 2 meetings?* |
-| On a meeting | The dialog of a meeting shows its participants as chips, each removed by its mark. A name typed is picked among the participants of the schedule, offered as one types, by Enter or Add; a name no participant has makes a new one, marked *(new)*, added to the schedule with the meeting. The grid writes two of them at most, then how many others: *Ana, Bo +10*; on hover and to a screen reader, the meeting names them all: *Lab meeting, weekly, Monday 10:00 to 11:00, with Ana and Bo.* |
+| Remove | The remove mark of a participant takes them out of the schedule and of every meeting; the one-to-one meetings they are the student of go with them. When they take part in some, the Organizer confirms first: *Remove Kalvin from the participants, and from 3 meetings? Their 2 one-to-one meetings go too.* |
+| On a meeting | The dialog of a meeting shows its student and its other participants as chips, each removed by its mark. A name typed is picked among the participants of the schedule, offered as one types, by Enter or Add; a name no participant has makes a new one, marked *(new)*, added to the schedule with the meeting. The grid writes the participants besides the student, two at most, then how many others: *Ana, Bo +10*; on hover and to a screen reader, the meeting names them all. |
 | Singled out | A list under the grid, beside the switch, labelled *Filter by*, offers *None*, the categories and the participants: one chosen singles out their meetings, every other booking faded. Time blocks are never faded: they are the Organizer's own time. |
 | Locked | The participants are shown, and none is added, renamed or removed. |
 

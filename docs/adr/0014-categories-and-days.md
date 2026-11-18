@@ -28,10 +28,14 @@ Options considered for where the Organizer is:
 
 ## Decision
 
-- The categories are those of `config/categories.json`, checked when the
-  page is built (`checkCategories()`); `Category` reads them. A meeting refers
-  to one by reference. The dialog requires one; a meeting read from a file of
-  version 3 or earlier has none until it is changed.
+- The categories are those of `config/categories.json`, each with its kind,
+  checked when the page is built (`checkCategories()`); `Category` reads them.
+  A **one-to-one** category (Master, PhD) is a meeting with a student, a
+  participant, named after them, and maybe co-supervisors; a **titled** one
+  (Project, Lab) has a title of its own and participants. The dialog asks the
+  category first, then what it needs. A meeting refers to its category by
+  reference; one read from a file of version 3 or earlier has none until it
+  is changed.
 - `Schedule` says, for each day of week A and of week B, on campus, remote, or
   nothing (`presences`), each day once. The day headers toggle it.
 - The schedule file is version 4: `category` on a meeting, `days` in the

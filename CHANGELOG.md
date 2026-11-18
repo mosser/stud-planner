@@ -36,11 +36,14 @@ project adheres to [Semantic Versioning](https://semver.org/).
   as chips, and adds a name no one has yet; the grid writes two names and how many others,
   and the list under the grid singles out one participant's meetings. Time blocks stay
   visible whatever is singled out.
-- **Categories**: every meeting is Master, PhD, Project or Lab, tagged on the grid, and the
-  list under the grid singles out a category's meetings as it does a participant's.
+- **Categories**: every meeting is Master, PhD, Project or Lab, asked first when it is added.
+  A Master or PhD meeting is a one-to-one with its student, named after them, and maybe
+  co-supervisors: *Kalvin | PhD*. A Project or Lab meeting has its own title and its
+  participants. The list under the grid singles out a category's meetings as it does a
+  participant's.
 - **On campus or remote**: each weekday's header says where you are that day, in week A and
   in week B, with a click.
-- Meetings of half an hour or less stay readable: title and time on one line, participants
+- Meetings back to back stand apart; meetings of half an hour or less stay readable: title and time on one line, participants
   under them; every booking tells all of itself on hover.
 - The schedule is kept by the browser between two sessions, and is downloaded as, or
   uploaded from, `stud-planner-schedule.json`: the way to share it.

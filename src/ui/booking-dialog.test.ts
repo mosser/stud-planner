@@ -1,6 +1,7 @@
 // @vitest-environment happy-dom
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { Cadence, Week } from '../domain/cadence.ts'
+import { Category } from '../domain/category.ts'
 import { Duration } from '../domain/duration.ts'
 import { aMeeting, aTimeBlock, at } from '../domain/meeting.fixture.ts'
 import { Participant } from '../domain/participant.ts'
@@ -61,26 +62,64 @@ describe('the meeting dialog of a new meeting', () => {
     expect(dialog.querySelector('[data-action="remove"]')).toBeNull()
   })
 
-  it('refuses Done until the meeting has a title and a category', () => {
-    const onDone = vi.fn()
-    const dialog = openBookingDialog(document, { schedule, kind: 'meeting', proposal, onDone })
+  it('asks for the category first, and nothing else about the meeting before it', () => {
+    const dialog = openBookingDialog(document, {
+      schedule,
+      kind: 'meeting',
+      proposal,
+      onDone: vi.fn(),
+    })
+    expect(dialog.querySelector('[name="title"]')).toBeNull()
+    expect(dialog.querySelector('fieldset.participants')).toBeNull()
     expect(done(dialog).disabled).toBe(true)
     expect(finding(dialog)).toBe('')
-    type(dialog, 'title', ' Ana ')
-    type(dialog, 'note', 'Room 3')
+  })
+
+  it('asks a titled meeting its title and its participants, and Done once titled', () => {
+    const onDone = vi.fn()
+    const dialog = openBookingDialog(document, { schedule, kind: 'meeting', proposal, onDone })
+    choose(dialog, 'category', 'Project')
+    expect(dialog.querySelector('fieldset.participants legend')?.textContent).toBe('Participants')
     expect(done(dialog).disabled).toBe(true)
-    choose(dialog, 'category', 'PhD')
+    type(dialog, 'title', ' Thesis tool ')
+    type(dialog, 'note', 'Room 3')
     expect(done(dialog).disabled).toBe(false)
     dialog.querySelector('form')?.requestSubmit()
-    expect(onDone).toHaveBeenCalledTimes(1)
     const added = onDone.mock.calls[0]?.[0]
     expect([added.title, added.note, added.weekday, added.category?.name]).toEqual([
-      'Ana',
+      'Thesis tool',
       'Room 3',
       Weekday.tuesday,
-      'PhD',
+      'Project',
     ])
     expect(dialog.isConnected).toBe(false)
+  })
+
+  it('asks a one-to-one meeting its student and its co-supervisors, and Done once it has one', () => {
+    const onDone = vi.fn()
+    const dialog = openBookingDialog(document, { schedule, kind: 'meeting', proposal, onDone })
+    choose(dialog, 'category', 'PhD')
+    expect(dialog.querySelector('[name="title"]')).toBeNull()
+    const legends = [...dialog.querySelectorAll('fieldset.participants legend')].map(
+      (legend) => legend.textContent,
+    )
+    expect(legends).toEqual(['Student', 'Co-supervisors'])
+    expect(done(dialog).disabled).toBe(true)
+    const student = dialog.querySelector(
+      '.student input[name="participant-search"]',
+    ) as HTMLInputElement
+    student.value = 'Kalvin'
+    student.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }))
+    expect(dialog.querySelector('.student input[name="participant-search"]')).toBeNull()
+    expect(done(dialog).disabled).toBe(false)
+    dialog.querySelector('form')?.requestSubmit()
+    const [added, newcomers] = onDone.mock.calls[0] ?? []
+    expect([added.title, added.student?.name, added.category?.name]).toEqual([
+      'Kalvin',
+      'Kalvin',
+      'PhD',
+    ])
+    expect(newcomers).toEqual([added.student])
   })
 
   it('refuses Done while the meeting would overlap another, and names it', () => {
@@ -90,7 +129,6 @@ describe('the meeting dialog of a new meeting', () => {
       proposal,
       onDone: vi.fn(),
     })
-    type(dialog, 'title', 'Ana')
     choose(dialog, 'weekday', 'Monday')
     choose(dialog, 'start', '10:30')
     expect(done(dialog).disabled).toBe(true)
@@ -165,7 +203,7 @@ describe('the meeting dialog of a meeting of the schedule', () => {
 describe('the participants of a meeting in its dialog', () => {
   const ana = new Participant('Ana')
   const bo = new Participant('Bo')
-  const withAna = aMeeting({ participants: [ana] })
+  const withAna = aMeeting({ participants: [ana], category: Category.named('Lab') })
   const roster = new Schedule([withAna], [], [ana, bo])
 
   const chips = (dialog: HTMLElement) =>
@@ -189,7 +227,6 @@ describe('the participants of a meeting in its dialog', () => {
       proposal: withAna.timing,
       onDone,
     })
-    choose(dialog, 'category', 'Master')
     return dialog
   }
 

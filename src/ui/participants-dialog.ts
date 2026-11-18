@@ -115,8 +115,10 @@ export function openParticipantsDialog(
     if (participant === undefined) {
       return
     }
-    const count = given.schedule().meetingsOf(participant).length
-    const question = participantRemovalQuestion(participant.name, count)
+    const theirs = given.schedule().meetingsOf(participant)
+    const oneToOne = theirs.filter((meeting) => meeting.student === participant).length
+    const count = theirs.length
+    const question = participantRemovalQuestion(participant.name, count, oneToOne)
     void (count === 0 ? Promise.resolve(true) : given.ask(question, 'Remove')).then(
       (isConfirmed) => {
         if (isConfirmed) {

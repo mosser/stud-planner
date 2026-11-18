@@ -1,14 +1,14 @@
 # Schedule file
 
 The schedule as a file: JSON, UTF-8, one object. The browser keeps the same
-content (ADR 0006). The system writes version 4, and reads versions 1 to 4.
+content (ADR 0006). The system writes version 5, and reads versions 1 to 5.
 
 ## The schedule
 
 | Field | Value |
 |---|---|
 | `format` | `"stud-planner/schedule"`. |
-| `version` | `4`; `1` to `3` are read as their sections say. A file of another version is refused. |
+| `version` | `5`; `1` to `4` are read as their sections say. A file of another version is refused. |
 | `meetings` | The meetings, an array, possibly empty, in no particular order. |
 | `timeBlocks` | The time blocks, an array, possibly empty, in no particular order. A file without it holds no time block. |
 | `participants` | The participants, by name, an array of texts, possibly empty, no two names alike whatever their case. A file without it holds no participant. |
@@ -18,7 +18,8 @@ content (ADR 0006). The system writes version 4, and reads versions 1 to 4.
 
 | Field | Value |
 |---|---|
-| `title` | Its title. |
+| `title` | Its title; absent for a one-to-one meeting. |
+| `student` | The name of its student, a participant of the schedule; for a one-to-one meeting only. |
 | `cadence` | `"weekly"` or `"bi-weekly"`. |
 | `week` | `"A"` or `"B"`; for a bi-weekly meeting only. |
 | `weekday` | `"monday"` to `"friday"`. |
@@ -45,6 +46,13 @@ content (ADR 0006). The system writes version 4, and reads versions 1 to 4.
 
 No two days have the same week and weekday.
 
+## Version 4
+
+A file of version 4 has no `student`. A meeting of it of a one-to-one
+category has a title instead: it is read with the participant of that name as
+its student, made a participant of the schedule when none has the name, and
+out of its other participants.
+
 ## Version 3
 
 A file of version 3 is read as one of version 4 without categories and days:
@@ -61,7 +69,7 @@ A file of version 1 is read as one of version 2, but for the week of a
 bi-weekly booking, written `parity`: `"odd"` for week A, `"even"` for week B.
 It has no `week`.
 
-Downloaded again, a file of an earlier version is written as version 4.
+Downloaded again, a file of an earlier version is written as version 5.
 
 ## Refusal
 

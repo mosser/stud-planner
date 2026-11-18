@@ -88,14 +88,18 @@ const describeMeetings = (schedule: Schedule) =>
     (meeting) => `${meeting.title} ${meeting.weekday.name} ${meeting.start}-${meeting.end}`,
   )
 
-/** Types the title, chooses the first category when the dialog asks for one, and submits. */
+/**
+ * Chooses Lab, a titled category, when the dialog of a meeting asks for one; types the title;
+ * and submits.
+ */
 function typeTitle(title: string): void {
-  const input = dialog().querySelector('[name="title"]') as HTMLInputElement
-  input.value = title
   const category = dialog().querySelector<HTMLSelectElement>('[name="category"]')
   if (category !== null && category.value === '') {
-    category.value = '0'
+    category.value = String(Category.all.findIndex((each) => each.name === 'Lab'))
+    category.dispatchEvent(new Event('change', { bubbles: true }))
   }
+  const input = dialog().querySelector('[name="title"]') as HTMLInputElement
+  input.value = title
   input.dispatchEvent(new Event('input', { bubbles: true }))
   dialog().querySelector('form')?.requestSubmit()
 }
@@ -559,6 +563,9 @@ describe('the participants on the page', () => {
     const { root, application } = mounted(new Schedule())
     press(day(root, Weekday.monday), point(Weekday.monday, '08:00'))
     release(point(Weekday.monday, '08:00'))
+    const category = dialog().querySelector('[name="category"]') as HTMLSelectElement
+    category.value = String(Category.all.findIndex((each) => each.name === 'Lab'))
+    category.dispatchEvent(new Event('change', { bubbles: true }))
     const field = dialog().querySelector('input[name="participant-search"]') as HTMLInputElement
     field.value = 'Zoé'
     field.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }))
@@ -581,12 +588,15 @@ describe('the participants on the page', () => {
 
 describe('the categories on the page', () => {
   const phd = Category.named('PhD')
-  const ofPhd = aMeeting({ title: 'Thesis', weekday: Weekday.friday, category: phd })
+  const kalvin = new Participant('Kalvin')
+  const ofPhd = aMeeting({ weekday: Weekday.friday, category: phd, student: kalvin })
 
-  it('tag each meeting that has one, and single out its meetings', () => {
-    const { root } = mounted(new Schedule([lab, ofPhd]), {}, 'overview')
-    expect(bookingElement(root, 1).querySelector('.category-tag')?.textContent).toBe('PhD')
-    expect(bookingElement(root, 0).querySelector('.category-tag')).toBeNull()
+  it('name each meeting that has one after it, and single out its meetings', () => {
+    const { root } = mounted(new Schedule([lab, ofPhd], [], [kalvin]), {}, 'overview')
+    expect(bookingElement(root, 1).querySelector('.booking-title')?.textContent).toBe(
+      'Kalvin | PhD',
+    )
+    expect(bookingElement(root, 0).querySelector('.booking-title')?.textContent).toBe('Lab meeting')
     const filter = root.querySelector('[data-filter]') as HTMLSelectElement
     filter.value = 'category:PhD'
     filter.dispatchEvent(new Event('change', { bubbles: true }))

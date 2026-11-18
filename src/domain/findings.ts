@@ -11,9 +11,19 @@ export function timeOf(booking: Booking): string {
 /** What a time block is called when it has no title. */
 export const aTimeBlock = 'Time block'
 
-/** What a booking is shown as: a meeting's title; a time block's, or Time block. */
+/**
+ * What a booking is shown as: a meeting by its title and its category, Kalvin | PhD, or its title
+ * alone when it has no category; a time block by its title, or Time block.
+ */
 export function labelOf(booking: Booking): string {
-  return booking.title ?? aTimeBlock
+  if (booking.isTimeBlock) {
+    return booking.title ?? aTimeBlock
+  }
+  const { category } = booking as Booking & { readonly category?: { readonly name: string } }
+  const title = booking.title ?? ''
+  const isSaid =
+    category === undefined || title.toLocaleLowerCase() === category.name.toLocaleLowerCase()
+  return isSaid ? title : `${title} | ${category.name}`
 }
 
 /**
@@ -80,6 +90,16 @@ export function dayTwice(weekday: string, week: string): string {
   return `${weekday} of ${week} says twice where the Organizer is.`
 }
 
+/** Why a one-to-one meeting cannot be without its student. */
+export function needsAStudent(): string {
+  return 'A one-to-one meeting needs a student.'
+}
+
+/** Why a meeting that is not one-to-one cannot have a student. */
+export function studentOnlyOneToOne(): string {
+  return 'Only a one-to-one meeting has a student.'
+}
+
 /** Why a meeting cannot be without a category. */
 export function needsACategory(): string {
   return 'A meeting needs a category.'
@@ -106,9 +126,21 @@ export function notAParticipant(name: string): string {
 }
 
 /** What the Organizer confirms before a participant who takes part in meetings leaves the schedule. */
-export function participantRemovalQuestion(name: string, meetingCount: number): string {
+export function participantRemovalQuestion(
+  name: string,
+  meetingCount: number,
+  oneToOneCount = 0,
+): string {
   const meetings = meetingCount === 1 ? '1 meeting' : `${meetingCount} meetings`
-  return `Remove ${name} from the participants, and from ${meetings}?`
+  const question = `Remove ${name} from the participants, and from ${meetings}?`
+  if (oneToOneCount === 0) {
+    return question
+  }
+  const theirs =
+    oneToOneCount === 1
+      ? 'Their one-to-one meeting goes'
+      : `Their ${oneToOneCount} one-to-one meetings go`
+  return `${question} ${theirs} too.`
 }
 
 /** Who takes part in a meeting, as the interface writes it: with Ana and Bo. */
@@ -196,7 +228,7 @@ export function notAScheduleFile(): string {
 
 /** Why a file is refused: it is a schedule file of a version this system does not read. */
 export function unknownVersion(version: unknown): string {
-  return `it is a schedule file of version ${JSON.stringify(version)}, and this system reads versions 1 to 4.`
+  return `it is a schedule file of version ${JSON.stringify(version)}, and this system reads versions 1 to 5.`
 }
 
 /** Why a file is refused: a part of it has a field missing. */

@@ -59,7 +59,7 @@ export class Schedule {
       throw new RangeError(nameTaken(named.name))
     }
     const stranger = meetings
-      .flatMap((meeting) => meeting.participants)
+      .flatMap((meeting) => meeting.everyone)
       .find((participant) => !participants.includes(participant))
     if (stranger !== undefined) {
       throw new RangeError(notAParticipant(stranger.name))
@@ -112,7 +112,7 @@ export class Schedule {
     )
   }
 
-  /** The meetings the participant takes part in. */
+  /** The meetings the participant takes part in, as their student or otherwise. */
   meetingsOf(participant: Participant): readonly Meeting[] {
     return this.meetings.filter((meeting) => meeting.hasParticipant(participant))
   }
@@ -142,7 +142,10 @@ export class Schedule {
     return this.afterChangingParticipants(participant, swap)
   }
 
-  /** The schedule without the participant, who leaves every meeting they take part in. */
+  /**
+   * The schedule without the participant, who leaves every meeting they take part in; the
+   * one-to-one meetings they are the student of go with them.
+   */
   afterRemovingParticipant(participant: Participant): Schedule {
     return this.afterChangingParticipants(participant, (each) =>
       each === participant ? undefined : each,
@@ -159,11 +162,16 @@ export class Schedule {
     }
     const changed = (list: readonly Participant[]) =>
       list.map(change).filter((each): each is Participant => each !== undefined)
-    const meetings = this.meetings.map((meeting) =>
-      meeting.hasParticipant(participant)
-        ? meeting.afterChanging({ participants: changed(meeting.participants) })
-        : meeting,
-    )
+    const meetings = this.meetings
+      .filter((meeting) => meeting.student === undefined || change(meeting.student) !== undefined)
+      .map((meeting) =>
+        meeting.hasParticipant(participant)
+          ? meeting.afterChanging({
+              participants: changed(meeting.participants),
+              student: meeting.student === undefined ? undefined : change(meeting.student),
+            })
+          : meeting,
+      )
     return new Schedule(meetings, this.timeBlocks, changed(this.participants), this.presences)
   }
 

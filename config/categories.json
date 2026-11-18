@@ -1,1 +1,6 @@
-["Master", "PhD", "Project", "Lab"]
+[
+  { "name": "Master", "kind": "one-to-one" },
+  { "name": "PhD", "kind": "one-to-one" },
+  { "name": "Project", "kind": "titled" },
+  { "name": "Lab", "kind": "titled" }
+]

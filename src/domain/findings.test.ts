@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { Cadence, Week } from './cadence.ts'
+import { Category } from './category.ts'
 import { Duration } from './duration.ts'
 import {
   bookingBroken,
@@ -50,6 +51,10 @@ describe('the findings', () => {
     expect(labelOf(aTimeBlock())).toBe('Time block')
     expect(labelOf(aTimeBlock({ title: 'Teaching' }))).toBe('Teaching')
     expect(labelOf(aMeeting())).toBe('Lab meeting')
+    expect(labelOf(aMeeting({ category: Category.named('Project'), title: 'Tool' }))).toBe(
+      'Tool | Project',
+    )
+    expect(labelOf(aMeeting({ category: Category.named('Lab'), title: 'lab' }))).toBe('lab')
     expect(nameOf(aTimeBlock())).toBe('a time block')
     expect(nameOf(aTimeBlock({ title: 'Teaching' }))).toBe('the time block Teaching')
     expect(nameOf(aMeeting())).toBe('Lab meeting')
@@ -70,6 +75,12 @@ describe('the findings', () => {
     )
     expect(participantRemovalQuestion('Ana', 1)).toBe(
       'Remove Ana from the participants, and from 1 meeting?',
+    )
+    expect(participantRemovalQuestion('Kalvin', 3, 2)).toBe(
+      'Remove Kalvin from the participants, and from 3 meetings? Their 2 one-to-one meetings go too.',
+    )
+    expect(participantRemovalQuestion('Kalvin', 1, 1)).toBe(
+      'Remove Kalvin from the participants, and from 1 meeting? Their one-to-one meeting goes too.',
     )
   })
 
@@ -118,8 +129,8 @@ describe('the findings', () => {
       'a.json is refused: it is not a schedule file, nor JSON.',
     )
     expect(notAScheduleFile()).toBe('it is not a schedule file.')
-    expect(unknownVersion(5)).toBe(
-      'it is a schedule file of version 5, and this system reads versions 1 to 4.',
+    expect(unknownVersion(6)).toBe(
+      'it is a schedule file of version 6, and this system reads versions 1 to 5.',
     )
     expect(missingField(part, 'title')).toBe('meeting 2 has no title.')
     expect(unknownField(part, 'room')).toBe(
