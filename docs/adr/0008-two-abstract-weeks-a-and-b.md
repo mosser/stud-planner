@@ -38,12 +38,13 @@ week B** name two weeks that alternate, and nothing more.
   week A or in week B). There is no monthly cadence.
 - The screen shows **three tabs**, one at a time: the **overview**, which
   merges the two weeks and is the tab shown first, then week A and week B
-  (`docs/specs/plan-the-meetings.md`). Only the time a booking of week A and
-  one of week B share is cut, along the diagonal of that time, week A upper
-  left, week B lower right; the rest of each booking is whole, so that the
-  overview shows at once what alternates and what does not. The time shared
-  is cut as one, not quarter by quarter: a quarter is a row too flat for its
-  halves to be read.
+  (`docs/specs/plan-the-meetings.md`). A bi-weekly booking is cut along the
+  diagonal of its time, week A upper left, week B lower right; the other half
+  holds the booking of the other week sharing that time, or is left empty,
+  its diagonal drawn. A weekly booking is whole. The overview so shows at
+  once what alternates and what does not. A booking's time is cut where what
+  it shares changes, not quarter by quarter: a quarter is a row too flat for
+  its halves to be read.
 - A booking added from a week's tab is held in that week: weekly, or
   bi-weekly in it. A booking added from the overview is held in both weeks:
   it is weekly.

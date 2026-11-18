@@ -48,35 +48,44 @@ describe('the grid of a tab', () => {
     expect(meeting?.getAttribute('aria-label')).toBe(accessibleNameOf(ana))
   })
 
-  it('cuts on the overview only the time a meeting of week A and one of week B share', () => {
+  it('cuts on the overview each piece of a bi-weekly meeting, shared or alone', () => {
     const overview = rendered('overview')
     const rowsOfPieces = (rank: number) =>
       [...overview.querySelectorAll<HTMLElement>(`.piece[data-booking="${rank}"]`)].map(
         (piece) => `${piece.className.replace(/\s+/g, ' ').trim()} | ${piece.style.gridRow}`,
       )
     expect(rowsOfPieces(1)).toEqual([
-      'booking piece meeting week-a alone first | 9 / span 2',
-      'booking piece meeting week-a half last | 11 / span 2',
+      'booking piece meeting week-a half alone first | 9 / span 2',
+      'booking piece meeting week-a half shared last | 11 / span 2',
     ])
     expect(rowsOfPieces(2)).toEqual([
-      'booking piece meeting week-b half first | 11 / span 2',
-      'booking piece meeting week-b alone last | 13 / span 2',
+      'booking piece meeting week-b half shared first | 11 / span 2',
+      'booking piece meeting week-b half alone last | 13 / span 2',
     ])
+    const empty = [...overview.querySelectorAll<HTMLElement>('.empty-half')].map(
+      (half) => `${half.className.replace(/\s+/g, ' ').trim()} | ${half.style.gridRow}`,
+    )
+    expect(empty).toEqual(['empty-half week-a | 9 / span 2', 'empty-half week-b | 13 / span 2'])
     expect(overview.querySelector('.booking-label.week-b.shared [data-remove="2"]')).not.toBeNull()
     expect(overview.querySelector('.resize-zone.week-a.shared [data-resize="1"]')).not.toBeNull()
     expect(overview.querySelectorAll('[data-booking="1"][tabindex="0"]')).toHaveLength(1)
     expect(titles(overview)).toEqual(['Ana', 'Bo <b>', 'Lab meeting'])
   })
 
-  it('draws whole on the overview a bi-weekly meeting that shares no time', () => {
+  it('draws on the overview a bi-weekly meeting alone as its half, the other half empty', () => {
     const alone = new Schedule([
       ana,
       aMeeting({ title: 'Bo', cadence: Cadence.biWeekly(Week.b), start: at('11:00') }),
+      aMeeting({ title: 'Weekly', weekday: Weekday.friday }),
     ])
     const element = document.createElement('div')
     element.innerHTML = gridOf(alone, 'overview').text
-    expect(element.querySelectorAll('.piece')).toHaveLength(0)
-    expect(element.querySelector<HTMLElement>('.booking.week-a')?.style.gridRow).toBe('9 / span 4')
+    expect(element.querySelector<HTMLElement>('.piece.half.week-a')?.style.gridRow).toBe(
+      '9 / span 4',
+    )
+    expect(element.querySelectorAll('.empty-half')).toHaveLength(2)
+    expect(element.querySelector('.booking.weekly:not(.piece)')).not.toBeNull()
+    expect(element.querySelector('.booking-label.week-a.shared')).not.toBeNull()
   })
 
   it('marks every hour of the day', () => {
@@ -116,7 +125,8 @@ describe('a time block on the grid', () => {
 
   it('shares on the overview the time it has in common with a meeting of the other week', () => {
     expect(piecesOf(block, withBlocks).map((piece) => piece.isShared)).toEqual([false, true])
-    expect(drawn('overview').querySelectorAll('.piece.time-block.half')).toHaveLength(1)
+    expect(drawn('overview').querySelectorAll('.piece.time-block.half.shared')).toHaveLength(1)
+    expect(drawn('overview').querySelectorAll('.piece.time-block.half.alone')).toHaveLength(1)
   })
 })
 

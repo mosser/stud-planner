@@ -533,7 +533,7 @@ describe('the participants on the page', () => {
     const { root } = mounted(new Schedule([lab, withZoe], [], [zoe]), {}, 'overview')
     const filter = root.querySelector('[data-filter]') as HTMLSelectElement
     expect([...filter.options].map((option) => option.textContent)).toEqual([
-      'Everyone',
+      'None',
       'Master',
       'PhD',
       'Project',

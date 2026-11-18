@@ -15,7 +15,7 @@ and the one shown when the page opens; the switch is then on Meeting.
 
 | Tab | Shows |
 |---|---|
-| Overview | Every booking, each filling its slots, except the time a booking of week A and one of week B share on a weekday: that time is cut along its diagonal, the upper left half for the booking of week A, the lower right half for that of week B, and each booking is whole before and after it. A title starting in a shared time is written in its half's corner. |
+| Overview | Every booking. A weekly booking fills its slots. A bi-weekly booking fills the half of its slots that is its week's, cut along their diagonal: the upper left half for week A, the lower right half for week B. The other half holds the booking of the other week that shares that time, or is left empty, its diagonal drawn, so that what alternates shows at once. Its time is cut where what it shares changes, each piece along its own diagonal. A title is written in its half's corner. |
 | Week A | The weekly bookings and the bi-weekly bookings held in week A. |
 | Week B | The weekly bookings and the bi-weekly bookings held in week B. |
 
@@ -89,7 +89,7 @@ itself on hover: its title, cadence, weekday, time and participants.
 | Rename | A name changed in the list renames the participant, in every meeting they take part in. |
 | Remove | The remove mark of a participant takes them out of the schedule and of every meeting; when they take part in some, the Organizer confirms first: *Remove Ana from the participants, and from 2 meetings?* |
 | On a meeting | The dialog of a meeting shows its participants as chips, each removed by its mark. A name typed is picked among the participants of the schedule, offered as one types, by Enter or Add; a name no participant has makes a new one, marked *(new)*, added to the schedule with the meeting. The grid writes two of them at most, then how many others: *Ana, Bo +10*; on hover and to a screen reader, the meeting names them all: *Lab meeting, weekly, Monday 10:00 to 11:00, with Ana and Bo.* |
-| Singled out | A list under the grid, beside the switch, labelled *Filter by*, offers *Everyone*, the categories and the participants: one chosen singles out their meetings, every other booking faded. Time blocks are never faded: they are the Organizer's own time. |
+| Singled out | A list under the grid, beside the switch, labelled *Filter by*, offers *None*, the categories and the participants: one chosen singles out their meetings, every other booking faded. Time blocks are never faded: they are the Organizer's own time. |
 | Locked | The participants are shown, and none is added, renamed or removed. |
 
 ## The dialog of a booking

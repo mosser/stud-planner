@@ -227,23 +227,32 @@ export function piecesOf(booking: Booking, schedule: Schedule): readonly Piece[]
   return pieces
 }
 
-/** The classes of a piece: cut along its diagonal when shared, rounded at the booking's ends. */
+/**
+ * The classes of a piece: cut along its diagonal, shared with a booking of the other week or
+ * alone, and rounded at the booking's ends.
+ */
 function pieceClasses(piece: Piece, rank: number, count: number): string {
-  const classes = [piece.isShared ? 'half' : 'alone']
+  const classes = ['half', piece.isShared ? 'shared' : 'alone']
   if (rank === 0) classes.push('first')
   if (rank === count - 1) classes.push('last')
   return classes.join(' ')
 }
 
-/** Where a shared piece writes or holds something: in the half of its week. */
-function sharedClass(piece: Piece): string {
-  return piece.isShared ? 'shared' : ''
+/**
+ * The half of a piece no booking of the other week takes: left empty, its diagonal drawn, so that
+ * the overview shows the booking alternates.
+ */
+function emptyHalf(piece: Piece, week: Week): Markup | string {
+  return piece.isShared
+    ? ''
+    : html`<div class="empty-half ${weekClass(week)}" style="grid-row: ${rowsOf(piece)}" aria-hidden="true"></div>`
 }
 
 /**
- * A bi-weekly booking on the overview that shares time with a booking of the other week: the time
- * shared cut along its diagonal, the upper left half for week A, the lower right half for week B, the
- * rest whole; its title and remove mark over its first piece, its lower edge over its last.
+ * A bi-weekly booking on the overview: each piece of its time cut along its diagonal, the upper
+ * left half for week A, the lower right half for week B; the other half taken by the booking of
+ * the other week it shares that time with, or left empty, its diagonal drawn. Its title and
+ * remove mark stand over its first piece, its lower edge over its last.
  */
 function piecedBooking(
   booking: Booking,
@@ -261,13 +270,13 @@ function piecedBooking(
     const focus =
       index === 0 ? html`role="button" tabindex="0" aria-label="${accessibleNameOf(booking)}"` : ''
     return html`<div class="booking piece ${kind} ${weekClass(week)} ${dimmed} ${pieceClasses(piece, index, pieces.length)}"
-      style="grid-row: ${rowsOf(piece)}" data-booking="${rank}" ${focus}></div>`
+      style="grid-row: ${rowsOf(piece)}" data-booking="${rank}" ${focus}></div>${emptyHalf(piece, week)}`
   })
   return html`${drawn}
-    <div class="booking-label ${weekClass(week)} ${dimmed} ${sharedClass(first)}" style="grid-row: ${rowsOf(first)}">
+    <div class="booking-label ${weekClass(week)} ${dimmed} shared" style="grid-row: ${rowsOf(first)}">
       <span class="booking-title">${categoryTag(booking)}${labelOf(booking)}</span>${removeMark(booking, rank, isLocked)}
     </div>
-    <div class="resize-zone ${weekClass(week)} ${sharedClass(last)}" style="grid-row: ${rowsOf(last)}">
+    <div class="resize-zone ${weekClass(week)} shared" style="grid-row: ${rowsOf(last)}">
       ${resizeHandle(rank, isLocked)}
     </div>`
 }
@@ -280,9 +289,8 @@ function bookingOnTab(
   drawing: Drawing,
 ): Markup {
   const week = booking.cadence.week
-  const pieces = piecesOf(booking, schedule)
-  if (tab === 'overview' && week !== undefined && pieces.some((piece) => piece.isShared)) {
-    return piecedBooking(booking, rank, week, pieces, drawing)
+  if (tab === 'overview' && week !== undefined) {
+    return piecedBooking(booking, rank, week, piecesOf(booking, schedule), drawing)
   }
   return wholeBooking(booking, rank, drawing)
 }

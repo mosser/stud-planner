@@ -33,7 +33,7 @@ in the specification, in the interface and in the code.
 | Quarter | Fifteen minutes. Starts and durations are whole quarters. |
 | Start | The time of day a booking begins: a quarter of the day, its end within the day. |
 | Duration | How long a booking lasts: one quarter at least, ending at the end of the day at most. |
-| Slot | A quarter of a weekday. On the overview, the slots a booking of week A and one of week B share are cut, together, along their diagonal: the upper left half for week A, the lower right half for week B. |
+| Slot | A quarter of a weekday. On the overview, the slots of a bi-weekly booking are cut along their diagonal in two halves: the upper left half for week A, the lower right half for week B; the other half holds what the other week has there, or is empty. |
 | Free, taken | A slot is taken in a week when a booking held that week covers it, and free otherwise. A weekly booking takes its slots in both weeks, a bi-weekly one in its week only. |
 | Overlap | Two bookings that would take the same slot in the same week: two meetings, a meeting in a time block, or two time blocks. The system refuses an overlap, whatever makes it: adding, moving, resizing, changing a cadence or a week, or uploading a file. |
 | Tab | One of the three grids the screen shows, one at a time: the overview, first, week A and week B. |

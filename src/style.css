@@ -547,6 +547,27 @@ button:disabled {
   background: var(--half-fill);
 }
 
+/* The half no booking of the other week takes: empty, its diagonal drawn in grey. */
+.empty-half {
+  margin: 0 2px;
+  pointer-events: none;
+  background: linear-gradient(
+    to bottom right,
+    transparent calc(50% - 1px),
+    var(--color-secondary-text) calc(50% - 1px),
+    var(--color-secondary-text) calc(50% + 1px),
+    transparent calc(50% + 1px)
+  );
+}
+
+.empty-half.week-a {
+  clip-path: polygon(100% 0, 100% 100%, 0 100%);
+}
+
+.empty-half.week-b {
+  clip-path: polygon(0 0, 100% 0, 0 100%);
+}
+
 .booking.half.week-a {
   clip-path: polygon(0 0, 100% 0, 0 100%);
 }

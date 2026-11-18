@@ -143,7 +143,7 @@ export function mountApplication(root: HTMLElement, context: ApplicationContext)
     }
   }
 
-  /** The value the filter shows: what stands out, or Everyone. */
+  /** The value the filter shows: what stands out, or None. */
   function filterValue(): string {
     const { participant, category } = singledOut()
     if (participant !== undefined) {
@@ -162,7 +162,7 @@ export function mountApplication(root: HTMLElement, context: ApplicationContext)
               html`<option value="participant:${participant.name}">${participant.name}</option>`,
           )}</optgroup>`
     return html`<label class="filter">Filter by <select class="participant-filter" data-filter>
-      <option value="">Everyone</option>
+      <option value="">None</option>
       <optgroup label="Categories">${Category.all.map(
         (category) => html`<option value="category:${category.name}">${category.name}</option>`,
       )}</optgroup>
