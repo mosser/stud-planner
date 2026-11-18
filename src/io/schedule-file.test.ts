@@ -302,6 +302,48 @@ describe('the student of a one-to-one meeting in the schedule file', () => {
   })
 })
 
+describe('a tentative meeting in the schedule file', () => {
+  const tentative = new Schedule([
+    aMeeting({ isTentative: true }),
+    aMeeting({ title: 'Ana', weekday: Weekday.tuesday }),
+  ])
+  const file = (version: number, meeting: Record<string, unknown>) => ({
+    format: 'stud-planner/schedule',
+    version,
+    meetings: [{ ...aMeetingContent, ...meeting }],
+  })
+
+  it('is written tentative, a meeting confirmed without the field', () => {
+    const [lab, ana] = contentOf(tentative).meetings
+    expect(lab?.tentative).toBe(true)
+    expect(ana !== undefined && 'tentative' in ana).toBe(false)
+  })
+
+  it('is read back as it was written', () => {
+    const read = readScheduleFile(scheduleFileOf(tentative))
+    expect(!read.isRefused && read.schedule.meetings.map((each) => each.isTentative)).toEqual([
+      true,
+      false,
+    ])
+  })
+
+  it('is confirmed when the field says false, and refused when it says anything else', () => {
+    const read = scheduleFromContent(file(6, { tentative: false }))
+    expect(!read.isRefused && read.schedule.meetings[0]?.isTentative).toBe(false)
+    expect(reasonOf(scheduleFromContent(file(6, { tentative: 'yes' })))).toBe(
+      'meeting 1 cannot have "yes" as its tentative.',
+    )
+  })
+
+  it('is none in a file of version 5, which cannot say so', () => {
+    expect(reasonOf(scheduleFromContent(file(5, { tentative: true })))).toBe(
+      'meeting 1 has a field tentative, which a schedule file does not have.',
+    )
+    const read = scheduleFromContent(file(5, {}))
+    expect(!read.isRefused && read.schedule.meetings[0]?.isTentative).toBe(false)
+  })
+})
+
 describe('a schedule file of version 1', () => {
   const versionOne = {
     format: 'stud-planner/schedule',
@@ -336,9 +378,9 @@ describe('a schedule file of version 1', () => {
     )
   })
 
-  it('is written again as version 5', () => {
+  it('is written again as version 6', () => {
     const read = scheduleFromContent(versionOne)
-    expect(!read.isRefused && contentOf(read.schedule).version).toBe(5)
+    expect(!read.isRefused && contentOf(read.schedule).version).toBe(6)
   })
 })
 
@@ -350,7 +392,7 @@ describe('the schedule file', () => {
   it('writes each meeting as the specification lists, a week for a bi-weekly one only', () => {
     expect(contentOf(schedule)).toEqual({
       format: 'stud-planner/schedule',
-      version: 5,
+      version: 6,
       meetings: [
         { ...aMeetingContent, note: 'Room 201' },
         {
@@ -398,11 +440,11 @@ describe('the schedule file', () => {
   })
 
   it('refuses a version it does not read', () => {
-    expect(reasonOf(scheduleFromContent(fileWith([], { version: 6 })))).toBe(
-      'it is a schedule file of version 6, and this system reads versions 1 to 5.',
+    expect(reasonOf(scheduleFromContent(fileWith([], { version: 7 })))).toBe(
+      'it is a schedule file of version 7, and this system reads versions 1 to 6.',
     )
     expect(reasonOf(scheduleFromContent(fileWith([], { version: '2' })))).toBe(
-      'it is a schedule file of version "2", and this system reads versions 1 to 5.',
+      'it is a schedule file of version "2", and this system reads versions 1 to 6.',
     )
   })
 

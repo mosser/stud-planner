@@ -21,10 +21,10 @@ from `file://` and is served by GitHub Pages at
 
 It follows the conventions of its siblings `macreport` and `streaming-hat`.
 
-**Current state:** the specification (`docs/specs/`) and ADRs 0001 to 0014
+**Current state:** the specification (`docs/specs/`) and ADRs 0001 to 0015
 are implemented: the three tabs, meetings and time blocks added, moved,
 resized and removed by dragging, the dialog of a booking, overlaps refused,
-the lock, participants, categories, on campus or remote days, the schedule
+the lock, participants, categories, tentative meetings, on campus or remote days, the schedule
 kept in IndexedDB, and downloaded as or uploaded
 from its file. Not released yet.
 
@@ -231,11 +231,20 @@ first.
   is shown as *title | category* (`labelOf`). The list under the
   grid singles out a category or a participant (`category:`/`participant:`).
 - `Schedule.presences` says, per day of week A and of week B, on campus or
-  remote, or nothing; toggled in the day headers. The schedule file is
-  version 5 (`category`, `days`, `student`); versions 1 to 4 are read, a
-  version 4 one-to-one meeting taking its title as its student's name.
+  remote, or nothing; toggled in the day headers. Version 5 of the schedule
+  file added `category`, `days` and `student`; a version 4 one-to-one meeting
+  takes its title as its student's name.
 - A booking added takes the weeks of its tab; only a booking changed has a
   Weeks field.
+
+### ADR 0015: tentative meetings
+
+- `Meeting.isTentative`, ticked in the dialog (*Tentative*), confirmed when
+  added; a time block is never tentative. A tentative meeting takes its slots
+  as any other (ADR 0009 unchanged). The grid hatches it and dashes its border
+  (`.tentative`), and its description says *tentative*.
+- The schedule file is version 6 (`tentative`, absent when confirmed);
+  versions 1 to 5 are read.
 
 ## Writing
 

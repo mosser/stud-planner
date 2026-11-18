@@ -12,6 +12,8 @@ export interface MeetingDescription extends Timing {
   readonly category?: Category | undefined
   /** The student of a one-to-one meeting; none for any other. */
   readonly student?: Participant | undefined
+  /** Whether the meeting is not confirmed yet; confirmed when absent. */
+  readonly isTentative?: boolean | undefined
 }
 
 /**
@@ -36,6 +38,11 @@ export class Meeting extends Booking implements MeetingDescription {
   readonly category: Category | undefined
   /** The student of a one-to-one meeting; absent for any other. */
   readonly student: Participant | undefined
+  /**
+   * Whether the Organizer has marked the meeting tentative, not confirmed yet. A tentative meeting
+   * takes its slots as any other does: nothing overlaps it.
+   */
+  readonly isTentative: boolean
 
   /**
    * Throws a RangeError for a one-to-one meeting without a student, another meeting with a
@@ -69,6 +76,7 @@ export class Meeting extends Booking implements MeetingDescription {
     this.participants = [...participants]
     this.category = description.category
     this.student = description.student
+    this.isTentative = description.isTentative === true
   }
 
   /** What the meeting is called: its student's name when one-to-one, its title otherwise. */
@@ -110,6 +118,7 @@ export class Meeting extends Booking implements MeetingDescription {
       participants: this.participants,
       category: this.category,
       student: this.student,
+      isTentative: this.isTentative,
     }
   }
 }

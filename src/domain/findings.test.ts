@@ -21,6 +21,7 @@ import {
   removalQuestion,
   replacementQuestion,
   setAside,
+  tentativeWritten,
   unknownField,
   unknownVersion,
   valueNotAllowed,
@@ -49,6 +50,7 @@ describe('the findings', () => {
 
   it('name a time block by its title, or as a time block', () => {
     expect(labelOf(aTimeBlock())).toBe('Time block')
+    expect(tentativeWritten).toBe('tentative')
     expect(labelOf(aTimeBlock({ title: 'Teaching' }))).toBe('Teaching')
     expect(labelOf(aMeeting())).toBe('Lab meeting')
     expect(labelOf(aMeeting({ category: Category.named('Project'), title: 'Tool' }))).toBe(
@@ -129,8 +131,8 @@ describe('the findings', () => {
       'a.json is refused: it is not a schedule file, nor JSON.',
     )
     expect(notAScheduleFile()).toBe('it is not a schedule file.')
-    expect(unknownVersion(6)).toBe(
-      'it is a schedule file of version 6, and this system reads versions 1 to 5.',
+    expect(unknownVersion(7)).toBe(
+      'it is a schedule file of version 7, and this system reads versions 1 to 6.',
     )
     expect(missingField(part, 'title')).toBe('meeting 2 has no title.')
     expect(unknownField(part, 'room')).toBe(

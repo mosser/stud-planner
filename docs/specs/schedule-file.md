@@ -1,14 +1,14 @@
 # Schedule file
 
 The schedule as a file: JSON, UTF-8, one object. The browser keeps the same
-content (ADR 0006). The system writes version 5, and reads versions 1 to 5.
+content (ADR 0006). The system writes version 6, and reads versions 1 to 6.
 
 ## The schedule
 
 | Field | Value |
 |---|---|
 | `format` | `"stud-planner/schedule"`. |
-| `version` | `5`; `1` to `4` are read as their sections say. A file of another version is refused. |
+| `version` | `6`; `1` to `5` are read as their sections say. A file of another version is refused. |
 | `meetings` | The meetings, an array, possibly empty, in no particular order. |
 | `timeBlocks` | The time blocks, an array, possibly empty, in no particular order. A file without it holds no time block. |
 | `participants` | The participants, by name, an array of texts, possibly empty, no two names alike whatever their case. A file without it holds no participant. |
@@ -28,6 +28,7 @@ content (ADR 0006). The system writes version 5, and reads versions 1 to 5.
 | `note` | Its note; absent when it has none. |
 | `participants` | Its participants, by name, each a participant of the schedule, once; absent when it has none. |
 | `category` | The name of its category, one of `config/categories.json`; absent when it has none. |
+| `tentative` | `true` for a tentative meeting; absent, or `false`, for a confirmed one. |
 
 ## A time block
 
@@ -46,12 +47,16 @@ content (ADR 0006). The system writes version 5, and reads versions 1 to 5.
 
 No two days have the same week and weekday.
 
+## Version 5
+
+A file of version 5 has no `tentative`: its meetings are confirmed.
+
 ## Version 4
 
-A file of version 4 has no `student`. A meeting of it of a one-to-one
-category has a title instead: it is read with the participant of that name as
-its student, made a participant of the schedule when none has the name, and
-out of its other participants.
+A file of version 4 is read as one of version 5, but has no `student`. A
+meeting of it of a one-to-one category has a title instead: it is read with
+the participant of that name as its student, made a participant of the
+schedule when none has the name, and out of its other participants.
 
 ## Version 3
 
@@ -69,7 +74,7 @@ A file of version 1 is read as one of version 2, but for the week of a
 bi-weekly booking, written `parity`: `"odd"` for week A, `"even"` for week B.
 It has no `week`.
 
-Downloaded again, a file of an earlier version is written as version 5.
+Downloaded again, a file of an earlier version is written as version 6.
 
 ## Refusal
 

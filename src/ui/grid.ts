@@ -7,6 +7,7 @@ import {
   cadenceWritten,
   labelOf,
   presenceLabel,
+  tentativeWritten,
   timeOf,
   withParticipants,
 } from '../domain/findings.ts'
@@ -20,8 +21,9 @@ import { html, type Markup } from './html.ts'
 import { presenceIcon } from './icon.ts'
 
 /**
- * How a booking is named to a screen reader: Lab meeting, weekly, Monday 10:00 to 11:00; a time
- * block as Time block: Teaching, and so on.
+ * How a booking is named to a screen reader: Lab meeting, weekly, Monday 10:00 to 11:00; a
+ * tentative meeting as Lab meeting, tentative, weekly, and so on; a time block as Time block:
+ * Teaching, and so on.
  */
 export function accessibleNameOf(booking: Booking): string {
   const name =
@@ -32,7 +34,8 @@ export function accessibleNameOf(booking: Booking): string {
     booking instanceof Meeting && booking.category !== undefined
       ? ` (${booking.category.name})`
       : ''
-  const spoken = `${name}${category}, ${cadenceWritten(booking.cadence)}, ${booking.weekday.name} ${timeOf(booking)}`
+  const tentative = booking instanceof Meeting && booking.isTentative ? `, ${tentativeWritten}` : ''
+  const spoken = `${name}${category}${tentative}, ${cadenceWritten(booking.cadence)}, ${booking.weekday.name} ${timeOf(booking)}`
   const people = participantsOf(booking)
   return people.length === 0 ? spoken : `${spoken}, ${withParticipants(people)}`
 }
@@ -93,7 +96,8 @@ export function kindClass(booking: Booking): string {
 }
 
 function classesOf(booking: Booking): string {
-  return `${kindClass(booking)} ${cadenceClass(booking)}`
+  const tentative = booking instanceof Meeting && booking.isTentative ? ' tentative' : ''
+  return `${kindClass(booking)} ${cadenceClass(booking)}${tentative}`
 }
 
 /** The rows of the day column a booking, or where one goes, takes, as a grid-row value. */

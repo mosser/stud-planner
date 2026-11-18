@@ -33,13 +33,15 @@ export const scheduleFileName = 'stud-planner-schedule.json'
 
 const format = 'stud-planner/schedule'
 /** The version written; every version ever written is read (ADR 0007). */
-const version = 5
+const version = 6
 
 /**
  * How a version of the schedule file is written: the field and the values of the week of a
  * bi-weekly booking (version 1 as `parity`, odd for week A and even for week B; later ones as
- * `week`, A or B), whether it lists participants (from version 3), and whether its meetings have
- * a category and its days say where the Organizer is (from version 4).
+ * `week`, A or B), whether it lists participants (from version 3), whether its meetings have
+ * a category and its days say where the Organizer is (from version 4), whether a one-to-one
+ * meeting names its student (from version 5), and whether a meeting may be tentative (from
+ * version 6).
  */
 interface WeekWritten {
   readonly field: string
@@ -47,16 +49,37 @@ interface WeekWritten {
   readonly hasParticipants: boolean
   readonly hasCategoriesAndDays: boolean
   readonly hasStudents: boolean
+  readonly hasTentative: boolean
 }
 
 const parity = { field: 'parity', weeks: { odd: Week.a, even: Week.b } }
 const lettered = { field: 'week', weeks: { A: Week.a, B: Week.b } }
+const before = { hasParticipants: false, hasCategoriesAndDays: false, hasStudents: false }
 const weekWritten: Readonly<Record<number, WeekWritten>> = {
-  1: { ...parity, hasParticipants: false, hasCategoriesAndDays: false, hasStudents: false },
-  2: { ...lettered, hasParticipants: false, hasCategoriesAndDays: false, hasStudents: false },
-  3: { ...lettered, hasParticipants: true, hasCategoriesAndDays: false, hasStudents: false },
-  4: { ...lettered, hasParticipants: true, hasCategoriesAndDays: true, hasStudents: false },
-  5: { ...lettered, hasParticipants: true, hasCategoriesAndDays: true, hasStudents: true },
+  1: { ...parity, ...before, hasTentative: false },
+  2: { ...lettered, ...before, hasTentative: false },
+  3: { ...lettered, ...before, hasParticipants: true, hasTentative: false },
+  4: {
+    ...lettered,
+    ...before,
+    hasParticipants: true,
+    hasCategoriesAndDays: true,
+    hasTentative: false,
+  },
+  5: {
+    ...lettered,
+    hasParticipants: true,
+    hasCategoriesAndDays: true,
+    hasStudents: true,
+    hasTentative: false,
+  },
+  6: {
+    ...lettered,
+    hasParticipants: true,
+    hasCategoriesAndDays: true,
+    hasStudents: true,
+    hasTentative: true,
+  },
 }
 
 function scheduleFields(written: WeekWritten): string[] {
@@ -101,6 +124,8 @@ interface MeetingContent extends TimingContent {
   readonly note?: string
   readonly participants?: readonly string[]
   readonly category?: string
+  /** Absent for a meeting confirmed. */
+  readonly tentative?: boolean
 }
 
 /** A day of a week that says where the Organizer is, as the schedule file holds it. */
@@ -151,6 +176,7 @@ function contentOfMeeting(meeting: Meeting): MeetingContent {
       ? {}
       : { participants: meeting.participants.map((participant) => participant.name) }),
     ...(meeting.category === undefined ? {} : { category: meeting.category.name }),
+    ...(meeting.isTentative ? { tentative: true } : {}),
   }
 }
 
@@ -313,6 +339,7 @@ function meetingOf(reading: Reading, value: unknown): Meeting {
     ...participantsField,
     ...(reading.written.hasCategoriesAndDays ? ['category'] : []),
     ...(reading.written.hasStudents ? ['student'] : []),
+    ...(reading.written.hasTentative ? ['tentative'] : []),
   ])
   const description = {
     title: 'student' in record ? undefined : fieldRead(part, record, 'title', text),
@@ -326,6 +353,12 @@ function meetingOf(reading: Reading, value: unknown): Meeting {
             typeof value === 'string' ? Category.named(value) : undefined,
           )
         : undefined,
+    isTentative:
+      'tentative' in record
+        ? fieldRead(part, record, 'tentative', (value) =>
+            typeof value === 'boolean' ? value : undefined,
+          )
+        : false,
   }
   if (!reading.written.hasStudents && description.category?.isOneToOne === true) {
     return built(part, () => new Meeting(namedAfterItsStudent(reading, description)))

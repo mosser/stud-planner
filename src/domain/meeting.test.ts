@@ -16,6 +16,18 @@ describe('a meeting', () => {
     expect(aMeeting().note).toBeUndefined()
   })
 
+  it('is confirmed unless the Organizer marks it tentative', () => {
+    expect(aMeeting().isTentative).toBe(false)
+    expect(aMeeting({ isTentative: true }).isTentative).toBe(true)
+    expect(aMeeting({ isTentative: true }).afterChanging({ isTentative: false }).isTentative).toBe(
+      false,
+    )
+  })
+
+  it('takes its slots when tentative, as any meeting does', () => {
+    expect(aMeeting({ isTentative: true }).overlaps(aMeeting({ start: at('10:30') }))).toBe(true)
+  })
+
   it('fits within the day', () => {
     expect(aMeeting({ start: at('17:00'), duration: Duration.ofQuarters(4) }).end.toString()).toBe(
       '18:00',
@@ -56,7 +68,7 @@ describe('a meeting', () => {
   })
 
   it('moves and resizes as a copy, keeping the rest', () => {
-    const lab = aMeeting({ note: 'Room 201' })
+    const lab = aMeeting({ note: 'Room 201', isTentative: true })
     const moved = lab.afterMovingTo(Weekday.friday, at('14:00'))
     expect([moved.weekday, moved.start.toString(), moved.duration.quarters]).toEqual([
       Weekday.friday,
@@ -64,6 +76,8 @@ describe('a meeting', () => {
       4,
     ])
     expect(moved.note).toBe('Room 201')
+    expect(moved.isTentative).toBe(true)
+    expect(lab.afterResizingTo(Duration.ofQuarters(2)).isTentative).toBe(true)
     expect(lab.afterResizingTo(Duration.ofQuarters(2)).end.toString()).toBe('10:30')
     expect(lab.weekday).toBe(Weekday.monday)
     expect(() => lab.afterResizingTo(Duration.ofQuarters(40))).toThrow(RangeError)

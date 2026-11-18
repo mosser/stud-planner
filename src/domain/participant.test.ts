@@ -68,7 +68,7 @@ describe('the participants of a schedule', () => {
   })
 
   it('are renamed in every meeting they take part in', () => {
-    const lab = aMeeting({ participants: [ana, bo] })
+    const lab = aMeeting({ participants: [ana, bo], isTentative: true })
     const schedule = new Schedule(
       [lab, aMeeting({ title: 'Bo', weekday: Weekday.friday })],
       [],
@@ -80,6 +80,7 @@ describe('the participants of a schedule', () => {
       'Anaïs',
       'Bo',
     ])
+    expect(renamed.meetings[0]?.isTentative).toBe(true)
     expect(renamed.meetings[1]).toBe(schedule.meetings[1])
     expect(() => schedule.afterRenaming(ana, 'bo')).toThrow(
       'There is already a participant named Bo.',

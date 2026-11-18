@@ -11,6 +11,9 @@ export function timeOf(booking: Booking): string {
 /** What a time block is called when it has no title. */
 export const aTimeBlock = 'Time block'
 
+/** How a tentative meeting is said in its description: Lab meeting, tentative, weekly, … */
+export const tentativeWritten = 'tentative'
+
 /**
  * What a booking is shown as: a meeting by its title and its category, Kalvin | PhD, or its title
  * alone when it has no category; a time block by its title, or Time block.
@@ -228,7 +231,7 @@ export function notAScheduleFile(): string {
 
 /** Why a file is refused: it is a schedule file of a version this system does not read. */
 export function unknownVersion(version: unknown): string {
-  return `it is a schedule file of version ${JSON.stringify(version)}, and this system reads versions 1 to 5.`
+  return `it is a schedule file of version ${JSON.stringify(version)}, and this system reads versions 1 to 6.`
 }
 
 /** Why a file is refused: a part of it has a field missing. */

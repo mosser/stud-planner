@@ -6,8 +6,16 @@ project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+
+- A meeting can be marked **Tentative** in its dialog, while it is not entirely confirmed:
+  it is drawn hatched, with a dashed border, and its description says so. It still takes its
+  slots: nothing can overlap it.
+
 ### Changed
 
+- The schedule file is now version 6, which records tentative meetings. Files of earlier
+  versions are still read; a file downloaded now is refused by earlier releases.
 - A meeting tall enough to list all its participants lists them all, rather than two and how
   many others; the short form is kept for the meetings where they do not fit.
 

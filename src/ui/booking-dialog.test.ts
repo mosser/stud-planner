@@ -83,15 +83,18 @@ describe('the meeting dialog of a new meeting', () => {
     expect(done(dialog).disabled).toBe(true)
     type(dialog, 'title', ' Thesis tool ')
     type(dialog, 'note', 'Room 3')
+    expect(field<HTMLInputElement>(dialog, 'tentative').checked).toBe(false)
+    field<HTMLInputElement>(dialog, 'tentative').checked = true
     expect(done(dialog).disabled).toBe(false)
     dialog.querySelector('form')?.requestSubmit()
     const added = onDone.mock.calls[0]?.[0]
-    expect([added.title, added.note, added.weekday, added.category?.name]).toEqual([
-      'Thesis tool',
-      'Room 3',
-      Weekday.tuesday,
-      'Project',
-    ])
+    expect([
+      added.title,
+      added.note,
+      added.weekday,
+      added.category?.name,
+      added.isTentative,
+    ]).toEqual(['Thesis tool', 'Room 3', Weekday.tuesday, 'Project', true])
     expect(dialog.isConnected).toBe(false)
   })
 
@@ -182,6 +185,24 @@ describe('the meeting dialog of a meeting of the schedule', () => {
     choose(dialog, 'duration', '1 h 30')
     dialog.querySelector('form')?.requestSubmit()
     expect(onDone.mock.calls[0]?.[0].end.toString()).toBe('11:30')
+  })
+
+  it('marks the meeting tentative, and confirms it', () => {
+    const onDone = vi.fn()
+    const tentative = aMeeting({ category: Category.named('Lab'), isTentative: true })
+    const dialog = openBookingDialog(document, {
+      schedule: new Schedule([tentative]),
+      kind: 'meeting',
+      booking: tentative,
+      proposal: tentative,
+      onDone,
+    })
+    const box = field<HTMLInputElement>(dialog, 'tentative')
+    expect(box.checked).toBe(true)
+    box.checked = false
+    box.dispatchEvent(new Event('change', { bubbles: true }))
+    dialog.querySelector('form')?.requestSubmit()
+    expect(onDone.mock.calls[0]?.[0].isTentative).toBe(false)
   })
 
   it('asks to remove the meeting', () => {

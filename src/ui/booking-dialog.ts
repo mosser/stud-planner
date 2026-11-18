@@ -104,6 +104,15 @@ function noteField(given: BookingDialogOptions): Markup | string {
   return html`<label>Note <textarea name="note" rows="2">${meetingOf(given)?.note ?? ''}</textarea></label>`
 }
 
+/** Whether a meeting is tentative, not confirmed yet; a time block never is. */
+function tentativeField(given: BookingDialogOptions): Markup | string {
+  if (given.kind !== 'meeting') {
+    return ''
+  }
+  const checked = meetingOf(given)?.isTentative === true ? 'checked' : ''
+  return html`<label class="check"><input type="checkbox" name="tentative" ${checked}> Tentative</label>`
+}
+
 /** The actions of the dialog: Close alone when read only; Remove, Cancel and Done otherwise. */
 function actionsOf(given: BookingDialogOptions): Markup {
   if (given.isReadOnly === true) {
@@ -140,6 +149,7 @@ function markupOf(given: BookingDialogOptions): Markup {
     <label>Weekday <select name="weekday">${options(Weekday.all, (weekday) => weekday.name)}</select></label>
     <label>Start <select name="start">${options(theDay.quarters, String)}</select></label>
     <label>Duration <select name="duration">${options(durations, durationWritten)}</select></label>
+    ${tentativeField(given)}
     ${noteField(given)}
     </fieldset>
     <p class="finding" role="alert"></p>
@@ -225,6 +235,8 @@ function meetingFrom(form: HTMLFormElement, timing: Timing, picked: Picked): Mee
     student: category.isOneToOne ? student : undefined,
     participants: picked.participants,
     note: textOf(form, 'note'),
+    isTentative:
+      (form.elements.namedItem('tentative') as HTMLInputElement | null)?.checked === true,
   })
 }
 

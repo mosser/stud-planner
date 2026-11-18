@@ -129,6 +129,17 @@ describe('a short booking on the grid', () => {
       'Lab meeting, weekly, Monday 10:00 to 11:00',
     )
   })
+
+  it('draws a tentative meeting as such, and says so on hover', () => {
+    const element = document.createElement('div')
+    element.innerHTML = gridOf(new Schedule([aMeeting({ isTentative: true })]), 'a').text
+    const meeting = element.querySelector('[data-booking="0"]')
+    expect(meeting?.classList.contains('tentative')).toBe(true)
+    expect(meeting?.getAttribute('title')).toBe(
+      'Lab meeting, tentative, weekly, Monday 10:00 to 11:00',
+    )
+    expect(rendered('a').querySelector('.tentative')).toBeNull()
+  })
 })
 
 describe('the participants on the grid', () => {

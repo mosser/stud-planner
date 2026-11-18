@@ -74,6 +74,14 @@ itself on hover: its title, cadence, weekday, time and participants.
 | On the grid | A meeting is shown by its title and its category, *Kalvin \| PhD*, *Thesis tool \| Project*; once when they are the same word. A one-to-one meeting's title is its student's name, renamed with them. |
 | Singled out | The list under the grid singles out a category's meetings, as it does a participant's. |
 
+## Tentative meetings
+
+| Rule | Behaviour |
+|---|---|
+| In the dialog | The dialog of a meeting holds a box, *Tentative*, ticked while the meeting is not entirely confirmed; a meeting added is confirmed until it is ticked. A time block has none. |
+| On the grid | A tentative meeting is hatched with the surface, and its border dashed; on hover and to a screen reader, it says so: *Lab meeting, tentative, weekly, Monday 10:00 to 11:00*. |
+| Its slots | A tentative meeting takes its slots as a confirmed one does: nothing overlaps it, and it overlaps nothing. |
+
 ## On campus or remote
 
 | Rule | Behaviour |
@@ -98,7 +106,7 @@ itself on hover: its title, cadence, weekday, time and participants.
 
 A click on a booking, without a drag, opens its dialog: title, weeks (both
 weeks, week A or week B, when it is changed), weekday, start and duration,
-and for a meeting its category, participants and note, with
+and for a meeting its category, participants, whether it is tentative, and its note, with
 Done and Remove. Every change a move or a resize makes can also be made here,
 with the keyboard. Done is refused while the booking would overlap another,
 and the dialog names it: *Overlaps Lab meeting, week A, 10:00 to 11:00.* A
